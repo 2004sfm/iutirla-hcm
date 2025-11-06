@@ -25,10 +25,10 @@ export function SiteHeader({ className }: SiteHeaderProps) {
                             className="h-10 w-auto"
                         />
                         {/* <div className="relative h-10 w-27 flex items-center text-2xl italic font-bold"> */}
-                        <div className="relative h-10 w-30 flex items-center font-montserrat text-2xl italic font-bold">
+                        <div className="relative h-10 flex items-center font-montserrat text-2xl italic font-bold">
 
                             <span>IUTIRLA</span>
-                            <span className="absolute top-0 font-semibold right-0 text-[10px]">HCM</span>
+                            <span className="absolute top-0 font-semibold -right-4 text-[8px]">HCM</span>
                         </div>
                     </div>
                 </Link>
