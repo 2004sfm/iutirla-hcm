@@ -6,6 +6,8 @@ import { Search } from "lucide-react";
 import { TaskSheet } from "./TaskSheet";
 import { NotificationsSheet } from "./NotificationsSheet";
 import { UserMenu } from "./UserMenu";
+import { CommandMenu } from "./CommandMenu";
+import { Kbd } from "@/components/ui/kbd";
 
 interface SiteHeaderProps {
     className?: string
@@ -34,29 +36,16 @@ export function SiteHeader({ className }: SiteHeaderProps) {
                 </Link>
             </div>
 
-            <div className="w-full hidden md:flex md:grow md:basis-0 items-center justify-end">
-                <Button
-                    variant="outline"
-                    className="hidden w-full justify-start text-muted-foreground md:flex"
-                >
-                    <Search className="mr-2 h-4 w-4" />
-                    <span className="flex-1 text-left">Buscar</span>
-                    {/* <Kbd>⌘ + K</Kbd> */}
-                </Button>
-            </div>
+            <div className="flex flex-2 gap-2 items-center">
 
-            <div className="flex flex-1 gap-2 items-center justify-end">
-                <Button
-                    variant={"ghost"}
-                    size={"icon"}
-                    className="md:hidden"
-                >
-                    <Search className="size-4.5" />
-                </Button>
-                <TaskSheet />
-
-                <NotificationsSheet />
-                <UserMenu />
+                <div className="md:flex-1 ml-auto text-right">
+                    <CommandMenu />
+                </div>
+                <div className="flex md:flex-1 gap-2 items-center justify-end">
+                    <TaskSheet />
+                    <NotificationsSheet />
+                    <UserMenu />
+                </div>
             </div>
         </header>
     )
