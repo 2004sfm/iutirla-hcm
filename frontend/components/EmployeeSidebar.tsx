@@ -18,6 +18,7 @@ import { Button } from './ui/button'
 
 import { cn } from '@/lib/utils'
 import { employeeSidebarItems } from "@/lib/nav";
+import { ScrollArea } from './ui/scroll-area'
 
 const basePath = "/employee"
 
@@ -55,28 +56,30 @@ export function EmployeeSidebar() {
                 </section>
             </SidebarHeader>
             <SidebarContent>
-                <SidebarGroup>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {employeeSidebarItems.map((item) => {
-                                const href = `${basePath}${item.href}`
-                                const isActive = pathname.startsWith(href)
-                                return (
-                                    <SidebarMenuItem key={item.name}>
-                                        <SidebarMenuButton className={cn(
-                                            isActive && "bg-sidebar-primary text-white hover:bg-sidebar-primary hover:text-white"
-                                        )} asChild>
-                                            <Link href={href}>
-                                                <item.icon />
-                                                <span>{item.name}</span>
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                )
-                            })}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                <ScrollArea className="w-full h-full">
+                    <SidebarGroup>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                {employeeSidebarItems.map((item) => {
+                                    const href = `${basePath}${item.href}`
+                                    const isActive = pathname.startsWith(href)
+                                    return (
+                                        <SidebarMenuItem key={item.name}>
+                                            <SidebarMenuButton className={cn(
+                                                isActive && "bg-sidebar-primary text-white hover:bg-sidebar-primary hover:text-white"
+                                            )} asChild>
+                                                <Link href={href}>
+                                                    <item.icon />
+                                                    <span>{item.name}</span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    )
+                                })}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                </ScrollArea>
             </SidebarContent>
         </Sidebar >
     )

@@ -1,12 +1,13 @@
 import { EmployeeHeader } from "@/components/EmployeeHeader";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function TalentProfile() {
     return (
         <>
             <EmployeeHeader title="Perfil de Talento" />
-            <div className="flex-1 w-full overflow-y-auto">
+            <ScrollArea className="flex-1 overflow-y-auto">
                 lorem*1000
-            </div>
+            </ScrollArea>
         </>
     )
 }
