@@ -29,11 +29,12 @@ export function EmployeeSidebar() {
             <SidebarHeader className="p-0">
                 <div className="h-30">
                     <Image
-                        src={"/Fotografia-Institucional-SEDE-COLONIAL-IUTIRLA-PORLAMAR.webp"}
+                        src={"/iutirla-porlamar.jpg"}
                         alt="Fotografía institucional, sede colonial IUTURLA Porlamar"
                         width={426}
                         height={426}
                         className="h-full object-cover"
+                        loading="eager"
                     />
                 </div>
                 <section className="h-full flex flex-col gap-2 p-2">
