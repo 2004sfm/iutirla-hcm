@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { SquareArrowOutUpRight } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Sidebar,
     SidebarContent,
@@ -40,8 +40,8 @@ export function EmployeeSidebar() {
                 <section className="h-full flex flex-col gap-2 p-2">
 
                     <div className="flex justify-between items-end h-8 pl-2">
-                        <Avatar className="size-20 border border-background rounded-full">
-                            <AvatarImage src="/profile.png" className="rounded-full" />
+                        <Avatar className="size-20 border border-background">
+                            <AvatarImage src="/profile.png" />
                             <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
                         <Button size={"sm"}>

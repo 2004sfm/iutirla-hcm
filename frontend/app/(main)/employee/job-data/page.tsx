@@ -1,13 +1,19 @@
-import { EmployeeHeader } from "@/components/EmployeeHeader";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { AdminHeader, BreadcrumbItemType } from "@/components/AdminHeader";
 
-export default function Profile() {
+const breadcrumbItems: BreadcrumbItemType[] = [
+    { name: "Perfil Profesional", href: "/employee" },
+    { name: "Datos del Puesto", href: "/employee/job-data" },
+];
+
+export default function JobDataPage() {
     return (
         <>
-            <EmployeeHeader title="Datos del Puesto" />
-            <ScrollArea className="flex-1 overflow-y-auto">
+            <AdminHeader
+                items={breadcrumbItems}
+            />
+            <div className="flex-1 overflow-y-auto px-8 py-4">
                 lorem*1000
-            </ScrollArea>
+            </div>
         </>
     )
 }

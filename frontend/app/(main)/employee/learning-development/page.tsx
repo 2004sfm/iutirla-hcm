@@ -1,13 +1,19 @@
-import { EmployeeHeader } from "@/components/EmployeeHeader";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { AdminHeader, BreadcrumbItemType } from "@/components/AdminHeader";
 
-export default function LearningDevelopment() {
+const breadcrumbItems: BreadcrumbItemType[] = [
+    { name: "Perfil Profesional", href: "/employee" },
+    { name: "Aprendizaje y Desarrollo", href: "/employee/learning-development" },
+];
+
+export default function LearningDevelopmentPage() {
     return (
         <>
-            <EmployeeHeader title="Aprendizaje y Desarrollo" />
-            <ScrollArea className="flex-1 overflow-y-auto">
+            <AdminHeader
+                items={breadcrumbItems}
+            />
+            <div className="flex-1 overflow-y-auto px-8 py-4">
                 lorem*1000
-            </ScrollArea>
+            </div>
         </>
     )
 }

@@ -21,7 +21,7 @@ interface AdminHeaderProps {
     items: BreadcrumbItemType[];
 }
 
-export function EmployeeHeader({ items }: AdminHeaderProps) {
+export function AdminHeader({ items }: AdminHeaderProps) {
     return (
         <header className="flex items-center h-10 border-b px-2 py-6">
             <SidebarTrigger className="ml-2" />
