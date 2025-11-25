@@ -1,39 +1,41 @@
 'use client';
 import { useState } from 'react';
-import { AdminHeader, type BreadcrumbItemType } from "@/components/AdminHeader";
+import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHeader";
 import { CatalogManager, ColumnDef, FormFieldDef } from "@/components/CatalogManager";
 import { SimpleCombobox } from "@/components/SimpleCombobox";
 
 interface CatalogConfig {
-    name: string;
+    name: string; // Nombre en plural (para el título de la tabla)
+    singularName: string; // ¡Nueva propiedad para los mensajes!
     endpoint: string;
     columns?: ColumnDef[];
     formFields?: FormFieldDef[];
 }
 
-// --- LISTA MAESTRA DE CATÁLOGOS GENERALES ---
 const generalCatalogs: CatalogConfig[] = [
-    // --- 1. GEOGRAFÍA ---
+    // --- 1. Geografía ---
     {
         name: 'Países',
+        singularName: 'País', // Agregado
         endpoint: '/api/core/countries/',
         columns: [
-            { header: "ID", accessorKey: "id" },
+            { header: "Id", accessorKey: "id" },
             { header: "Nombre", accessorKey: "name" },
-            { header: "ISO", accessorKey: "iso_2" },
+            { header: "Iso", accessorKey: "iso_2" },
             { header: "Prefijo", accessorKey: "phone_prefix" }
         ],
         formFields: [
             { name: "name", label: "Nombre", type: "text", required: true },
-            { name: "iso_2", label: "Código ISO (2 letras)", type: "text", required: true },
-            { name: "phone_prefix", label: "Prefijo Telefónico (ej. +58)", type: "text", required: true }
+            { name: "iso_2", label: "Código iso (2 letras)", type: "text", required: true },
+            { name: "phone_prefix", label: "Prefijo telefónico (ej. +58)", type: "text", required: true }
         ]
     },
     {
         name: 'Estados',
+        singularName: 'Estado', // Agregado
         endpoint: '/api/core/states/',
         columns: [
-            { header: "ID", accessorKey: "id" },
+            { header: "Id", accessorKey: "id" },
             { header: "Estado", accessorKey: "name" },
             { header: "País", accessorKey: "country_name" }
         ],
@@ -50,7 +52,8 @@ const generalCatalogs: CatalogConfig[] = [
         ]
     },
     {
-        name: 'Códigos de Área Telefónicos',
+        name: 'Códigos de área telefónicos',
+        singularName: 'Código de área telefónico', // Agregado
         endpoint: '/api/core/phone-area-codes/',
         columns: [
             { header: "Código", accessorKey: "code" },
@@ -60,7 +63,7 @@ const generalCatalogs: CatalogConfig[] = [
         ],
         formFields: [
             { name: "code", label: "Código (ej. 414)", type: "text", required: true },
-            { name: "type", label: "Tipo (Móvil/Fijo)", type: "text", required: true },
+            { name: "type", label: "Tipo (móvil/fijo)", type: "text", required: true },
             {
                 name: "country",
                 label: "País",
@@ -71,7 +74,7 @@ const generalCatalogs: CatalogConfig[] = [
             },
             {
                 name: "carrier",
-                label: "Operadora (Opcional)",
+                label: "Operadora (opcional)",
                 type: "select",
                 optionsEndpoint: "/api/core/phone-carriers/",
                 optionsLabelKey: "name"
@@ -79,82 +82,107 @@ const generalCatalogs: CatalogConfig[] = [
         ]
     },
 
-    // --- 2. FINANZAS ---
+    // --- 2. Finanzas ---
     {
-        name: 'Bancos', endpoint: '/api/core/banks/',
+        name: 'Bancos',
+        singularName: 'Banco', // Agregado
+        endpoint: '/api/core/banks/',
         columns: [
-            { header: "ID", accessorKey: "id" },
+            { header: "Id", accessorKey: "id" },
             { header: "Nombre", accessorKey: "name" },
             { header: "Código", accessorKey: "code" }
         ],
         formFields: [
             { name: "name", label: "Nombre", type: "text", required: true },
-            { name: "code", label: "Código Bancario", type: "text", required: true },
+            { name: "code", label: "Código bancario", type: "text", required: true },
         ]
     },
     {
-        name: 'Tipos de Cuenta Bancaria', endpoint: '/api/core/bank-account-types/',
+        name: 'Tipos de cuenta bancaria',
+        singularName: 'Tipo de cuenta bancaria', // Agregado
+        endpoint: '/api/core/bank-account-types/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
 
-    // --- 3. DEMOGRAFÍA ---
+    // --- 3. Demografía ---
     {
-        name: 'Géneros', endpoint: '/api/core/genders/',
+        name: 'Géneros',
+        singularName: 'Género', // Agregado
+        endpoint: '/api/core/genders/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Estado Civil', endpoint: '/api/core/marital-statuses/',
+        name: 'Estado civil',
+        singularName: 'Estado civil', // Agregado
+        endpoint: '/api/core/marital-statuses/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Saludos (Títulos)', endpoint: '/api/core/salutations/',
-        formFields: [{ name: "name", label: "Nombre (Sr., Dr.)", type: "text", required: true }]
+        name: 'Saludos (títulos)',
+        singularName: 'Saludo (título)', // Agregado
+        endpoint: '/api/core/salutations/',
+        formFields: [{ name: "name", label: "Nombre (sr., dr.)", type: "text", required: true }]
     },
 
-    // --- 4. CONTACTO Y RELACIONES ---
+    // --- 4. Contacto y relaciones ---
     {
-        name: 'Tipos de Dirección', endpoint: '/api/core/address-types/',
+        name: 'Tipos de dirección',
+        singularName: 'Tipo de dirección', // Agregado
+        endpoint: '/api/core/address-types/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Tipos de Teléfono', endpoint: '/api/core/phone-types/',
+        name: 'Tipos de teléfono',
+        singularName: 'Tipo de teléfono', // Agregado
+        endpoint: '/api/core/phone-types/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Operadoras Telefónicas', endpoint: '/api/core/phone-carriers/',
+        name: 'Operadoras telefónicas',
+        singularName: 'Operadora telefónica', // Agregado
+        endpoint: '/api/core/phone-carriers/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Tipos de Email', endpoint: '/api/core/email-types/',
+        name: 'Tipos de email',
+        singularName: 'Tipo de email', // Agregado
+        endpoint: '/api/core/email-types/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Tipos de Relación (Parentesco)', endpoint: '/api/core/relationship-types/',
+        name: 'Tipos de relación (parentesco)',
+        singularName: 'Tipo de relación (parentesco)', // Agregado
+        endpoint: '/api/core/relationship-types/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
 
-    // --- 5. IDENTIFICACIÓN (MODIFICADO) ---
-    // Ya no existe "Tipos de ID Nacional". El sistema usa los tipos fijos (V, E, P).
+    // --- 5. Identificación (modificado) ---
+    // Ya no existe "tipos de id nacional". El sistema usa los tipos fijos (v, e, p).
 
-    // --- 6. DISCAPACIDAD ---
+    // --- 6. Discapacidad ---
     {
-        name: 'Grupos de Discapacidad', endpoint: '/api/core/disability-groups/',
+        name: 'Grupos de discapacidad',
+        singularName: 'Grupo de discapacidad', // Agregado
+        endpoint: '/api/core/disability-groups/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Tipos de Discapacidad', endpoint: '/api/core/disability-types/',
+        name: 'Tipos de discapacidad',
+        singularName: 'Tipo de discapacidad', // Agregado
+        endpoint: '/api/core/disability-types/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
     {
-        name: 'Estatus de Discapacidad', endpoint: '/api/core/disability-statuses/',
+        name: 'Estatus de discapacidad',
+        singularName: 'Estatus de discapacidad', // Agregado
+        endpoint: '/api/core/disability-statuses/',
         formFields: [{ name: "name", label: "Nombre", type: "text", required: true }]
     },
 ];
 
 // Breadcrumbs
 const breadcrumbItems: BreadcrumbItemType[] = [
-    { name: "Panel de Control", href: "/admin/dashboard" },
-    { name: "Configuración", href: "/admin/config/general" },
+    { name: "Configuración", href: "/admin/config" },
     { name: "Catálogos Generales", href: "/admin/config/general" },
 ];
 
@@ -170,7 +198,7 @@ export default function GeneralConfigPage() {
 
     return (
         <>
-            <AdminHeader items={breadcrumbItems} />
+            <CatalogHeader items={breadcrumbItems} />
 
             <div className="flex-1 overflow-y-auto px-8 py-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center mb-8 p-4 border rounded-lg bg-card shadow-sm">
@@ -191,6 +219,7 @@ export default function GeneralConfigPage() {
                         key={selectedCatalogConfig.endpoint}
                         endpoint={selectedCatalogConfig.endpoint}
                         title={selectedCatalogConfig.name}
+                        singularTitle={selectedCatalogConfig.singularName}
                         columns={selectedCatalogConfig.columns}
                         formFields={selectedCatalogConfig.formFields}
                     />

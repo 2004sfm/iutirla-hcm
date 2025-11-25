@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { AdminHeader, type BreadcrumbItemType } from "@/components/AdminHeader";
+import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHeader";
 // Importamos el componente y la interfaz de tipos para evitar 'any'
 import { PersonForm, type PersonBackendData } from "@/components/PersonForm";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,10 +20,9 @@ export default function EditPersonPage({ params }: { params: Promise<{ id: strin
     const [error, setError] = useState<string | null>(null);
 
     const breadcrumbItems: BreadcrumbItemType[] = [
-        { name: "Panel de Control", href: "/admin/dashboard" },
         { name: "Gestión de Personal", href: "/admin/personnel" },
         { name: "Todas las Personas", href: "/admin/personnel/people" },
-        { name: "Editar Expediente", href: `/admin/personnel/people/${personId}` },
+        { name: "Editar", href: `/admin/personnel/people/${personId}` },
     ];
 
     useEffect(() => {
@@ -49,7 +48,7 @@ export default function EditPersonPage({ params }: { params: Promise<{ id: strin
     if (loading) {
         return (
             <>
-                <AdminHeader items={breadcrumbItems} />
+                <CatalogHeader items={breadcrumbItems} />
                 <div className="flex-1 overflow-y-auto px-8 py-4">
                     <div className="max-w-5xl mx-auto space-y-6">
                         <div className="space-y-2">
@@ -66,7 +65,7 @@ export default function EditPersonPage({ params }: { params: Promise<{ id: strin
     if (error) {
         return (
             <>
-                <AdminHeader items={breadcrumbItems} />
+                <CatalogHeader items={breadcrumbItems} />
                 <div className="flex-1 overflow-y-auto px-8 py-4">
                     <div className="max-w-5xl mx-auto">
                         <Alert variant="destructive">
@@ -82,13 +81,13 @@ export default function EditPersonPage({ params }: { params: Promise<{ id: strin
 
     return (
         <>
-            <AdminHeader items={breadcrumbItems} />
+            <CatalogHeader items={breadcrumbItems} />
 
             <div className="flex-1 overflow-y-auto px-8 py-4">
-                <div className="max-w-5xl mx-auto">
-                    {/* Renderizamos el formulario en modo edición pasándole el ID y la Data */}
-                    <PersonForm personId={personId} initialData={initialData} />
-                </div>
+                {/* <div className="max-w-5xl mx-auto"> */}
+                {/* Renderizamos el formulario en modo edición pasándole el ID y la Data */}
+                <PersonForm personId={personId} initialData={initialData} />
+                {/* </div> */}
             </div>
         </>
     );

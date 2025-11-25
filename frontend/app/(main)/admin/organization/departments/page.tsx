@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminHeader, type BreadcrumbItemType } from "@/components/AdminHeader";
+import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHeader";
 import { CatalogManager, ColumnDef, FormFieldDef } from "@/components/CatalogManager";
 
 // --- CONFIGURACIÓN DE CAMPOS Y COLUMNAS ---
@@ -38,19 +38,30 @@ const breadcrumbItems: BreadcrumbItemType[] = [
     { name: "Gestión de estructura", href: "/admin/organization/departments" },
 ];
 
+// --- CONFIGURACIÓN PRINCIPAL (AÑADIENDO NOMBRES SINGULAR Y PLURAL) ---
+const CATALOG_CONFIG = {
+    name: "Departamentos",
+    singularName: "Departamento",
+    endpoint: "/api/organization/departments/",
+    columns: departmentColumns,
+    formFields: departmentFields,
+};
+
+
 export default function DepartmentsPage() {
     return (
         <>
-            <AdminHeader
+            <CatalogHeader
                 items={breadcrumbItems}
             />
 
             <div className="flex-1 overflow-y-auto px-8 py-4">
                 <CatalogManager
-                    endpoint="/api/organization/departments/"
-                    title="Departamentos"
-                    columns={departmentColumns}
-                    formFields={departmentFields}
+                    endpoint={CATALOG_CONFIG.endpoint}
+                    title={CATALOG_CONFIG.name}
+                    singularTitle={CATALOG_CONFIG.singularName} // ¡Propiedad agregada!
+                    columns={CATALOG_CONFIG.columns}
+                    formFields={CATALOG_CONFIG.formFields}
                 />
             </div>
         </>

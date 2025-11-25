@@ -19,6 +19,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Plus, Trash2, FileText, Star, BadgeCheck, Pencil, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { cn } from '@/lib/utils';
+// IMPORTAR EL NUEVO COMPONENTE
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 
 // Interfaz para errores de Django
 interface DjangoErrorResponse {
@@ -63,13 +66,18 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
     const [ids, setIds] = useState<NationalIdItem[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Estados del Modal
+    // Estados del Modal (Crear/Editar)
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Estado para Errores Globales
+    // NUEVOS ESTADOS PARA DELETE DIALOG
+    const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
+
+
+    // Estado para Errores Globales (Modal Crear/Editar)
     const [serverError, setServerError] = useState<string | null>(null);
 
     const form = useForm<NationalIdFormData>({
@@ -98,7 +106,7 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
             setLoading(true);
             const res = await apiClient.get(`/api/core/national-ids/?person=${personId}`);
             setIds(res.data.results || res.data);
-        } catch { toast.error("Error al cargar documentos."); } finally { setLoading(false); }
+        } catch { toast.error("Error al cargar documentos"); } finally { setLoading(false); }
     }, [personId]);
 
     useEffect(() => { if (personId) fetchIds(); }, [personId, fetchIds]);
@@ -191,10 +199,10 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
 
             if (editingId) {
                 await apiClient.patch(`/api/core/national-ids/${editingId}/`, formData, config);
-                toast.success("Documento actualizado.");
+                toast.success("Documento actualizado exitosamente");
             } else {
                 await apiClient.post('/api/core/national-ids/', formData, config);
-                toast.success("Documento agregado.");
+                toast.success("Documento agregado exitosamente");
             }
 
             setIsModalOpen(false);
@@ -204,20 +212,30 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
             if (err instanceof AxiosError) {
                 handleServerError(err as AxiosError<DjangoErrorResponse>);
             } else {
-                setServerError("Ocurrió un error inesperado.");
+                setServerError("Ocurrió un error inesperado");
             }
         } finally { setIsSubmitting(false); }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("¿Eliminar documento?")) return;
-        try { await apiClient.delete(`/api/core/national-ids/${id}/`); fetchIds(); } catch { toast.error("Error al eliminar."); }
+    // FUNCIÓN PARA ABRIR EL DIÁLOGO DE ELIMINACIÓN
+    const handleDelete = (id: number) => {
+        setIdToDelete(id);
+        setIsDeleteAlertOpen(true);
     };
+
+    // FUNCIÓN ASÍNCRONA QUE SE PASARÁ AL COMPONENTE DE DIÁLOGO
+    const deleteIdAction = useCallback(async () => {
+        if (!idToDelete) return;
+
+        await apiClient.delete(`/api/core/national-ids/${idToDelete}/`);
+        fetchIds(); // Volver a cargar la lista después de la eliminación exitosa
+    }, [idToDelete, fetchIds]);
+
 
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium flex items-center gap-2"><BadgeCheck className="h-5 w-5 text-primary" /> Identificaciones</h3>
+                <h3 className="text-lg font-medium flex items-center gap-2">Identificaciones</h3>
                 <Button size="sm" onClick={handleCreate}><Plus className="h-4 w-4 mr-2" /> Agregar</Button>
             </div>
 
@@ -265,7 +283,7 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>{editingId ? "Editar Documento" : "Nuevo Documento"}</DialogTitle>
                     </DialogHeader>
@@ -285,13 +303,18 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
 
                         {/* CAMPO: CATEGORÍA */}
                         <div className="space-y-1">
-                            <Label className={errors.category ? "text-destructive" : ""}>
+                            <Label className={cn(
+                                "text-sm",
+                                errors.category && "text-destructive")}>
                                 Categoría <span className="text-destructive">*</span>
                             </Label>
 
                             <Controller name="category" control={control} render={({ field }) => (
                                 <Select onValueChange={field.onChange} value={field.value}>
-                                    <SelectTrigger className={`w-full ${errors.category ? "border-destructive focus:ring-destructive" : ""}`}><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className={cn(
+                                        "w-full text-sm",
+                                        errors.category && "border-destructive focus:ring-destructive"
+                                    )}><SelectValue /></SelectTrigger>
                                     <SelectContent>{DOC_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                                 </Select>
                             )} />
@@ -300,14 +323,19 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
                             {errors.category && <span className="text-xs font-medium text-destructive block mt-1">{errors.category.message}</span>}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-[auto_1fr] gap-3">
                             {/* CAMPO: PREFIJO */}
-                            <div className="col-span-1 space-y-1">
-                                <Label className={errors.document_type ? "text-destructive" : ""}>Prefijo</Label>
+                            <div className="space-y-1">
+                                <Label className={cn(
+                                    "text-sm",
+                                    errors.document_type && "text-destructive")}>Prefijo</Label>
 
                                 <Controller name="document_type" control={control} render={({ field }) => (
                                     <Select onValueChange={field.onChange} value={field.value}>
-                                        <SelectTrigger className={`w-full ${errors.document_type ? "border-destructive" : ""}`}><SelectValue /></SelectTrigger>
+                                        <SelectTrigger className={cn(
+                                            "w-full text-sm",
+                                            errors.document_type && "border-destructive"
+                                        )}><SelectValue /></SelectTrigger>
                                         <SelectContent>{PREFIX_OPTIONS[selectedCategory]?.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                                     </Select>
                                 )} />
@@ -317,15 +345,20 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
                             </div>
 
                             {/* CAMPO: NÚMERO */}
-                            <div className="col-span-2 space-y-1">
-                                <Label className={errors.id_number ? "text-destructive" : ""}>
+                            <div className="space-y-1">
+                                <Label className={cn(
+                                    "text-sm",
+                                    errors.id_number && "text-destructive")}>
                                     Número <span className="text-destructive">*</span>
                                 </Label>
 
                                 <Input
                                     {...register("id_number")}
                                     placeholder="Ej: 12345678"
-                                    className={`w-full ${errors.id_number ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                    className={cn(
+                                        "w-full text-sm",
+                                        errors.id_number && "border-destructive focus-visible:ring-destructive"
+                                    )}
                                 />
 
                                 {/* ERROR DEBAJO DEL INPUT */}
@@ -339,13 +372,17 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
 
                         <div className="space-y-2 pt-2">
                             <Label>Soporte (Opcional)</Label>
-                            <Input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} accept=".pdf,.jpg,.png" className="w-full text-xs cursor-pointer" />
+                            {/* Input de archivo - AÑADIDO text-sm */}
+                            <Input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} accept=".pdf,.jpg,.png" className="w-full text-sm cursor-pointer" />
                         </div>
 
                         <div className="flex flex-col space-y-1 bg-muted/30 p-3 rounded border">
                             <div className="flex items-center space-x-2">
                                 <Switch id="is-primary" checked={watch('is_primary')} onCheckedChange={(v) => setValue('is_primary', v)} />
-                                <Label htmlFor="is-primary" className={`text-sm cursor-pointer ${errors.is_primary ? "text-destructive" : ""}`}>
+                                <Label htmlFor="is-primary" className={cn(
+                                    "text-sm font-medium cursor-pointer",
+                                    errors.is_primary && "text-destructive"
+                                )}>
                                     Documento Principal
                                 </Label>
                             </div>
@@ -367,6 +404,15 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* NUEVO COMPONENTE DE CONFIRMACIÓN DE ELIMINACIÓN */}
+            <DeleteConfirmationDialog
+                open={isDeleteAlertOpen}
+                setOpen={setIsDeleteAlertOpen}
+                onConfirmDelete={deleteIdAction}
+                successMessage="Documento eliminado exitosamente."
+                genericErrorMessage="No se pudo eliminar el documento. Intente de nuevo."
+            />
         </div>
     );
 }

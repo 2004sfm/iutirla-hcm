@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { AdminHeader, type BreadcrumbItemType } from "@/components/AdminHeader";
+import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHeader";
 import { CatalogManager, ColumnDef, FormFieldDef } from "@/components/CatalogManager";
 import { SimpleCombobox } from "@/components/SimpleCombobox";
 
 // --- DEFINICIÓN DE TIPOS ---
 interface CatalogConfig {
-    name: string;
+    name: string; // Nombre en plural (para el título de la tabla)
+    singularName: string; // ¡Propiedad agregada para mensajes en singular!
     endpoint: string;
     columns?: ColumnDef[];
     formFields?: FormFieldDef[];
@@ -14,44 +15,49 @@ interface CatalogConfig {
 
 // --- LISTA MAESTRA DE CATÁLOGOS DE TALENTO ---
 const talentCatalogs: CatalogConfig[] = [
-    // --- 1. EDUCACIÓN ---
+    // --- 1. Educación ---
     {
-        name: 'Niveles de Educación',
+        name: 'Niveles de educación',
+        singularName: 'Nivel de educación', // Agregado
         endpoint: '/api/talent/education-levels/',
-        formFields: [{ name: "name", label: "Nombre (ej. Licenciatura)", type: "text", required: true }]
+        formFields: [{ name: "name", label: "Nombre (ej. licenciatura)", type: "text", required: true }]
     },
     {
-        name: 'Campos de Estudio',
+        name: 'Campos de estudio',
+        singularName: 'Campo de estudio', // Agregado
         endpoint: '/api/talent/fields-of-study/',
-        formFields: [{ name: "name", label: "Nombre (ej. Ingeniería de Software)", type: "text", required: true }]
+        formFields: [{ name: "name", label: "Nombre (ej. ingeniería de software)", type: "text", required: true }]
     },
 
-    // --- 2. EXPERIENCIA Y FUNCIONES ---
+    // --- 2. Experiencia y funciones ---
     {
-        name: 'Funciones de Negocio',
+        name: 'Funciones de negocio',
+        singularName: 'Función de negocio', // Agregado
         endpoint: '/api/talent/business-functions/',
         formFields: [
-            { name: "name", label: "Nombre (ej. Finanzas, IT)", type: "text", required: true },
+            { name: "name", label: "Nombre (ej. finanzas, it)", type: "text", required: true },
             { name: "description", label: "Descripción", type: "text" }
         ]
     },
 
-    // --- 3. IDIOMAS (Traídos de 'core' por lógica de negocio) ---
+    // --- 3. Idiomas (traídos de 'core' por lógica de negocio) ---
     {
         name: 'Idiomas',
-        endpoint: '/api/core/languages/',
-        formFields: [{ name: "name", label: "Nombre (ej. Inglés)", type: "text", required: true }]
+        singularName: 'Idioma', // Agregado
+        endpoint: '/api/talent/languages/',
+        formFields: [{ name: "name", label: "Nombre (ej. inglés)", type: "text", required: true }]
     },
     {
-        name: 'Niveles de Fluidez',
-        endpoint: '/api/core/language-proficiencies/',
-        formFields: [{ name: "name", label: "Nivel (ej. Nativo, Avanzado)", type: "text", required: true }]
+        name: 'Niveles de fluidez',
+        singularName: 'Nivel de fluidez', // Agregado
+        endpoint: '/api/talent/language-proficiencies/',
+        formFields: [{ name: "name", label: "Nivel (ej. nativo, avanzado)", type: "text", required: true }]
     },
 ];
 
 // Breadcrumbs
 const breadcrumbItems: BreadcrumbItemType[] = [
-    { name: "Configuración", href: "/admin/config/general" },
+    { name: "Configuración", href: "/admin/config" },
     { name: "Catálogos de talento", href: "/admin/config/talent" },
 ];
 
@@ -67,7 +73,7 @@ export default function TalentConfigPage() {
 
     return (
         <>
-            <AdminHeader items={breadcrumbItems} />
+            <CatalogHeader items={breadcrumbItems} />
 
             <div className="flex-1 overflow-y-auto px-8 py-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center mb-8 p-4 border rounded-lg bg-card shadow-sm">
@@ -89,6 +95,7 @@ export default function TalentConfigPage() {
                         key={selectedCatalogConfig.endpoint}
                         endpoint={selectedCatalogConfig.endpoint}
                         title={selectedCatalogConfig.name}
+                        singularTitle={selectedCatalogConfig.singularName}
                         columns={selectedCatalogConfig.columns}
                         formFields={selectedCatalogConfig.formFields}
                     />

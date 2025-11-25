@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/apiClient';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,8 @@ import {
     Plus, Pencil, Trash2, Loader2, AlertCircle,
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from "lucide-react";
+// Importamos el toast para las notificaciones de éxito
+import { toast } from "sonner";
 import { CatalogForm } from './CatalogForm';
 import {
     AlertDialog,
@@ -29,9 +32,7 @@ import {
 } from "@/components/ui/select";
 import { AxiosError } from 'axios';
 
-// --- TIPOS ---
-
-export type FieldType = "text" | "number" | "email" | "date" | "select";
+export type FieldType = "text" | "number" | "email" | "date" | "select" | "boolean";
 
 export interface FormFieldDef {
     name: string;
@@ -55,25 +56,25 @@ interface CatalogItem {
 
 interface CatalogManagerProps {
     endpoint: string;
-    title: string;
+    title: string; // Título en plural
+    singularTitle: string; // <-- ¡NUEVA PROP!
     columns?: ColumnDef[];
     formFields?: FormFieldDef[];
+    editUrl?: string;
 }
 
-export function CatalogManager({ endpoint, title, columns, formFields }: CatalogManagerProps) {
-    // Estados de Datos
+export function CatalogManager({ endpoint, title, singularTitle, columns, formFields, editUrl }: CatalogManagerProps) {
+    const router = useRouter();
+
     const [data, setData] = useState<CatalogItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
-    // Estados de Paginación Avanzada
     const [currentPage, setCurrentPage] = useState(1);
-    // RESTAURADO: pageSize ahora es estado (mutable) y defecto 5
     const [pageSize, setPageSize] = useState(10);
     const [totalCount, setTotalCount] = useState(0);
 
-    // Estados de UI
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
@@ -87,29 +88,20 @@ export function CatalogManager({ endpoint, title, columns, formFields }: Catalog
     ];
 
     const activeColumns = columns || defaultColumns;
-
-    // Cálculo dinámico de páginas totales
     const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
     const loadData = useCallback(async (page: number, size: number) => {
         setIsRefreshing(true);
         setFetchError(null);
-
-        // Enviamos page_size explícitamente para forzar la sincronización con el backend
         const separator = endpoint.includes('?') ? '&' : '?';
         const url = `${endpoint}${separator}page=${page}&page_size=${size}`;
 
-        console.log("Fetching:", url);
-
         try {
             const response = await apiClient.get(url);
-
             if (response.data && typeof response.data === 'object' && 'results' in response.data) {
-                // Respuesta Paginada
                 setData(response.data.results);
                 setTotalCount(response.data.count || 0);
             } else if (Array.isArray(response.data)) {
-                // Respuesta Plana (fallback)
                 setData(response.data);
                 setTotalCount(response.data.length);
             } else {
@@ -118,7 +110,6 @@ export function CatalogManager({ endpoint, title, columns, formFields }: Catalog
             }
         } catch (error) {
             if (error instanceof AxiosError && error.response?.status === 404 && page > 1) {
-                // Si la página no existe, retrocedemos una
                 setCurrentPage(prev => Math.max(1, prev - 1));
             } else {
                 console.error(`Error fetching ${url}:`, error);
@@ -131,25 +122,38 @@ export function CatalogManager({ endpoint, title, columns, formFields }: Catalog
         }
     }, [endpoint]);
 
-    // Efecto para cargar datos cuando cambia página O tamaño
     useEffect(() => {
         setIsLoading(true);
         loadData(currentPage, pageSize);
     }, [endpoint, currentPage, pageSize, loadData]);
 
-    const refreshData = () => {
-        loadData(currentPage, pageSize);
+    const refreshData = () => loadData(currentPage, pageSize);
+
+    // --- MANEJADOR DE ÉXITO DE FORMULARIO ---
+    // Recibe un booleano para saber si fue edición o creación
+    const handleSuccess = (isEditing: boolean) => {
+        setIsModalOpen(false); // Cierra el modal
+        refreshData(); // Refresca los datos de la tabla
+
+        const action = isEditing ? 'actualizad@' : 'cread@';
+
+        // Muestra el toast de éxito
+        toast.success(`${singularTitle} ${action} exitosamente`);
     };
 
-    // --- MANEJADORES ---
+    // --- MANEJADORES DE ACCIONES ---
     const handleCreate = () => {
         setEditingItem(null);
         setIsModalOpen(true);
     };
 
     const handleEdit = (item: CatalogItem) => {
-        setEditingItem(item);
-        setIsModalOpen(true);
+        if (editUrl) {
+            router.push(`${editUrl}/${item.id}`);
+        } else {
+            setEditingItem(item);
+            setIsModalOpen(true);
+        }
     };
 
     const handleDeleteClick = (id: number) => {
@@ -165,6 +169,8 @@ export function CatalogManager({ endpoint, title, columns, formFields }: Catalog
             await apiClient.delete(`${endpoint}${itemToDelete}/`);
             setIsDeleteAlertOpen(false);
             refreshData();
+            // Muestra toast de eliminación
+            toast.success(`${singularTitle} eliminad@ exitosamente`);
         } catch (error) {
             if (error instanceof AxiosError && error.response?.status === 400) {
                 setDeleteError("No se pudo eliminar: Este registro tiene dependencias.");
@@ -235,18 +241,27 @@ export function CatalogManager({ endpoint, title, columns, formFields }: Catalog
                                 <TableRow key={item.id}>
                                     {activeColumns.map((col) => (
                                         <TableCell key={col.accessorKey}>
-                                            {/* Texto truncado con tooltip nativo */}
-                                            <div
-                                                className="truncate max-w-[300px]"
-                                                title={item[col.accessorKey]?.toString()}
-                                            >
-                                                {item[col.accessorKey]}
+                                            <div className="truncate max-w-[300px]" title={item[col.accessorKey]?.toString()}>
+                                                {typeof item[col.accessorKey] === 'boolean' ? (
+                                                    // CASO BOOLEANO: Mostramos Badges
+                                                    item[col.accessorKey] ? (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                            Sí
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
+                                                            No
+                                                        </span>
+                                                    )
+                                                ) : (
+                                                    item[col.accessorKey] ?? <span className="text-muted-foreground">-</span>
+                                                )}
                                             </div>
                                         </TableCell>
                                     ))}
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {formFields && (
+                                            {(formFields || editUrl) && (
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}>
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -265,117 +280,44 @@ export function CatalogManager({ endpoint, title, columns, formFields }: Catalog
 
             <div className="flex items-center justify-between px-2">
                 <div className="text-sm text-muted-foreground">
-                    {totalCount > 0 ? (
-                        <>Mostrando {data.length} de {totalCount} registros</>
-                    ) : (
-                        "Sin registros"
-                    )}
+                    {totalCount > 0 ? <>Mostrando {data.length} de {totalCount} registros</> : "Sin registros"}
                 </div>
-
                 <div className="flex items-center space-x-6 lg:space-x-8">
-
-                    {/* RESTAURADO: Selector de Filas por página */}
                     <div className="flex items-center space-x-2">
                         <p className="text-sm font-medium hidden sm:block">Filas</p>
-                        <Select
-                            value={`${pageSize}`}
-                            onValueChange={(value) => {
-                                setPageSize(Number(value));
-                                setCurrentPage(1); // Reset a pag 1 al cambiar tamaño
-                            }}
-                        >
-                            <SelectTrigger className="h-8 w-[70px]">
-                                <SelectValue placeholder={pageSize} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                                {/* Opciones de paginación */}
-                                {[5, 10, 20, 50, 100].map((size) => (
-                                    <SelectItem key={size} value={`${size}`}>
-                                        {size}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
+                        <Select value={`${pageSize}`} onValueChange={(value) => { setPageSize(Number(value)); setCurrentPage(1); }}>
+                            <SelectTrigger className="h-8 w-[70px]"><SelectValue placeholder={pageSize} /></SelectTrigger>
+                            <SelectContent side="top">{[5, 10, 20, 50, 100].map((size) => (<SelectItem key={size} value={`${size}`}>{size}</SelectItem>))}</SelectContent>
                         </Select>
                     </div>
-
-                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                        Página {currentPage} de {totalPages}
-                    </div>
-
+                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">Página {currentPage} de {totalPages}</div>
                     <div className="flex items-center space-x-2">
-                        <Button
-                            variant="outline"
-                            className="hidden h-8 w-8 p-0 lg:flex"
-                            onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1 || isLoading}
-                        >
-                            <span className="sr-only">Ir a primera página</span>
-                            <ChevronsLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-8 w-8 p-0"
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1 || isLoading}
-                        >
-                            <span className="sr-only">Anterior</span>
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-8 w-8 p-0"
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages || isLoading}
-                        >
-                            <span className="sr-only">Siguiente</span>
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="hidden h-8 w-8 p-0 lg:flex"
-                            onClick={() => setCurrentPage(totalPages)}
-                            disabled={currentPage === totalPages || isLoading}
-                        >
-                            <span className="sr-only">Ir a última página</span>
-                            <ChevronsRight className="h-4 w-4" />
-                        </Button>
+                        <Button variant="outline" className="hidden h-8 w-8 p-0 lg:flex" onClick={() => setCurrentPage(1)} disabled={currentPage === 1 || isLoading}><ChevronsLeft className="h-4 w-4" /></Button>
+                        <Button variant="outline" className="h-8 w-8 p-0" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || isLoading}><ChevronLeft className="h-4 w-4" /></Button>
+                        <Button variant="outline" className="h-8 w-8 p-0" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || isLoading}><ChevronRight className="h-4 w-4" /></Button>
+                        <Button variant="outline" className="hidden h-8 w-8 p-0 lg:flex" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || isLoading}><ChevronsRight className="h-4 w-4" /></Button>
                     </div>
                 </div>
             </div>
 
-            {/* --- MODALES --- */}
             {formFields && isModalOpen && (
                 <CatalogForm
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    onSuccess={refreshData}
+                    // ✨ PASAMOS EL NUEVO MANEJADOR DE ÉXITO
+                    onSuccess={handleSuccess}
                     endpoint={endpoint}
                     fields={formFields}
                     initialData={editingItem || undefined}
                     isEditing={!!editingItem}
-                    title={editingItem ? `Editar ${title}` : `Crear ${title}`}
+                    title={editingItem ? `Editar ${singularTitle}` : `Crear ${singularTitle}`}
                 />
             )}
-
             <AlertDialog open={isDeleteAlertOpen} onOpenChange={handleCloseDeleteAlert}>
                 <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{deleteError ? "Error" : "¿Estás seguro?"}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {deleteError || "Esta acción es irreversible."}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
+                    <AlertDialogHeader><AlertDialogTitle>{deleteError ? "Error" : "¿Estás seguro?"}</AlertDialogTitle><AlertDialogDescription>{deleteError || "Esta acción es irreversible."}</AlertDialogDescription></AlertDialogHeader>
                     <AlertDialogFooter>
-                        {deleteError ? (
-                            <AlertDialogAction onClick={() => handleCloseDeleteAlert(false)}>Cerrar</AlertDialogAction>
-                        ) : (
-                            <>
-                                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                                <Button onClick={confirmDelete} disabled={isDeleting} variant="destructive">
-                                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Eliminar"}
-                                </Button>
-                            </>
-                        )}
+                        {deleteError ? <AlertDialogAction onClick={() => handleCloseDeleteAlert(false)}>Cerrar</AlertDialogAction> : <><AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel><Button onClick={confirmDelete} disabled={isDeleting} variant="destructive">{isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Eliminar"}</Button></>}
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

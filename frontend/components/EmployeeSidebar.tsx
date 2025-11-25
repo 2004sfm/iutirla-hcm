@@ -44,10 +44,10 @@ export function EmployeeSidebar() {
                             <AvatarImage src="/profile.png" />
                             <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
-                        <Button size={"sm"}>
+                        {/* <Button size={"sm"}>
                             <SquareArrowOutUpRight />
                             <span>Mas opciones</span>
-                        </Button>
+                        </Button> */}
                     </div>
                     <div className="flex flex-col gap-1 px-2">
                         <h2 className="text-lg font-bold">Santiago Fermin</h2>

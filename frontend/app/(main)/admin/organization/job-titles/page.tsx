@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminHeader, type BreadcrumbItemType } from "@/components/AdminHeader";
+import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHeader";
 import { CatalogManager, ColumnDef, FormFieldDef } from "@/components/CatalogManager";
 
 // --- COLUMNAS ---
@@ -32,19 +32,29 @@ const breadcrumbItems: BreadcrumbItemType[] = [
     { name: "Títulos de cargo", href: "/admin/organization/job-titles" },
 ];
 
+// --- CONFIGURACIÓN PRINCIPAL (AÑADIENDO NOMBRES SINGULAR Y PLURAL) ---
+const CATALOG_CONFIG = {
+    name: "Títulos de Cargo",
+    singularName: "Título de Cargo", // Agregado
+    endpoint: "/api/organization/jobtitles/",
+    columns: jobTitleColumns,
+    formFields: jobTitleFields,
+};
+
 export default function JobTitlesPage() {
     return (
         <>
-            <AdminHeader
+            <CatalogHeader
                 items={breadcrumbItems}
             />
 
             <div className="flex-1 overflow-y-auto px-8 py-4">
                 <CatalogManager
-                    endpoint="/api/organization/jobtitles/"
-                    title="Títulos de Cargo"
-                    columns={jobTitleColumns}
-                    formFields={jobTitleFields}
+                    endpoint={CATALOG_CONFIG.endpoint}
+                    title={CATALOG_CONFIG.name}
+                    singularTitle={CATALOG_CONFIG.singularName} // ¡Propiedad agregada!
+                    columns={CATALOG_CONFIG.columns}
+                    formFields={CATALOG_CONFIG.formFields}
                 />
             </div>
         </>

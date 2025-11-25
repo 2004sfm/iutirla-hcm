@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useForm, Controller, type Resolver } from 'react-hook-form';
+import { useForm, Controller, type Resolver, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import apiClient from '@/lib/apiClient';
 import { AxiosError } from 'axios';
+import { cn } from "@/lib/utils";
 
 // UI
 import { Button } from "@/components/ui/button";
@@ -15,15 +16,18 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Plus, Trash2, Pencil, AlertCircle, Phone, Mail, Star, BadgeCheck } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, AlertCircle, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // Custom
 import { DynamicCombobox } from "@/components/DynamicCombobox";
+// Importamos el nuevo componente de diálogo
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 
-// --- ESQUEMAS DE VALIDACIÓN ---
+
+// --- ESQUEMAS DE VALIDACIÓN / TIPOS ---
 
 interface DjangoErrorResponse {
     [key: string]: string[] | string | undefined;
@@ -70,6 +74,11 @@ interface EmailItem {
     is_primary: boolean;
 }
 
+// Tipo de retorno del formulario para Phone y Email
+type PhoneFormReturn = UseFormReturn<PhoneFormData>;
+type EmailFormReturn = UseFormReturn<EmailFormData>;
+
+
 export function PersonContactManager({ personId }: PersonContactManagerProps) {
     const [phones, setPhones] = useState<PhoneItem[]>([]);
     const [emails, setEmails] = useState<EmailItem[]>([]);
@@ -85,16 +94,24 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // --- NUEVOS ESTADOS PARA MANEJAR LA ELIMINACIÓN CENTRALIZADA ---
+    const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<{ type: 'phone' | 'email'; id: number | null } | null>(null);
+
+
     // Forms
     const phoneForm = useForm<PhoneFormData>({
         resolver: zodResolver(phoneSchema),
         defaultValues: { phone_type: "", area_code: "", subscriber_number: "", is_primary: false }
     });
+    const { formState: { errors: phoneErrors } } = phoneForm;
 
     const emailForm = useForm<EmailFormData>({
         resolver: zodResolver(emailSchema),
         defaultValues: { email_type: "", email_address: "", is_primary: false }
     });
+    const { formState: { errors: emailErrors } } = emailForm;
+
 
     // --- CARGA DE DATOS ---
     const fetchData = useCallback(async () => {
@@ -116,8 +133,10 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
     useEffect(() => { if (personId) fetchData(); }, [personId, fetchData]);
 
     // --- MANEJO DE ERRORES INTELIGENTE ---
-    const handleServerError = (err: AxiosError<DjangoErrorResponse>, form: any) => {
+    const handleServerError = (err: AxiosError<DjangoErrorResponse>, form: PhoneFormReturn | EmailFormReturn) => {
         const responseData = err.response?.data;
+        // Obtener las claves del formulario actual para una verificación de tipo en tiempo de ejecución
+        const formValues = form.getValues();
 
         if (responseData && typeof responseData === 'object') {
             const globalErrors: string[] = [];
@@ -129,9 +148,10 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
                 if (key === 'is_primary' || key === 'email_address' || key === 'non_field_errors') {
                     globalErrors.push(errorText);
                 }
-                // Si el campo existe en el formulario (y no es email_address)
-                else if (key in form.getValues()) {
-                    form.setError(key, { type: 'server', message: errorText });
+                // Si el campo existe en el formulario, lo asignamos.
+                else if (key in formValues) {
+                    // Eliminamos 'as any' tipando la clave dinámicamente
+                    form.setError(key as keyof typeof formValues, { type: 'server', message: errorText });
                 }
                 // Errores no asignados
                 else {
@@ -148,7 +168,7 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
         }
     };
 
-    // ==================== LOGICA TELÉFONOS ====================
+    // ==================== LOGICA TELÉFONOS (MODIFICADA) ====================
 
     const handlePhoneCreate = () => {
         setEditingPhoneId(null);
@@ -176,10 +196,10 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
             const payload = { ...data, person: personId };
             if (editingPhoneId) {
                 await apiClient.patch(`/api/core/person-phones/${editingPhoneId}/`, payload);
-                toast.success("Teléfono actualizado.");
+                toast.success("Teléfono actualizado exitosamente");
             } else {
                 await apiClient.post('/api/core/person-phones/', payload);
-                toast.success("Teléfono agregado.");
+                toast.success("Teléfono agregado exitosamente");
             }
             setIsPhoneModalOpen(false);
             fetchData();
@@ -189,13 +209,13 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
         } finally { setIsSubmitting(false); }
     };
 
-    const handleDeletePhone = async (id: number) => {
-        if (!confirm("¿Eliminar este teléfono?")) return;
-        try { await apiClient.delete(`/api/core/person-phones/${id}/`); fetchData(); }
-        catch { toast.error("Error al eliminar."); }
+    // Función para disparar el diálogo de eliminación de teléfono
+    const handleDeletePhone = (id: number) => {
+        setItemToDelete({ type: 'phone', id });
+        setIsDeleteAlertOpen(true);
     };
 
-    // ==================== LOGICA EMAILS ====================
+    // ==================== LOGICA EMAILS (MODIFICADA) ====================
 
     const handleEmailCreate = () => {
         setEditingEmailId(null);
@@ -235,11 +255,26 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
         } finally { setIsSubmitting(false); }
     };
 
-    const handleDeleteEmail = async (id: number) => {
-        if (!confirm("¿Eliminar este correo?")) return;
-        try { await apiClient.delete(`/api/core/person-emails/${id}/`); fetchData(); }
-        catch { toast.error("Error al eliminar."); }
+    // Función para disparar el diálogo de eliminación de correo
+    const handleDeleteEmail = (id: number) => {
+        setItemToDelete({ type: 'email', id });
+        setIsDeleteAlertOpen(true);
     };
+
+    // --- FUNCIÓN UNIFICADA DE ELIMINACIÓN PARA EL DIÁLOGO ---
+    const deleteItemAction = useCallback(async () => {
+        if (!itemToDelete || !itemToDelete.id) {
+            throw new Error("ID de elemento a eliminar no especificado.");
+        }
+
+        const endpoint = itemToDelete.type === 'phone'
+            ? `/api/core/person-phones/${itemToDelete.id}/`
+            : `/api/core/person-emails/${itemToDelete.id}/`;
+
+        // La promesa debe lanzar un error si la API falla, para que el componente DeleteConfirmationDialog lo capture.
+        await apiClient.delete(endpoint);
+        fetchData(); // Recargar los datos después de la eliminación exitosa
+    }, [itemToDelete, fetchData]);
 
 
     return (
@@ -248,8 +283,8 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
             {/* --- TABLA TELÉFONOS --- */}
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium flex items-center gap-2"><Phone className="h-5 w-5 text-primary" /> Teléfonos</h3>
-                    <Button size="sm" onClick={handlePhoneCreate}><Plus className="h-4 w-4 mr-2" /> Agregar</Button>
+                    <h3 className="text-lg font-medium flex items-center gap-2">Teléfonos</h3>
+                    <Button size="sm" onClick={handlePhoneCreate}><Plus className="h-4 w-4 " /> Agregar</Button>
                 </div>
                 <div className="border rounded-md overflow-hidden">
                     <Table>
@@ -294,8 +329,8 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
             {/* --- TABLA EMAILS --- */}
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium flex items-center gap-2"><Mail className="h-5 w-5 text-primary" /> Correos Electrónicos</h3>
-                    <Button size="sm" onClick={handleEmailCreate}><Plus className="h-4 w-4 mr-2" /> Agregar Correo</Button>
+                    <h3 className="text-lg font-medium flex items-center gap-2">Correos Electrónicos</h3>
+                    <Button size="sm" onClick={handleEmailCreate}><Plus className="h-4 w-4 " /> Agregar</Button>
                 </div>
                 <div className="border rounded-md overflow-hidden">
                     <Table>
@@ -332,7 +367,7 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
 
             {/* ================= MODAL TELÉFONO ================= */}
             <Dialog open={isPhoneModalOpen} onOpenChange={setIsPhoneModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="max-w-[425px]">
                     <DialogHeader><DialogTitle>{editingPhoneId ? "Editar Teléfono" : "Nuevo Teléfono"}</DialogTitle></DialogHeader>
 
                     <form onSubmit={phoneForm.handleSubmit(onSubmitPhone)} className="space-y-4 py-2">
@@ -347,36 +382,56 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
                         )}
 
                         <div className="space-y-1">
-                            <Label className={phoneForm.formState.errors.phone_type ? "text-destructive" : ""}>Tipo <span className="text-destructive">*</span></Label>
+                            {/* CN: Etiqueta de Tipo de Teléfono */}
+                            <Label className={cn(
+                                "text-sm",
+                                phoneErrors.phone_type && "text-destructive")}>
+                                Tipo <span className="text-destructive">*</span>
+                            </Label>
 
                             <Controller name="phone_type" control={phoneForm.control} render={({ field }) => (
-                                <DynamicCombobox field={{ name: 'phone_type', label: 'Tipo', type: 'select', optionsEndpoint: '/api/core/phone-types/' }} value={field.value} onChange={field.onChange} placeholder="Móvil, Casa..." hasError={!!phoneForm.formState.errors.phone_type} />
+                                <DynamicCombobox field={{ name: 'phone_type', label: 'Tipo', type: 'select', optionsEndpoint: '/api/core/phone-types/' }} value={field.value} onChange={field.onChange} placeholder="Móvil, Casa..." hasError={!!phoneErrors.phone_type} />
                             )} />
                             {/* Error DEBAJO */}
-                            {phoneForm.formState.errors.phone_type && <span className="text-xs font-medium text-destructive block mt-1">{phoneForm.formState.errors.phone_type.message}</span>}
+                            {phoneErrors.phone_type && <span className="text-xs font-medium text-destructive block mt-1">{phoneErrors.phone_type.message}</span>}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="col-span-1 space-y-1">
-                                <Label className={phoneForm.formState.errors.area_code ? "text-destructive" : ""}>Código</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-3">
+                            <div className="space-y-1">
+                                {/* CN: Etiqueta de Código de Área */}
+                                <Label className={cn(
+                                    "text-sm",
+                                    phoneErrors.area_code && "text-destructive")}>Código</Label>
                                 <Controller name="area_code" control={phoneForm.control} render={({ field }) => (
-                                    <DynamicCombobox field={{ name: 'area_code', label: 'Código', type: 'select', optionsEndpoint: '/api/core/phone-area-codes/', optionsLabelKey: 'code' }} value={field.value} onChange={field.onChange} placeholder="0414" hasError={!!phoneForm.formState.errors.area_code} />
+                                    <DynamicCombobox field={{ name: 'area_code', label: 'Código', type: 'select', optionsEndpoint: '/api/core/phone-area-codes/', optionsLabelKey: 'code' }} value={field.value} onChange={field.onChange} placeholder="0414" hasError={!!phoneErrors.area_code} />
                                 )} />
                                 {/* Error DEBAJO */}
-                                {phoneForm.formState.errors.area_code && <span className="text-xs font-medium text-destructive block mt-1">{phoneForm.formState.errors.area_code.message}</span>}
+                                {phoneErrors.area_code && <span className="text-xs font-medium text-destructive block mt-1">{phoneErrors.area_code.message}</span>}
                             </div>
-                            <div className="col-span-2 space-y-1">
-                                <Label className={phoneForm.formState.errors.subscriber_number ? "text-destructive" : ""}>Número <span className="text-destructive">*</span></Label>
-                                <Input {...phoneForm.register("subscriber_number")} placeholder="1234567" className={`w-full ${phoneForm.formState.errors.subscriber_number ? "border-destructive" : ""}`} />
+                            <div className="space-y-1">
+                                {/* CN: Etiqueta de Número de Suscriptor */}
+                                <Label className={cn(
+                                    "text-sm",
+                                    phoneErrors.subscriber_number && "text-destructive")}>Número <span className="text-destructive">*</span></Label>
+
+                                {/* CN: Input de Número de Suscriptor */}
+                                <Input
+                                    {...phoneForm.register("subscriber_number")}
+                                    placeholder="1234567"
+                                    className={cn(
+                                        "w-full text-sm",
+                                        phoneErrors.subscriber_number && "border-destructive"
+                                    )}
+                                />
                                 {/* Error DEBAJO */}
-                                {phoneForm.formState.errors.subscriber_number && <span className="text-xs font-medium text-destructive block mt-1">{phoneForm.formState.errors.subscriber_number.message}</span>}
+                                {phoneErrors.subscriber_number && <span className="text-xs font-medium text-destructive block mt-1">{phoneErrors.subscriber_number.message}</span>}
                             </div>
                         </div>
 
                         <div className="flex flex-col space-y-1 bg-muted/30 p-3 rounded border">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 cursor-pointer">
                                 <Switch id="phone-primary" checked={phoneForm.watch('is_primary')} onCheckedChange={(v) => phoneForm.setValue('is_primary', v)} />
-                                <Label htmlFor="phone-primary" className="text-sm cursor-pointer">Teléfono Principal</Label>
+                                <Label htmlFor="phone-primary" className="text-sm">Teléfono Principal</Label>
                             </div>
                         </div>
 
@@ -387,26 +442,41 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
 
             {/* ================= MODAL EMAIL ================= */}
             <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="max-w-[425px]">
                     <DialogHeader><DialogTitle>{editingEmailId ? "Editar Correo" : "Nuevo Correo"}</DialogTitle></DialogHeader>
                     <form onSubmit={emailForm.handleSubmit(onSubmitEmail)} className="space-y-4 py-2">
 
                         {serverError && <Alert variant="destructive" className="mb-2"><AlertCircle className="h-4 w-4" /><AlertTitle>Atención</AlertTitle><AlertDescription>{serverError}</AlertDescription></Alert>}
 
                         <div className="space-y-1">
-                            <Label className={emailForm.formState.errors.email_type ? "text-destructive" : ""}>Tipo <span className="text-destructive">*</span></Label>
+                            {/* CN: Etiqueta de Tipo de Correo */}
+                            <Label className={cn(emailErrors.email_type && "text-destructive")}>
+                                Tipo <span className="text-destructive">*</span>
+                            </Label>
                             <Controller name="email_type" control={emailForm.control} render={({ field }) => (
-                                <DynamicCombobox field={{ name: 'email_type', label: 'Tipo', type: 'select', optionsEndpoint: '/api/core/email-types/' }} value={field.value} onChange={field.onChange} placeholder="Personal, Trabajo..." hasError={!!emailForm.formState.errors.email_type} />
+                                <DynamicCombobox field={{ name: 'email_type', label: 'Tipo', type: 'select', optionsEndpoint: '/api/core/email-types/' }} value={field.value} onChange={field.onChange} placeholder="Personal, Trabajo..." hasError={!!emailErrors.email_type} />
                             )} />
                             {/* Error DEBAJO */}
-                            {emailForm.formState.errors.email_type && <span className="text-xs font-medium text-destructive block mt-1">{emailForm.formState.errors.email_type.message}</span>}
+                            {emailErrors.email_type && <span className="text-xs font-medium text-destructive block mt-1">{emailErrors.email_type.message}</span>}
                         </div>
 
                         <div className="space-y-1">
-                            <Label className={emailForm.formState.errors.email_address ? "text-destructive" : ""}>Dirección de Correo <span className="text-destructive">*</span></Label>
-                            <Input {...emailForm.register("email_address")} placeholder="usuario@ejemplo.com" className={`w-full ${emailForm.formState.errors.email_address ? "border-destructive" : ""}`} />
+                            {/* CN: Etiqueta de Dirección de Correo */}
+                            <Label className={cn(emailErrors.email_address && "text-destructive")}>
+                                Dirección de Correo <span className="text-destructive">*</span>
+                            </Label>
+
+                            {/* CN: Input de Dirección de Correo */}
+                            <Input
+                                {...emailForm.register("email_address")}
+                                placeholder="usuario@ejemplo.com"
+                                className={cn(
+                                    "w-full text-sm",
+                                    emailErrors.email_address && "border-destructive"
+                                )}
+                            />
                             {/* Error DEBAJO */}
-                            {emailForm.formState.errors.email_address && <span className="text-xs font-medium text-destructive block mt-1">{emailForm.formState.errors.email_address.message}</span>}
+                            {emailErrors.email_address && <span className="text-xs font-medium text-destructive block mt-1">{emailErrors.email_address.message}</span>}
                         </div>
 
                         <div className="flex flex-col space-y-1 bg-muted/30 p-3 rounded border">
@@ -420,6 +490,16 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* ================= DIÁLOGO DE CONFIRMACIÓN DE ELIMINACIÓN REUTILIZABLE ================= */}
+            <DeleteConfirmationDialog
+                open={isDeleteAlertOpen}
+                setOpen={setIsDeleteAlertOpen}
+                onConfirmDelete={deleteItemAction}
+                title={itemToDelete?.type === 'phone' ? "¿Eliminar Teléfono?" : "¿Eliminar Correo?"}
+                description="Se eliminará este contacto permanentemente."
+                successMessage="Contacto eliminado exitosamente."
+            />
         </div>
     );
 }

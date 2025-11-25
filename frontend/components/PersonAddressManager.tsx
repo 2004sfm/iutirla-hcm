@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import apiClient from '@/lib/apiClient';
 import { AxiosError } from 'axios';
+import { cn } from '@/lib/utils';
 
 // UI
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,9 @@ import { Loader2, Plus, Trash2, Pencil, AlertCircle, MapPin } from "lucide-react
 import { toast } from "sonner";
 import { DynamicCombobox } from "@/components/DynamicCombobox";
 import { Separator } from "@/components/ui/separator";
+
+// Custom
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 
 // --- ESQUEMAS DE VALIDACIÓN ---
 
@@ -56,7 +60,7 @@ interface AddressItem {
     address_type_name?: string;
     country_name?: string;
     state_name?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
@@ -67,6 +71,10 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // --- ESTADOS PARA DELETE DIALOG ---
+    const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
     const form = useForm<AddressFormData>({
         resolver: zodResolver(addressSchema),
@@ -100,7 +108,7 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
         const responseData = err.response?.data;
 
         if (responseData && typeof responseData === 'object') {
-            let globalErrors: string[] = [];
+            const globalErrors: string[] = [];
 
             Object.entries(responseData).forEach(([key, msgs]) => {
                 const errorText = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
@@ -141,10 +149,10 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
             city: item.city,
             postal_code: item.postal_code,
             street_name_and_number: item.street_name_and_number,
-            extra_address_line: item.extra_address_line,
-            house_number: item.house_number,
-            apartment: item.apartment,
-            street_2: item.street_2,
+            extra_address_line: item.extra_address_line as string | null | undefined,
+            house_number: item.house_number as string | null | undefined,
+            apartment: item.apartment as string | null | undefined,
+            street_2: item.street_2 as string | null | undefined,
         });
         setIsModalOpen(true);
     };
@@ -163,10 +171,10 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
 
             if (editingId) {
                 await apiClient.patch(`/api/core/addresses/${editingId}/`, finalPayload);
-                toast.success("Dirección actualizada.");
+                toast.success("Dirección actualizada exitosamente");
             } else {
                 await apiClient.post('/api/core/addresses/', finalPayload);
-                toast.success("Dirección agregada.");
+                toast.success("Dirección agregada exitosamente");
             }
             setIsModalOpen(false);
             fetchData();
@@ -177,18 +185,29 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
         } finally { setIsSubmitting(false); }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("¿Eliminar esta dirección?")) return;
-        try { await apiClient.delete(`/api/core/addresses/${id}/`); fetchData(); }
-        catch { toast.error("Error al eliminar."); }
+    // --- MANEJADOR DE ELIMINACIÓN (Ahora dispara el diálogo) ---
+    const handleDelete = (id: number) => {
+        setIdToDelete(id);
+        setIsDeleteAlertOpen(true);
     };
+
+    // --- FUNCIÓN ASÍNCRONA QUE EJECUTA LA ELIMINACIÓN REAL ---
+    const deleteItemAction = useCallback(async () => {
+        if (!idToDelete) {
+            throw new Error("ID de dirección a eliminar no especificado.");
+        }
+
+        // La promesa debe lanzar un error si la API falla, para que el componente DeleteConfirmationDialog lo capture.
+        await apiClient.delete(`/api/core/addresses/${idToDelete}/`);
+        fetchData(); // Recargar los datos después de la eliminación exitosa
+    }, [idToDelete, fetchData]);
 
 
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" /> Direcciones</h3>
-                <Button size="sm" onClick={handleCreate}><Plus className="h-4 w-4 mr-2" /> Agregar Dirección</Button>
+                <h3 className="text-lg font-medium flex items-center gap-2">Direcciones</h3>
+                <Button size="sm" onClick={handleCreate}><Plus className="size-4" /> Agregar</Button>
             </div>
 
             <div className="border rounded-md overflow-hidden">
@@ -209,7 +228,7 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
                                         {item.address_type_name}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="font-medium">{item.country_name}</div>
+                                        <div className="font-medium text-sm">{item.country_name}</div>
                                         <div className="text-xs text-muted-foreground">{item.state_name}</div>
                                     </TableCell>
                                     <TableCell className="text-sm">
@@ -217,8 +236,9 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}><Pencil className="size-4" /></Button>
+                                            {/* Llamada al nuevo manejador que abre el diálogo */}
+                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDelete(item.id)}><Trash2 className="size-4" /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -230,17 +250,20 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
 
             {/* --- MODAL DE DIRECCIÓN --- */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="sm:max-w-[600px]">
+                <DialogContent className="max-w-[500px]">
                     <DialogHeader><DialogTitle>{editingId ? "Editar Dirección" : "Nueva Dirección"}</DialogTitle></DialogHeader>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
 
-                        {serverError && <Alert variant="destructive" className="mb-2"><AlertCircle className="h-4 w-4" /><AlertTitle>Atención</AlertTitle><AlertDescription>{serverError}</AlertDescription></Alert>}
+                        {serverError && <Alert variant="destructive" className="mb-2"><AlertCircle className="size-4" /><AlertTitle>Atención</AlertTitle><AlertDescription>{serverError}</AlertDescription></Alert>}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="">
                             {/* TIPO DE DIRECCIÓN */}
                             <div className="space-y-1">
-                                <Label className={errors.address_type ? "text-destructive" : ""}>Tipo <span className="text-destructive">*</span></Label>
+                                <Label className={cn(
+                                    "text-sm",
+                                    errors.address_type && "text-destructive"
+                                )}>Tipo <span className="text-destructive">*</span></Label>
                                 <Controller name="address_type" control={control} render={({ field }) => (
                                     <DynamicCombobox field={{ name: 'address_type', label: 'Tipo de Dirección', type: 'select', optionsEndpoint: '/api/core/address-types/' }} value={field.value} onChange={field.onChange} placeholder="Casa, Trabajo..." hasError={!!errors.address_type} />
                                 )} />
@@ -250,10 +273,13 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
 
                         <Separator />
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {/* PAÍS */}
                             <div className="space-y-1">
-                                <Label className={errors.country ? "text-destructive" : ""}>País <span className="text-destructive">*</span></Label>
+                                <Label className={cn(
+                                    "text-sm",
+                                    errors.country && "text-destructive"
+                                )}>País <span className="text-destructive">*</span></Label>
                                 <Controller name="country" control={control} render={({ field }) => (
                                     <DynamicCombobox field={{ name: 'country', label: 'País', type: 'select', optionsEndpoint: '/api/core/countries/' }} value={field.value} onChange={field.onChange} placeholder="Buscar..." hasError={!!errors.country} />
                                 )} />
@@ -262,7 +288,10 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
 
                             {/* ESTADO (Dependiente de País) */}
                             <div className="space-y-1">
-                                <Label className={errors.state ? "text-destructive" : ""}>Estado <span className="text-destructive">*</span></Label>
+                                <Label className={cn(
+                                    "text-sm",
+                                    errors.state && "text-destructive"
+                                )}>Estado <span className="text-destructive">*</span></Label>
                                 <Controller name="state" control={control} render={({ field }) => (
                                     <DynamicCombobox
                                         field={{
@@ -284,32 +313,64 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
 
                             {/* CIUDAD */}
                             <div className="space-y-1">
-                                <Label className={errors.city ? "text-destructive" : ""}>Ciudad <span className="text-destructive">*</span></Label>
-                                <Input {...form.register("city")} placeholder="Ej: Caracas" className={errors.city ? "border-destructive" : ""} />
+                                <Label className={cn(
+                                    "text-sm",
+                                    errors.city && "text-destructive"
+                                )}>Ciudad <span className="text-destructive">*</span></Label>
+                                <Input
+                                    {...form.register("city")}
+                                    placeholder="Ej: Caracas"
+                                    className={cn(
+                                        "text-sm",
+                                        errors.city && "border-destructive"
+                                    )}
+                                />
                                 {errors.city && <span className="text-xs font-medium text-destructive block mt-1">{errors.city.message}</span>}
                             </div>
                         </div>
 
                         {/* DETALLE DE CALLE */}
                         <div className="space-y-1">
-                            <Label className={errors.street_name_and_number ? "text-destructive" : ""}>Calle y Número Principal <span className="text-destructive">*</span></Label>
-                            <Input {...form.register("street_name_and_number")} placeholder="Ej: Av. Francisco de Miranda, Edificio X" className={errors.street_name_and_number ? "border-destructive" : ""} />
+                            <Label className={cn(
+                                "text-sm",
+                                errors.street_name_and_number && "text-destructive"
+                            )}>Calle y Número Principal <span className="text-destructive">*</span></Label>
+                            <Input
+                                {...form.register("street_name_and_number")}
+                                placeholder="Ej: Av. Francisco de Miranda, Edificio X"
+                                className={cn(
+                                    "text-sm",
+                                    errors.street_name_and_number && "border-destructive"
+                                )}
+                            />
                             {errors.street_name_and_number && <span className="text-xs font-medium text-destructive block mt-1">{errors.street_name_and_number.message}</span>}
                         </div>
 
                         {/* DETALLE ADICIONAL */}
-                        <div className="grid grid-cols-4 gap-4">
-                            <div className="space-y-1 col-span-2">
-                                <Label>Línea Adicional (Opcional)</Label>
-                                <Input {...form.register("extra_address_line")} placeholder="Ej: Cerca de la plaza..." />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <Label className="text-sm">Línea Adicional (Opcional)</Label>
+                                <Input
+                                    {...form.register("extra_address_line")}
+                                    placeholder="Ej: Cerca de la plaza..."
+                                    className="text-sm"
+                                />
                             </div>
-                            <div className="space-y-1 col-span-1">
-                                <Label>Nro Casa/Edif.</Label>
-                                <Input {...form.register("house_number")} placeholder="Ej: 15" />
+                            <div className="space-y-1">
+                                <Label className="text-sm">Nro Casa/Edif.</Label>
+                                <Input
+                                    {...form.register("house_number")}
+                                    placeholder="Ej: 15"
+                                    className="text-sm"
+                                />
                             </div>
-                            <div className="space-y-1 col-span-1">
-                                <Label>Cód. Postal</Label>
-                                <Input {...form.register("postal_code")} placeholder="Ej: 1010" />
+                            <div className="space-y-1">
+                                <Label className="text-sm">Cód. Postal</Label>
+                                <Input
+                                    {...form.register("postal_code")}
+                                    placeholder="Ej: 1010"
+                                    className="text-sm"
+                                />
                             </div>
                         </div>
 
@@ -317,13 +378,22 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                             <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : (editingId ? "Guardar Cambios" : "Guardar")}
+                                {isSubmitting ? <Loader2 className="animate-spin size-4" /> : (editingId ? "Guardar Cambios" : "Guardar")}
                             </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
+            {/* ================= DIÁLOGO DE CONFIRMACIÓN DE ELIMINACIÓN REUTILIZABLE ================= */}
+            <DeleteConfirmationDialog
+                open={isDeleteAlertOpen}
+                setOpen={setIsDeleteAlertOpen}
+                onConfirmDelete={deleteItemAction}
+                title="¿Eliminar Dirección?"
+                description="Esta dirección será eliminada permanentemente del sistema."
+                successMessage="Dirección eliminada exitosamente."
+            />
         </div>
     );
 }

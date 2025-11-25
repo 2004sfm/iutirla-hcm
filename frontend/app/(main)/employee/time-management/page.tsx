@@ -1,4 +1,4 @@
-import { AdminHeader, BreadcrumbItemType } from "@/components/AdminHeader";
+import { CatalogHeader, BreadcrumbItemType } from "@/components/CatalogHeader";
 
 const breadcrumbItems: BreadcrumbItemType[] = [
     { name: "Perfil Profesional", href: "/employee" },
@@ -8,7 +8,7 @@ const breadcrumbItems: BreadcrumbItemType[] = [
 export default function TimeManagementPage() {
     return (
         <>
-            <AdminHeader
+            <CatalogHeader
                 items={breadcrumbItems}
             />
             <div className="flex-1 overflow-y-auto px-8 py-4">

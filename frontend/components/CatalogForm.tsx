@@ -18,9 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
+// --- IMPORTAMOS EL SWITCH ---
+import { Switch } from "@/components/ui/switch";
 
 import { FormFieldDef } from './CatalogManager';
-// IMPORTAMOS EL COMPONENTE UNIFICADO
 import { DynamicCombobox } from './DynamicCombobox';
 
 // --- TIPOS ---
@@ -33,7 +34,7 @@ interface FormData extends FieldValues {
 interface CatalogFormProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (isEditing: boolean) => void;
     endpoint: string;
     fields: FormFieldDef[];
     initialData?: FormData;
@@ -41,7 +42,6 @@ interface CatalogFormProps {
     title: string;
 }
 
-// Misma interfaz de error que en PersonIdManager
 interface DjangoErrorResponse {
     [key: string]: string[] | string | undefined;
     non_field_errors?: string[];
@@ -55,7 +55,13 @@ const generateZodSchema = (fields: FormFieldDef[]) => {
     fields.forEach(field => {
         let fieldSchema: z.ZodTypeAny;
 
-        if (field.type === 'number' || field.type === 'select') {
+        // CASO BOOLEAN (Switch)
+        if (field.type === 'boolean') {
+            // Zod boolean: permite true/false y por defecto false si no viene
+            fieldSchema = z.boolean().default(false);
+        }
+        // CASO NUMBER / SELECT
+        else if (field.type === 'number' || field.type === 'select') {
             fieldSchema = z.union([z.string(), z.number(), z.null(), z.undefined()])
                 .transform((v) => {
                     if (v === '' || v === null || v === undefined) return null;
@@ -69,6 +75,7 @@ const generateZodSchema = (fields: FormFieldDef[]) => {
                 });
             }
         }
+        // CASO TEXTO
         else {
             let baseStringSchema = z.string();
             if (field.label.toLowerCase().includes('nombre') || field.label.toLowerCase().includes('país')) {
@@ -112,6 +119,10 @@ export function CatalogForm({
             if (field.type === 'select' && defaults[field.name] != null) {
                 defaults[field.name] = String(defaults[field.name]);
             }
+            // Aseguramos que los booleanos tengan valor por defecto
+            if (field.type === 'boolean' && defaults[field.name] === undefined) {
+                defaults[field.name] = false;
+            }
         });
         return defaults;
     }, [initialData, fields]);
@@ -139,46 +150,26 @@ export function CatalogForm({
         onClose();
     };
 
-    // --- MANEJO DE ERRORES ESTANDARIZADO ---
     const handleServerError = (err: AxiosError<DjangoErrorResponse>) => {
+        // ... (Tu lógica de manejo de errores se mantiene igual) ...
         const responseData = err.response?.data;
         const status = err.response?.status;
 
         if (responseData && typeof responseData === 'object') {
             const rawString = JSON.stringify(responseData).toLowerCase();
-
-            // 1. Detección de duplicados globales
-            if (rawString.includes('conjunto único') || rawString.includes('unique set') || rawString.includes('must make a unique set')) {
+            if (rawString.includes('conjunto único') || rawString.includes('unique set')) {
                 setServerError("Este registro ya existe (posible duplicado).");
                 return;
             }
-
             const globalErrors: string[] = [];
-
-            // 2. Distribución de errores
             Object.entries(responseData).forEach(([key, msgs]) => {
                 const errorText = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
-
-                // Verificamos si la clave coincide con algún campo del formulario
                 const isField = fields.some(f => f.name === key);
-
-                if (isField) {
-                    // Error local (campo rojo)
-                    setError(key, { type: 'server', message: errorText });
-                } else {
-                    // Error global (Alert)
-                    if (key !== 'non_field_errors') {
-                        globalErrors.push(`${key}: ${errorText}`);
-                    } else {
-                        globalErrors.push(errorText);
-                    }
-                }
+                if (isField) setError(key, { type: 'server', message: errorText });
+                else if (key !== 'non_field_errors') globalErrors.push(`${key}: ${errorText}`);
+                else globalErrors.push(errorText);
             });
-
-            if (globalErrors.length > 0) {
-                setServerError(globalErrors.join('\n'));
-            }
-
+            if (globalErrors.length > 0) setServerError(globalErrors.join('\n'));
         } else {
             setServerError(`Ocurrió un problema de conexión o del servidor (${status || 'Desconocido'}).`);
         }
@@ -192,7 +183,7 @@ export function CatalogForm({
             } else {
                 await apiClient.post(endpoint, data);
             }
-            onSuccess();
+            onSuccess(isEditing);
             handleCloseDialog();
         } catch (err) {
             if (err instanceof AxiosError) {
@@ -212,51 +203,81 @@ export function CatalogForm({
 
                 <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
 
-                    {/* ALERT ROJO GLOBAL (Para errores no asociados a campos) */}
                     {serverError && (
                         <Alert variant="destructive" className="mb-2">
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Atención</AlertTitle>
-                            <AlertDescription className="whitespace-pre-wrap text-sm">
-                                {serverError}
-                            </AlertDescription>
+                            <AlertDescription className="whitespace-pre-wrap text-sm">{serverError}</AlertDescription>
                         </Alert>
                     )}
 
                     {fields.map((field) => (
                         <div key={field.name} className="grid gap-1">
-                            <Label
-                                htmlFor={field.name}
-                                className={errors[field.name] ? "text-destructive" : ""}
-                            >
-                                {field.label} {field.required && <span className="text-destructive">*</span>}
-                            </Label>
 
-                            {field.type === 'select' ? (
-                                <Controller
-                                    name={field.name}
-                                    control={control}
-                                    render={({ field: controllerField }) => (
-                                        <DynamicCombobox
-                                            field={field}
-                                            value={controllerField.value}
-                                            onChange={controllerField.onChange}
+                            {/* RENDERIZADO CONDICIONAL SEGÚN TIPO */}
+
+                            {field.type === 'boolean' ? (
+                                // CASO BOOLEAN: Renderizado especial con Switch
+                                <div className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor={field.name} className="text-base">
+                                            {field.label}
+                                        </Label>
+                                        {/* Descripción del campo si existe */}
+                                        {field.helpText && (
+                                            <p className="text-sm text-muted-foreground">
+                                                {field.helpText}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <Controller
+                                        name={field.name}
+                                        control={control}
+                                        render={({ field: { onChange, value } }) => (
+                                            <Switch
+                                                checked={value as boolean}
+                                                onCheckedChange={onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
+                            ) : (
+                                // CASOS TEXT / SELECT / NUMBER
+                                <>
+                                    <Label
+                                        htmlFor={field.name}
+                                        className={errors[field.name] ? "text-destructive" : ""}
+                                    >
+                                        {field.label} {field.required && <span className="text-destructive">*</span>}
+                                    </Label>
+
+                                    {field.type === 'select' ? (
+                                        <Controller
+                                            name={field.name}
+                                            control={control}
+                                            render={({ field: controllerField }) => (
+                                                <DynamicCombobox
+                                                    field={field}
+                                                    value={controllerField.value}
+                                                    onChange={controllerField.onChange}
+                                                    placeholder={field.helpText}
+                                                    hasError={!!errors[field.name]}
+                                                />
+                                            )}
+                                        />
+                                    ) : (
+                                        <Input
+                                            id={field.name}
+                                            type={field.type}
                                             placeholder={field.helpText}
-                                            hasError={!!errors[field.name]}
+                                            className={`${errors[field.name] ? "border-destructive focus-visible:ring-destructive" : ""} w-full`}
+                                            {...register(field.name)}
                                         />
                                     )}
-                                />
-                            ) : (
-                                <Input
-                                    id={field.name}
-                                    type={field.type}
-                                    placeholder={field.helpText}
-                                    className={`${errors[field.name] ? "border-destructive focus-visible:ring-destructive" : ""} w-full`}
-                                    {...register(field.name)}
-                                />
+                                </>
                             )}
 
-                            {/* FIX: Mensaje de error DEBAJO del input/select */}
+                            {/* Mensaje de error */}
                             {errors[field.name] && (
                                 <span className="text-xs font-medium text-destructive mt-1 block">
                                     {errors[field.name]?.message?.toString()}
