@@ -25,14 +25,6 @@ class Country(models.Model):
     phone_prefix = models.CharField(max_length=10, help_text="Prefijo telefónico (ej: +58).", unique=True, error_messages={'unique': "Ya existe un país con este prefijo."})
     def __str__(self): return self.name
 
-class Language(models.Model):
-    name = models.CharField(max_length=100, unique=True, error_messages=UNIQUE_ERR_MSG)
-    def __str__(self): return self.name
-
-class LanguageProficiency(models.Model):
-    name = models.CharField(max_length=50, unique=True, error_messages=UNIQUE_ERR_MSG)
-    def __str__(self): return self.name
-
 class DisabilityGroup(models.Model):
     name = models.CharField(max_length=100, unique=True, error_messages=UNIQUE_ERR_MSG)
     def __str__(self): return self.name
@@ -221,13 +213,6 @@ class PersonNationality(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name="nationalities")
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
     class Meta: unique_together = ('person', 'country')
-
-class PersonLanguage(models.Model):
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name="languages")
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    speaking_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="speaking")
-    reading_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="reading")
-    writing_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="writing")
 
 # --- SATÉLITES ---
 class Dependent(models.Model):

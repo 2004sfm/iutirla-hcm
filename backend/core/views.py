@@ -1,16 +1,16 @@
 from rest_framework import viewsets, permissions
 from .models import (
-    Person, Salutation, Gender, MaritalStatus, Country, Language, 
-    LanguageProficiency, DisabilityGroup, DisabilityType, DisabilityStatus,
+    Person, Salutation, Gender, MaritalStatus, Country,
+    DisabilityGroup, DisabilityType, DisabilityStatus,
     PersonDisabilityVE, AddressType, State, Address, 
     NationalId, EmailType, PersonEmail, PhoneType, PhoneCarrier, 
     PhoneAreaCode, PersonPhone, Bank, BankAccountType, PersonBankAccount, 
     PersonDocument, RelationshipType, PersonNationality, 
-    PersonLanguage, Dependent, EmergencyContact
+    Dependent, EmergencyContact
 )
 from .serializers import (
     PersonSerializer, PersonListSerializer, SalutationSerializer, GenderSerializer, MaritalStatusSerializer, 
-    CountrySerializer, LanguageSerializer, LanguageProficiencySerializer, 
+    CountrySerializer,
     DisabilityGroupSerializer, DisabilityTypeSerializer, DisabilityStatusSerializer,
     PersonDisabilityVESerializer, AddressTypeSerializer, StateSerializer, 
     AddressSerializer, NationalIdSerializer, 
@@ -18,7 +18,7 @@ from .serializers import (
     PhoneCarrierSerializer, PhoneAreaCodeSerializer, PersonPhoneSerializer, 
     BankSerializer, BankAccountTypeSerializer, PersonBankAccountSerializer, 
     PersonDocumentSerializer, RelationshipTypeSerializer, 
-    PersonNationalitySerializer, PersonLanguageSerializer, 
+    PersonNationalitySerializer,
     DependentSerializer, EmergencyContactSerializer
 )
 
@@ -29,6 +29,16 @@ class PersonViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list': return PersonListSerializer
         return PersonSerializer
+
+    # FIX: Sobrescribimos get_queryset para permitir filtros avanzados
+    def get_queryset(self):
+        queryset = Person.objects.all().order_by('-created_at')
+        
+        # Filtro para el modal de contratación: Solo personas CON Cédula/ID
+        if self.request.query_params.get('has_id') == 'true':
+            queryset = queryset.filter(national_ids__isnull=False).distinct()
+            
+        return queryset
 
 class NationalIdViewSet(viewsets.ModelViewSet):
     serializer_class = NationalIdSerializer
@@ -58,14 +68,7 @@ class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-class LanguageViewSet(viewsets.ModelViewSet):
-    queryset = Language.objects.all()
-    serializer_class = LanguageSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-class LanguageProficiencyViewSet(viewsets.ModelViewSet):
-    queryset = LanguageProficiency.objects.all()
-    serializer_class = LanguageProficiencySerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
 class DisabilityGroupViewSet(viewsets.ModelViewSet):
     queryset = DisabilityGroup.objects.all()
     serializer_class = DisabilityGroupSerializer
@@ -125,7 +128,12 @@ class AddressViewSet(viewsets.ModelViewSet):
     serializer_class = AddressSerializer
     permission_classes = [permissions.IsAuthenticated]
     def get_queryset(self):
-        return Address.objects.filter(person=self.request.query_params.get('person')) if self.request.query_params.get('person') else Address.objects.all()
+        queryset = Address.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
+    
 class PersonEmailViewSet(viewsets.ModelViewSet):
     queryset = PersonEmail.objects.all()
     serializer_class = PersonEmailSerializer
@@ -159,17 +167,27 @@ class PersonNationalityViewSet(viewsets.ModelViewSet):
     queryset = PersonNationality.objects.all()
     serializer_class = PersonNationalitySerializer
     permission_classes = [permissions.IsAuthenticated]
-class PersonLanguageViewSet(viewsets.ModelViewSet):
-    queryset = PersonLanguage.objects.all()
-    serializer_class = PersonLanguageSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
 # --- VIEWSETS SATÉLITES ---
 class DependentViewSet(viewsets.ModelViewSet):
     queryset = Dependent.objects.all()
     serializer_class = DependentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        queryset = Dependent.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
+
 class EmergencyContactViewSet(viewsets.ModelViewSet):
     queryset = EmergencyContact.objects.all()
     serializer_class = EmergencyContactSerializer
     permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        queryset = EmergencyContact.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
+    

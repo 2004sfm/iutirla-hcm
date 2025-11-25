@@ -1,5 +1,5 @@
 from django.db import models
-from core.models import Person, LanguageProficiency
+from core.models import Person
 
 # Mensajes de error estándar
 UNIQUE_ERR_MSG = {'unique': "Ya existe un registro con este nombre."}
@@ -121,3 +121,18 @@ class PersonMembership(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self): return self.organization_name
+
+class Language(models.Model):
+    name = models.CharField(max_length=100, unique=True, error_messages=UNIQUE_ERR_MSG)
+    def __str__(self): return self.name
+
+class LanguageProficiency(models.Model):
+    name = models.CharField(max_length=50, unique=True, error_messages=UNIQUE_ERR_MSG)
+    def __str__(self): return self.name
+
+class PersonLanguage(models.Model):
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name="languages")
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    speaking_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="speaking")
+    reading_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="reading")
+    writing_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="writing")

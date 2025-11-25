@@ -46,6 +46,8 @@ PROJECT_APPS = [
     'organization',
     'employment',
     'talent',
+    'training',
+    'performance',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -117,11 +119,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'es-ve'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Caracas'
 
-USE_I18N = True
+# USE_I18N = True
 
-USE_TZ = True
+# USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -177,7 +179,7 @@ REST_AUTH = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=300),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': False, # Genera un nuevo refresh token cada vez que se usa
     'BLACKLIST_AFTER_ROTATION': False,

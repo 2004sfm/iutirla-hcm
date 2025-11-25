@@ -1,17 +1,16 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from django.utils import timezone
 from datetime import date
 import re 
 
 from .models import (
-    Person, Salutation, Gender, MaritalStatus, Country, Language, 
-    LanguageProficiency, DisabilityGroup, DisabilityType, DisabilityStatus,
+    Person, Salutation, Gender, MaritalStatus, Country, 
+    DisabilityGroup, DisabilityType, DisabilityStatus,
     PersonDisabilityVE, AddressType, State, Address, 
     NationalId, EmailType, PersonEmail, PhoneType, PhoneCarrier, 
     PhoneAreaCode, PersonPhone, Bank, BankAccountType, PersonBankAccount, 
     PersonDocument, RelationshipType, PersonNationality, 
-    PersonLanguage, Dependent, EmergencyContact
+    Dependent, EmergencyContact
 )
 
 # --- FUNCIONES DE UTILIDAD ---
@@ -62,6 +61,29 @@ def check_uniqueness(model, field_name, value, instance=None, error_msg="Ya exis
         raise serializers.ValidationError(error_msg)
     return value
 
+class AddressSerializer(serializers.ModelSerializer):
+    # Campos para lectura
+    address_type_name = serializers.CharField(source='address_type.name', read_only=True)
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    state_name = serializers.CharField(source='state.name', read_only=True)
+
+    class Meta: model = Address; fields = '__all__'
+    
+    def validate(self, data):
+        if data.get('state') and data.get('country') and data['state'].country != data['country']:
+            raise serializers.ValidationError({"state": "El estado no pertenece al país seleccionado."})
+        return data
+    
+class EmergencyContactSerializer(serializers.ModelSerializer):
+    class Meta: model = EmergencyContact; fields = '__all__'
+    def validate_phone_number(self, value):
+        if not value.isdigit(): raise serializers.ValidationError("Solo números.")
+        return value
+    def validate(self, data): return validate_single_primary(self, data, EmergencyContact, "Contacto")
+    def validate_first_name(self, value): return title_case_cleaner(validate_only_letters(value, "Nombre"))
+    def validate_second_name(self, value): return title_case_cleaner(validate_only_letters(value, "Segundo Nombre")) if value else value
+    def validate_paternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Paterno"))
+    def validate_maternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Materno")) if value else value
 
 # --- Serializers de Catálogo ---
 class SalutationSerializer(serializers.ModelSerializer):
@@ -73,7 +95,6 @@ class GenderSerializer(serializers.ModelSerializer):
 class MaritalStatusSerializer(serializers.ModelSerializer):
     class Meta: model = MaritalStatus; fields = '__all__'
     def validate_name(self, value): return check_uniqueness(MaritalStatus, 'name', title_case_cleaner(value), self.instance)
-
 class CountrySerializer(serializers.ModelSerializer):
     class Meta: model = Country; fields = '__all__'
     def validate_name(self, value): return check_uniqueness(Country, 'name', title_case_cleaner(value), self.instance)
@@ -82,13 +103,7 @@ class CountrySerializer(serializers.ModelSerializer):
         val = value.strip().lstrip('+')
         if not val.isdigit(): raise serializers.ValidationError("Solo dígitos.")
         return check_uniqueness(Country, 'phone_prefix', '+' + val, self.instance)
-class LanguageSerializer(serializers.ModelSerializer):
-    
-    class Meta: model = Language; fields = '__all__'
-    def validate_name(self, value): return check_uniqueness(Language, 'name', title_case_cleaner(value), self.instance)
-class LanguageProficiencySerializer(serializers.ModelSerializer):
-    class Meta: model = LanguageProficiency; fields = '__all__'
-    def validate_name(self, value): return check_uniqueness(LanguageProficiency, 'name', title_case_cleaner(value), self.instance)
+
 class DisabilityGroupSerializer(serializers.ModelSerializer):
     class Meta: model = DisabilityGroup; fields = '__all__'
     def validate_name(self, value): return check_uniqueness(DisabilityGroup, 'name', title_case_cleaner(value), self.instance)
@@ -139,14 +154,16 @@ class NationalIdSerializer(serializers.ModelSerializer):
         model = NationalId
         fields = '__all__'
         validators = [
-            UniqueTogetherValidator(queryset=NationalId.objects.all(), fields=['document_type', 'number'], message="Este documento ya está registrado"),
-            UniqueTogetherValidator(queryset=NationalId.objects.all(), fields=['person', 'category'], message="Documento ya está registrado para esta persona")
+            UniqueTogetherValidator(queryset=NationalId.objects.all(), fields=['document_type', 'number'], message="Este documento ya está registrado en el sistema."),
+            UniqueTogetherValidator(queryset=NationalId.objects.all(), fields=['person', 'category'], message="Esta persona ya tiene un documento de esta categoría registrado.")
         ]
     
     def get_full_document(self, obj): return f"{obj.document_type}-{obj.number}"
+    
     def validate_number(self, value):
-        if not value.strip().isdigit(): raise serializers.ValidationError("El campo solo debe contener numeros")
+        if not value.strip().isdigit(): raise serializers.ValidationError("El número debe contener solo dígitos.")
         return value.strip()
+        
     def validate(self, data): return validate_single_primary(self, data, NationalId, "ID Nacional")
 
 
@@ -156,104 +173,124 @@ class PersonEmailSerializer(serializers.ModelSerializer):
     class Meta: 
         model = PersonEmail
         fields = '__all__'
-        # No se necesita el UniqueTogetherValidator porque email_address es unique=True 
-        # y la restricción condicional es mejor manejarla en validate().
-        # No se necesita 'validators = []'
+        extra_kwargs = {
+            'email_address': {
+                'error_messages': {
+                    'unique': 'Este email ya se encuentra registrado.'
+                }
+            }
+        }
     
-    # 🚨 Restaurar la lógica de validación para is_primary
+    def validate_email_address(self, value):
+        return value.strip().lower() 
+    
     def validate(self, data):
-        # Obtener el valor de is_primary (nuevo o existente)
         is_primary = data.get('is_primary', getattr(self.instance, 'is_primary', False))
-        # Obtener la instancia de Person
-        person = data.get('person', getattr(self.instance, 'person', None)) 
-
-        if is_primary and person:
-            # Buscar otros correos que sean primary para esta persona
+        person = data.get('person')
+        if is_primary:
             queryset = PersonEmail.objects.filter(person=person, is_primary=True)
-            
-            # Excluir la instancia actual si estamos actualizando
-            if self.instance: 
-                queryset = queryset.exclude(pk=self.instance.pk)
-            
+            if self.instance: queryset = queryset.exclude(pk=self.instance.pk)
             if queryset.exists():
-                # Lanza el error de validación de DRF con un mensaje claro
-                raise serializers.ValidationError(
-                    {'is_primary': "Ya existe un Correo Electrónico principal para esta persona."}
-                )
-        
+                raise serializers.ValidationError({'is_primary': "Ya existe un Correo Electrónico principal para esta persona."})
         return data
 
 
-from rest_framework import serializers
-
 class PersonPhoneSerializer(serializers.ModelSerializer):
-    # Campos adicionales para presentación de datos
     phone_type_name = serializers.CharField(source='phone_type.name', read_only=True)
     full_number = serializers.SerializerMethodField()
 
-    validators = [
+    class Meta: 
+        model = PersonPhone; 
+        fields = '__all__'
+        validators = [
             UniqueTogetherValidator(
                 queryset=PersonPhone.objects.all(),
                 fields=['area_code', 'subscriber_number'],
-                message="Este número de teléfono ya se encuentra registrado." 
+                message="Este número de teléfono ya se encuentra registrado."
             )
         ]
-
-    class Meta: 
-        model = PersonPhone 
-        fields = '__all__'
-
+    
     def get_full_number(self, obj):
-        if obj.area_code and obj.area_code.country:
+        if obj.area_code:
             return f"{obj.area_code.country.phone_prefix} {obj.area_code.code} {obj.subscriber_number}"
-        elif obj.area_code:
-            return f"{obj.area_code.code} {obj.subscriber_number}"
         return obj.subscriber_number
 
     def validate_subscriber_number(self, value):
-        if not value.isdigit() or len(value) > 10: 
-            raise serializers.ValidationError("Número de abonado inválido (solo dígitos, máx 10).")
+        if not value.isdigit() or len(value) > 10: raise serializers.ValidationError("Número inválido.")
         return value
-    
+
     def validate(self, data):
         is_primary = data.get('is_primary', getattr(self.instance, 'is_primary', False))
-        person = data.get('person', getattr(self.instance, 'person', None))
-
-        if is_primary and person:
+        person = data.get('person')
+        if is_primary:
             queryset = PersonPhone.objects.filter(person=person, is_primary=True)
-            
-            if self.instance:
-                queryset = queryset.exclude(pk=self.instance.pk)
-            
+            if self.instance: queryset = queryset.exclude(pk=self.instance.pk)
             if queryset.exists():
-                raise serializers.ValidationError(
-                    {'is_primary': "Ya existe un teléfono principal"}
-                )
-        
+                raise serializers.ValidationError({'is_primary': "Ya existe un Teléfono principal para esta persona."})
         return data
+    
+class PersonBankAccountSerializer(serializers.ModelSerializer):
+    class Meta: model = PersonBankAccount; fields = '__all__'
+    def validate_account_number(self, value):
+        if not value.isdigit() or len(value) != 20: raise serializers.ValidationError("Debe tener 20 dígitos.")
+        return value
+    def validate(self, data): return validate_single_primary(self, data, PersonBankAccount, "Cuenta Bancaria")
 
-# ... (El resto de serializers sigue igual) ...
+
+
 class PersonListSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     primary_document = serializers.SerializerMethodField()
     primary_email = serializers.SerializerMethodField()
     primary_phone = serializers.SerializerMethodField()
+    hiring_search = serializers.SerializerMethodField()
+
     class Meta:
         model = Person
-        fields = ['id', 'photo', 'full_name', 'primary_document', 'primary_email', 'primary_phone']
+        fields = ['id', 'photo', 'full_name', 'primary_document', 'primary_email', 'primary_phone', 'hiring_search']
+    
     def get_full_name(self, obj): return f"{obj.first_name} {obj.paternal_surname}".strip()
+    
     def get_primary_document(self, obj):
         doc = obj.national_ids.filter(is_primary=True).first()
         return f"{doc.category} {doc.document_type}-{doc.number}" if doc else "—"
+    
     def get_primary_email(self, obj):
-        email = obj.emails.filter(is_primary=True).first()
-        return email.email_address if email else "—"
+        e = obj.emails.filter(is_primary=True).first()
+        return e.email_address if e else "—"
+    
     def get_primary_phone(self, obj):
-        phone = obj.phones.filter(is_primary=True).first()
-        return f"({phone.area_code.code}) {phone.subscriber_number}" if phone else "—"
+        p = obj.phones.filter(is_primary=True).first()
+        return f"({p.area_code.code}) {p.subscriber_number}" if p else "—"
+        
+    def get_hiring_search(self, obj):
+        doc = obj.national_ids.filter(is_primary=True).first()
+        doc_str = f"{doc.document_type}-{doc.number}" if doc else "Sin Cédula"
+        return f"{obj.first_name} {obj.paternal_surname} ({doc_str})"
 
 class PersonSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    primary_document = serializers.SerializerMethodField()
+    primary_email = serializers.SerializerMethodField()
+    primary_phone = serializers.SerializerMethodField()
+    photo = serializers.FileField(required=False, allow_null=True)
+    gender_name = serializers.CharField(source='gender.name', read_only=True)
+    country_of_birth_name = serializers.CharField(source='country_of_birth.name', read_only=True)
+    
+    addresses = AddressSerializer(many=True, read_only=True)
+    phones = PersonPhoneSerializer(many=True, read_only=True)
+    emails = PersonEmailSerializer(many=True, read_only=True)
+    national_ids = NationalIdSerializer(many=True, read_only=True)
+    emergency_contacts = EmergencyContactSerializer(many=True, read_only=True)
+    bank_accounts = PersonBankAccountSerializer(many=True, read_only=True)
+
     class Meta: model = Person; fields = '__all__'
+    
+    def to_internal_value(self, data):
+        if hasattr(data, 'copy'): data = data.copy()
+        if 'photo' in data and data['photo'] == 'DELETE': data['photo'] = None
+        return super().to_internal_value(data)
+
     def validate_birthdate(self, value):
         if value and value > date.today(): raise serializers.ValidationError("Fecha futura no permitida.")
         return value
@@ -262,6 +299,28 @@ class PersonSerializer(serializers.ModelSerializer):
     def validate_paternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Paterno"))
     def validate_maternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Materno")) if value else value
 
+    def get_full_name(self, obj):
+        """Devuelve el nombre completo usando el __str__ del modelo"""
+        return str(obj)
+
+    def get_primary_document(self, obj):
+        """Busca el documento marcado como principal"""
+        # Usamos el related_name='national_ids' definido en el modelo
+        doc = obj.national_ids.filter(is_primary=True).first()
+        return str(doc) if doc else None
+
+    def get_primary_email(self, obj):
+        """Busca el correo marcado como principal"""
+        # Usamos el related_name='emails'
+        email = obj.emails.filter(is_primary=True).first()
+        return email.email_address if email else None
+
+    def get_primary_phone(self, obj):
+        """Busca el teléfono marcado como principal"""
+        # Usamos el related_name='phones'
+        phone = obj.phones.filter(is_primary=True).first()
+        return str(phone) if phone else None
+
 class PersonDisabilityVESerializer(serializers.ModelSerializer):
     class Meta: model = PersonDisabilityVE; fields = '__all__'
     def validate(self, data):
@@ -269,32 +328,14 @@ class PersonDisabilityVESerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"date_learned": "Fecha inconsistente."})
         return data
 
-class AddressSerializer(serializers.ModelSerializer):
-    address_type_name = serializers.CharField(source='address_type.name', read_only=True)
-    country_name = serializers.CharField(source='country.name', read_only=True)
-    state_name = serializers.CharField(source='state.name', read_only=True)
 
-    class Meta: model = Address; fields = '__all__'
-    def validate(self, data):
-        if data.get('state') and data.get('country') and data['state'].country != data['country']:
-            raise serializers.ValidationError({"state": "El estado no pertenece al país seleccionado."})
-        return data
 
-class PersonBankAccountSerializer(serializers.ModelSerializer):
-    class Meta: model = PersonBankAccount; fields = '__all__'
-    def validate_account_number(self, value):
-        if not value.isdigit() or len(value) != 20: raise serializers.ValidationError("Debe tener 20 dígitos.")
-        return value
-    def validate(self, data): return validate_single_primary(self, data, PersonBankAccount, "Cuenta Bancaria")
 
 class PersonDocumentSerializer(serializers.ModelSerializer):
     class Meta: model = PersonDocument; fields = '__all__'
 
 class PersonNationalitySerializer(serializers.ModelSerializer):
     class Meta: model = PersonNationality; fields = '__all__'
-
-class PersonLanguageSerializer(serializers.ModelSerializer):
-    class Meta: model = PersonLanguage; fields = '__all__'
 
 class DependentSerializer(serializers.ModelSerializer):
     class Meta: model = Dependent; fields = '__all__'
@@ -307,13 +348,3 @@ class DependentSerializer(serializers.ModelSerializer):
     def validate_paternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Paterno"))
     def validate_maternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Materno")) if value else value
 
-class EmergencyContactSerializer(serializers.ModelSerializer):
-    class Meta: model = EmergencyContact; fields = '__all__'
-    def validate_phone_number(self, value):
-        if not value.isdigit(): raise serializers.ValidationError("Solo números.")
-        return value
-    def validate(self, data): return validate_single_primary(self, data, EmergencyContact, "Contacto")
-    def validate_first_name(self, value): return title_case_cleaner(validate_only_letters(value, "Nombre"))
-    def validate_second_name(self, value): return title_case_cleaner(validate_only_letters(value, "Segundo Nombre")) if value else value
-    def validate_paternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Paterno"))
-    def validate_maternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Materno")) if value else value

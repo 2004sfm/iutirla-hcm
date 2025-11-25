@@ -7,8 +7,6 @@ admin.site.register(models.Gender)
 admin.site.register(models.MaritalStatus)
 admin.site.register(models.Country)
 admin.site.register(models.State)
-admin.site.register(models.Language)
-admin.site.register(models.LanguageProficiency)
 
 # --- Discapacidad ---
 admin.site.register(models.DisabilityGroup)
@@ -57,4 +55,3 @@ admin.site.register(models.PersonPhone)
 admin.site.register(models.PersonBankAccount)
 admin.site.register(models.PersonDocument)
 admin.site.register(models.PersonNationality)
-admin.site.register(models.PersonLanguage)

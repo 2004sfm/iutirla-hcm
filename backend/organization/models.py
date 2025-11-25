@@ -37,6 +37,7 @@ class JobTitle(models.Model):
 class Position(models.Model):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
     job_title = models.ForeignKey(JobTitle, on_delete=models.SET_NULL, null=True)
+    vacancies = models.PositiveIntegerField(default=1, help_text="Número de vacantes disponibles")
     
     # Validaremos que una posición no se reporte a sí misma
     manager_position = models.ForeignKey(

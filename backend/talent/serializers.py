@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from django.utils import timezone
 from datetime import date
-from core.serializers import title_case_cleaner
+from core.serializers import check_uniqueness, title_case_cleaner
 
 from .models import (
     PersonSpecialAssignment, BusinessFunction, PersonFunctionalExperience,
     PersonCertification, CertificationDocument, EducationLevel, FieldOfStudy,
-    PersonEducation, PersonVolunteerExperience, PersonAward, PersonMembership
+    PersonEducation, PersonVolunteerExperience, PersonAward, PersonMembership,
+    Language, LanguageProficiency, PersonLanguage
 )
 
 def validate_date_range(data, start_field='start_date', end_field='end_date'):
@@ -72,6 +73,8 @@ class CertificationDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PersonEducationSerializer(serializers.ModelSerializer):
+    level_name = serializers.CharField(source='level.name', read_only=True)
+    field_of_study_name = serializers.CharField(source='field_of_study.name', read_only=True)
     class Meta:
         model = PersonEducation
         fields = '__all__'
@@ -115,3 +118,19 @@ class PersonMembershipSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         return validate_date_range(data)
+
+class LanguageProficiencySerializer(serializers.ModelSerializer):
+    class Meta: model = LanguageProficiency; fields = '__all__'
+    def validate_name(self, value): return check_uniqueness(LanguageProficiency, 'name', title_case_cleaner(value), self.instance)
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta: model = Language; fields = '__all__'
+    def validate_name(self, value): return check_uniqueness(Language, 'name', title_case_cleaner(value), self.instance)
+
+class PersonLanguageSerializer(serializers.ModelSerializer):
+    language_name = serializers.CharField(source='language.name', read_only=True)
+    
+    speaking_proficiency_name = serializers.CharField(source='speaking_proficiency.name', read_only=True)
+    reading_proficiency_name = serializers.CharField(source='reading_proficiency.name', read_only=True)
+    writing_proficiency_name = serializers.CharField(source='writing_proficiency.name', read_only=True)
+    class Meta: model = PersonLanguage; fields = '__all__'
