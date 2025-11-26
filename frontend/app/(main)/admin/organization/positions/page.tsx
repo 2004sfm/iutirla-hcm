@@ -8,6 +8,7 @@ const positionColumns: ColumnDef[] = [
     { header: "ID", accessorKey: "id" },
     { header: "Título", accessorKey: "job_title_name" },
     { header: "Departamento", accessorKey: "department_name" },
+    { header: "Vacantes", accessorKey: "vacancies" },
     { header: "Jefe Inmediato", accessorKey: "manager_position_name" },
 ];
 
@@ -18,7 +19,7 @@ const positionFields: FormFieldDef[] = [
         label: "Título del Cargo",
         type: "select",
         required: true,
-        optionsEndpoint: "/api/organization/jobtitles/",
+        optionsEndpoint: "/api/organization/job-titles/",
         optionsLabelKey: "name",
         helpText: "Seleccione el nombre genérico del cargo (ej: Analista)."
     },
@@ -30,6 +31,14 @@ const positionFields: FormFieldDef[] = [
         optionsEndpoint: "/api/organization/departments/",
         optionsLabelKey: "name",
         helpText: "¿A qué área pertenece esta posición?"
+    },
+    {
+        name: "vacancies",
+        label: "Vacantes",
+        type: "number",
+        required: true,
+        defaultValue: 1,
+        helpText: "Número de vacantes disponibles para esta posición"
     },
     {
         name: "manager_position",
@@ -51,7 +60,7 @@ const breadcrumbItems: BreadcrumbItemType[] = [
 // --- CONFIGURACIÓN PRINCIPAL (AÑADIENDO NOMBRES SINGULAR Y PLURAL) ---
 const CATALOG_CONFIG = {
     name: "Posiciones",
-    singularName: "Posición", // Agregado
+    singularName: "Posición",
     endpoint: "/api/organization/positions/",
     columns: positionColumns,
     formFields: positionFields,
@@ -68,9 +77,10 @@ export default function PositionsPage() {
                 <CatalogManager
                     endpoint={CATALOG_CONFIG.endpoint}
                     title={CATALOG_CONFIG.name}
-                    singularTitle={CATALOG_CONFIG.singularName} // ¡Propiedad agregada!
+                    singularTitle={CATALOG_CONFIG.singularName}
                     columns={CATALOG_CONFIG.columns}
                     formFields={CATALOG_CONFIG.formFields}
+                    editUrl="/admin/organization/positions"
                 />
             </div>
         </>

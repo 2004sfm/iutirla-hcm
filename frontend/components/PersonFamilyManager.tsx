@@ -67,35 +67,29 @@ interface PersonFamilyManagerProps { personId: number; }
 interface DependentItem {
     id: number;
     first_name: string;
-    second_name: string | null; // <-- Añadido y tipado
+    second_name: string | null;
     paternal_surname: string;
-    maternal_surname: string | null; // <-- Añadido y tipado
+    maternal_surname: string | null;
     relationship: number;
-    gender: number | null; // Asumiendo que es un ID de género o null
+    gender: number | null;
     birthdate: string;
-
-    // Campos expandidos usados en la tabla o lógica
     relationship_name?: string;
-
-    // Reemplazamos 'any' por 'unknown' (opcional si la API devuelve más)
     [key: string]: unknown;
 }
 
 interface ContactItem {
     id: number;
     first_name: string;
-    second_name: string | null; // <-- Añadido y tipado
+    second_name: string | null;
     paternal_surname: string;
-    maternal_surname: string | null; // <-- Añadido y tipado
-    relationship: number; // Asumiendo que es un ID
-    phone_area_code: number; // Asumiendo que es un ID o string de código de área
+    maternal_surname: string | null;
+    relationship: number;
+    phone_area_code: number;
     phone_number: string;
     is_primary: boolean;
-
-    // Campos expandidos usados en la tabla o lógica
     relationship_name?: string;
-
-    // Reemplazamos 'any' por 'unknown'
+    phone_country_code?: string;
+    phone_carrier_code?: string;
     [key: string]: unknown;
 }
 
@@ -105,7 +99,7 @@ type ContactFormReturn = UseFormReturn<ContactFormData>;
 export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
     const [dependents, setDependents] = useState<DependentItem[]>([]);
     const [contacts, setContacts] = useState<ContactItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
 
     // Estados Modales (Crear/Editar)
@@ -146,7 +140,7 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
     // --- MANEJO DE ERRORES (Estandarizado) ---
     const handleServerError = (
         err: AxiosError<DjangoErrorResponse>,
-        form: DependentFormReturn | ContactFormReturn // ¡Aquí está el cambio!
+        form: DependentFormReturn | ContactFormReturn
     ) => {
         const responseData = err.response?.data;
         if (responseData && typeof responseData === 'object') {
@@ -295,7 +289,7 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium flex items-center gap-2">Cargas Familiares</h3>
-                    <Button size="sm" onClick={() => openDependentModal()}><Plus className="size-4 " />Agregar</Button>
+                    <Button type="button" size="sm" onClick={() => openDependentModal()}><Plus className="size-4 " />Agregar</Button>
                 </div>
                 <div className="border rounded-md overflow-hidden">
                     <Table>
@@ -315,8 +309,8 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
                                     <TableCell>{item.birthdate}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openDependentModal(item)}><Pencil className="size-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => deleteDependent(item)}><Trash2 className="size-4" /></Button>
+                                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => openDependentModal(item)}><Pencil className="size-4" /></Button>
+                                            <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => deleteDependent(item)}><Trash2 className="size-4" /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -333,7 +327,7 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium flex items-center gap-2">Contactos de Emergencia</h3>
-                    <Button size="sm" onClick={() => openContactModal()}><Plus className="size-4 " />Agregar</Button>
+                    <Button type="button" size="sm" onClick={() => openContactModal()}><Plus className="size-4 " />Agregar</Button>
                 </div>
                 <div className="border rounded-md overflow-hidden">
                     <Table>
@@ -351,14 +345,14 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
                                 <TableRow key={item.id}>
                                     <TableCell className="font-medium">{item.first_name} {item.paternal_surname}</TableCell>
                                     <TableCell>{item.relationship_name || 'N/A'}</TableCell>
-                                    <TableCell className="font-mono">{item.phone_area_code}-{item.phone_number}</TableCell>
+                                    <TableCell className="font-mono">{item.phone_country_code ? `${item.phone_country_code}-` : ''}{item.phone_carrier_code}{item.phone_carrier_code ? '-' : ''}{item.phone_number}</TableCell>
                                     <TableCell>
                                         {item.is_primary ? <Badge className="bg-chart-2 text-[10px] w-24 justify-center"><Star className="h-3 w-3  fill-current" /> PRINCIPAL</Badge> : <Badge variant="secondary" className="text-[10px] w-24 justify-center">SECUNDARIO</Badge>}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openContactModal(item)}><Pencil className="size-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => deleteContact(item)}><Trash2 className="size-4" /></Button>
+                                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => openContactModal(item)}><Pencil className="size-4" /></Button>
+                                            <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => deleteContact(item)}><Trash2 className="size-4" /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -374,7 +368,7 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
                 <DialogContent className="sm:max-w-[550px]">
                     <DialogHeader><DialogTitle>{editingDependentId ? "Editar Dependiente" : "Nueva Carga Familiar"}</DialogTitle></DialogHeader>
 
-                    <form onSubmit={dependentForm.handleSubmit(onSubmitDependent)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); dependentForm.handleSubmit(onSubmitDependent)(e); }} className="space-y-4 py-2">
                         {serverError && <Alert variant="destructive" className="mb-2"><AlertCircle className="size-4" /><AlertTitle>Atención</AlertTitle><AlertDescription>{serverError}</AlertDescription></Alert>}
 
                         <div className="grid grid-cols-2 gap-4">
@@ -446,7 +440,7 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
                 <DialogContent className="max-w-[550px]">
                     <DialogHeader><DialogTitle>{editingContactId ? "Editar Contacto" : "Nuevo Contacto de Emergencia"}</DialogTitle></DialogHeader>
 
-                    <form onSubmit={contactForm.handleSubmit(onSubmitContact)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); contactForm.handleSubmit(onSubmitContact)(e); }} className="space-y-4 py-2">
                         {serverError && <Alert variant="destructive" className="mb-2"><AlertCircle className="size-4" /><AlertTitle>Atención</AlertTitle><AlertDescription>{serverError}</AlertDescription></Alert>}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -530,16 +524,18 @@ export function PersonFamilyManager({ personId }: PersonFamilyManagerProps) {
             </Dialog>
 
             {/* ================= DIÁLOGO DE CONFIRMACIÓN DE ELIMINACIÓN REUTILIZABLE ================= */}
-            {itemToDelete && (
-                <DeleteConfirmationDialog
-                    open={isDeleteAlertOpen}
-                    setOpen={setIsDeleteAlertOpen}
-                    onConfirmDelete={deleteItemAction}
-                    title={itemToDelete.type === 'dependent' ? "¿Eliminar Carga Familiar?" : "¿Eliminar Contacto de Emergencia?"}
-                    description={`¿Estás seguro de que deseas eliminar a ${itemToDelete.name}? Esta acción es irreversible.`}
-                    successMessage={`${itemToDelete.type === 'dependent' ? 'Carga Familiar' : 'Contacto'} eliminada(o) exitosamente.`}
-                />
-            )}
+            {
+                itemToDelete && (
+                    <DeleteConfirmationDialog
+                        open={isDeleteAlertOpen}
+                        setOpen={setIsDeleteAlertOpen}
+                        onConfirmDelete={deleteItemAction}
+                        title={itemToDelete.type === 'dependent' ? "¿Eliminar Carga Familiar?" : "¿Eliminar Contacto de Emergencia?"}
+                        description={`¿Estás seguro de que deseas eliminar a ${itemToDelete.name}? Esta acción es irreversible.`}
+                        successMessage={`${itemToDelete.type === 'dependent' ? 'Carga Familiar' : 'Contacto'} eliminada(o) exitosamente.`}
+                    />
+                )
+            }
         </div>
     );
 }

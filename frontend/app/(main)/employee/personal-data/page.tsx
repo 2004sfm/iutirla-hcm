@@ -11,7 +11,8 @@ import {
 import {
     Mail, Pencil, Phone, Loader2, MapPin,
     CreditCard, User, FileText, HeartHandshake, Star, Users
-} from "lucide-react"; // Usamos Star de Lucide para mantener consistencia, pero con tu estilo amarillo
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 
 // Tipos de datos
@@ -31,6 +32,7 @@ interface PersonData {
     emergency_contacts: any[];
     bank_accounts: any[];
     dependents: any[];
+    photo?: string;
 }
 
 const breadcrumbItems: BreadcrumbItemType[] = [
@@ -45,7 +47,7 @@ export default function PersonalDataPage() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const personId = typeof user?.person === 'object' ? user.person.id : user?.person;
+            const personId = (user?.person && typeof user.person === 'object') ? user.person.id : user?.person;
 
             if (personId) {
                 try {
@@ -73,7 +75,6 @@ export default function PersonalDataPage() {
     return (
         <>
             <CatalogHeader items={breadcrumbItems} />
-
             <div className="flex-1 flex flex-col gap-4 overflow-y-auto px-8 py-4">
 
                 {/* 1. INFORMACIÓN PERSONAL */}
@@ -185,7 +186,7 @@ export default function PersonalDataPage() {
                     </CardFooter>
                 </Card>
 
-                {/* 4. CONTACTO (Con tu diseño de iconos y estrella) */}
+                {/* 4. CONTACTO */}
                 <Card>
                     <CardHeader className="flex items-center justify-between">
                         <CardTitle className="">Información de Contacto</CardTitle>
@@ -202,7 +203,6 @@ export default function PersonalDataPage() {
                                 <div key={`ph-${idx}`} className="flex gap-4">
                                     <div className="relative size-12 flex items-center justify-center bg-chart-1 rounded-lg">
                                         <Phone className="size-5 text-chart-5" />
-                                        {/* ESTRELLA SI ES PRIMARIO */}
                                         {phone.is_primary && (
                                             <div className="absolute -right-1.5 -bottom-1.5 size-5 rounded-full bg-background flex items-center justify-center border shadow-sm">
                                                 <Star className="size-4 text-yellow-500 fill-yellow-500" />
@@ -211,7 +211,7 @@ export default function PersonalDataPage() {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm text-muted-foreground">{val(phone.phone_type_name)}</span>
-                                        <span className="text-sm">{phone.area_code} {phone.subscriber_number}</span>
+                                        <span className="text-sm">{phone.full_number}</span>
                                     </div>
                                 </div>
                             ))}
@@ -286,32 +286,35 @@ export default function PersonalDataPage() {
                             </Button>
                         </CardAction>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {person.emergency_contacts?.map((ec: any, idx: number) => (
-                            <div key={idx} className="contents">
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Nombres:</span>
-                                    <span className="text-sm">{ec.first_name} {ec.second_name}</span>
+                    <CardContent className="flex flex-col gap-6">
+                        {person.emergency_contacts?.length > 0 ? (
+                            person.emergency_contacts.map((ec: any, idx: number) => (
+                                <div key={idx} className="flex flex-col gap-2 border-b last:border-0 pb-4 last:pb-0">
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm text-muted-foreground">Nombre Completo:</span>
+                                            <span className="text-sm font-medium">{ec.first_name} {ec.paternal_surname}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm text-muted-foreground">Relacion:</span>
+                                            <span className="text-sm">{val(ec.relationship_name)}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm text-muted-foreground">Principal:</span>
+                                            <span className="text-sm">{ec.is_primary ? "Si" : "No"}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm text-muted-foreground">Teléfono:</span>
+                                        <span className="text-sm">
+                                            {ec.phone_country_code} {ec.phone_carrier_code} {ec.phone_number}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Apellidos:</span>
-                                    <span className="text-sm">{ec.paternal_surname} {ec.maternal_surname}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Telefono:</span>
-                                    <span className="text-sm">{ec.phone_area_code} {ec.phone_number}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Relacion:</span>
-                                    <span className="text-sm">{val(ec.relationship_name)}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Principal:</span>
-                                    <span className="text-sm">{ec.is_primary ? "Si" : "No"}</span>
-                                </div>
-                            </div>
-                        ))}
-                        {!person.emergency_contacts?.length && <span className="text-sm italic text-muted-foreground col-span-3">No registrado.</span>}
+                            ))
+                        ) : (
+                            <span className="text-sm italic text-muted-foreground">No registrado.</span>
+                        )}
                     </CardContent>
                     <CardFooter className="flex-col items-start gap-1.5 text-sm text-chart-4">
                         <Link href={"#"}>Ver todo</Link>
@@ -328,35 +331,42 @@ export default function PersonalDataPage() {
                             </Button>
                         </CardAction>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {person.dependents?.map((dep: any, idx: number) => (
-                            <div key={idx} className="contents">
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Nombres:</span>
-                                    <span className="text-sm">{dep.first_name}</span>
+                    <CardContent className="flex flex-col gap-6">
+                        {person.dependents?.length > 0 ? (
+                            person.dependents.map((dep: any, idx: number) => (
+                                <div key={idx} className="flex flex-col gap-2 border-b last:border-0 pb-4 last:pb-0">
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm text-muted-foreground">Nombre Completo:</span>
+                                            <span className="text-sm font-medium">{dep.first_name} {dep.paternal_surname}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm text-muted-foreground">Relacion:</span>
+                                            <span className="text-sm">{val(dep.relationship_name)}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm text-muted-foreground">Genero:</span>
+                                            <span className="text-sm">{val(dep.gender_name)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm text-muted-foreground">Fecha de nacimiento:</span>
+                                        <span className="text-sm">
+                                            {dep.birthdate ? new Date(dep.birthdate).toLocaleDateString() : val(null)}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Apellidos:</span>
-                                    <span className="text-sm">{dep.paternal_surname}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Relacion:</span>
-                                    <span className="text-sm">{val(dep.relationship_name)}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-muted-foreground">Fecha de nacimiento:</span>
-                                    <span className="text-sm">{dep.birthdate}</span>
-                                </div>
-                            </div>
-                        ))}
-                        {!person.dependents?.length && <span className="text-sm italic text-muted-foreground col-span-3">No registrados.</span>}
+                            ))
+                        ) : (
+                            <span className="text-sm italic text-muted-foreground">No registrados.</span>
+                        )}
                     </CardContent>
                     <CardFooter className="flex-col items-start gap-1.5 text-sm text-chart-4">
                         <Link href={"#"}>Ver todo</Link>
                     </CardFooter>
                 </Card>
 
-                {/* 8. INFORMACIÓN DE PAGO (Con tu diseño exacto de GRID y Estrella) */}
+                {/* 8. INFORMACIÓN DE PAGO */}
                 <Card>
                     <CardHeader className="flex items-center justify-between">
                         <CardTitle className="">Información de pago</CardTitle>
@@ -370,11 +380,9 @@ export default function PersonalDataPage() {
                         {person.bank_accounts?.length > 0 ? (
                             person.bank_accounts.map((bank: any, idx: number) => (
                                 <div key={idx} className="flex gap-4 items-start">
-
-                                    {/* 1. ÍCONO: Fijo a la izquierda */}
+                                    {/* 1. ÍCONO */}
                                     <div className="relative size-12 shrink-0 flex items-center justify-center bg-chart-1 rounded-lg">
                                         <CreditCard className="size-5 text-chart-5" />
-                                        {/* Estrella si es primario */}
                                         {bank.is_primary && (
                                             <div className="absolute -right-1.5 -bottom-1.5 size-5 rounded-full bg-background flex items-center justify-center border shadow-sm">
                                                 <Star className="size-4 text-yellow-500 fill-yellow-500" />
@@ -382,19 +390,16 @@ export default function PersonalDataPage() {
                                         )}
                                     </div>
 
-                                    {/* 2. TEXTOS: Grid Responsivo exacto */}
+                                    {/* 2. TEXTOS */}
                                     <div className="w-full grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                        {/* Banco */}
                                         <div className="flex flex-col justify-center">
                                             <span className="text-sm text-muted-foreground">Banco:</span>
                                             <span className="text-sm font-medium">{val(bank.bank_name)}</span>
                                         </div>
-                                        {/* Código (Si tu API lo manda, o el tipo de cuenta) */}
                                         <div className="flex flex-col justify-center">
                                             <span className="text-sm text-muted-foreground">Tipo:</span>
-                                            <span className="text-sm font-medium">{val(bank.account_type_name)}</span>
+                                            <span className="text-sm font-medium">{val(bank.bank_account_type_name)}</span>
                                         </div>
-                                        {/* Cuenta */}
                                         <div className="flex flex-col justify-center col-span-2 md:col-span-1">
                                             <span className="text-sm text-muted-foreground">Numero de cuenta:</span>
                                             <span className="text-sm font-medium">{bank.account_number}</span>

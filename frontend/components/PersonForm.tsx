@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Save, ArrowLeft, User, FileBadge, Phone, MapPin, Users, Camera, X, GraduationCap } from "lucide-react";
+import { Loader2, Save, ArrowLeft, User, FileBadge, Phone, MapPin, Users, Camera, X, GraduationCap, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -30,6 +30,7 @@ import { DatePicker } from './DatePicker';
 import { PersonLanguageManager } from './PersonLanguageManager';
 import { PersonEducationManager } from './PersonEducationManager';
 import { PersonCertificationManager } from './PersonCertification';
+import { PersonBankAccountManager } from './PersonBankAccountManager';
 
 // ... (Tipos y Esquema igual) ...
 export interface PersonBackendData {
@@ -48,11 +49,21 @@ export interface PersonBackendData {
 }
 
 const personSchema = z.object({
-    first_name: z.string().min(2, "El primer nombre es obligatorio."),
-    second_name: z.string().optional().nullable(),
-    paternal_surname: z.string().min(2, "El apellido paterno es obligatorio."),
-    maternal_surname: z.string().optional().nullable(),
-    birthdate: z.date().optional().nullable(),
+    first_name: z.string()
+        .min(2, "El primer nombre es obligatorio.")
+        .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]+$/, "Solo se permiten letras y tildes (sin espacios)."),
+    second_name: z.string()
+        .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]*$/, "Solo se permiten letras y tildes (sin espacios).")
+        .optional()
+        .nullable(),
+    paternal_surname: z.string()
+        .min(2, "El apellido paterno es obligatorio.")
+        .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]+$/, "Solo se permiten letras y tildes (sin espacios)."),
+    maternal_surname: z.string()
+        .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]*$/, "Solo se permiten letras y tildes (sin espacios).")
+        .optional()
+        .nullable(),
+    birthdate: z.date("La fecha de nacimiento es obligatoria."),
     gender: z.string().optional().nullable(),
     marital_status: z.string().optional().nullable(),
     salutation: z.string().optional().nullable(),
@@ -91,7 +102,7 @@ export function PersonForm({ personId, initialData }: PersonFormProps) {
 
     useEffect(() => {
         if (initialData) {
-            const formattedData: PersonFormData = {
+            const formattedData = {
                 first_name: initialData.first_name,
                 second_name: initialData.second_name,
                 paternal_surname: initialData.paternal_surname,
@@ -164,9 +175,11 @@ export function PersonForm({ personId, initialData }: PersonFormProps) {
 
             if (isEditMode) {
                 await apiClient.patch(`/api/core/persons/${personId}/`, formData, config);
+                toast.success("Persona actualizada exitosamente");
             } else {
                 const response = await apiClient.post('/api/core/persons/', formData, config);
                 const newId = response.data.id;
+                toast.success("Persona creada exitosamente");
                 router.push(`/admin/personnel/people/${newId}`);
             }
 
@@ -203,12 +216,13 @@ export function PersonForm({ personId, initialData }: PersonFormProps) {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col gap-4">
-                <TabsList className="grid w-full h-auto grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                <TabsList className="grid w-full h-auto grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
                     <TabsTrigger value="basic" className="gap-2"><User className="size-4" /> Básicos</TabsTrigger>
                     <TabsTrigger value="ids" disabled={!isEditMode} className="gap-2"><FileBadge className="size-4" /> Identidad</TabsTrigger>
                     <TabsTrigger value="contact" disabled={!isEditMode} className="gap-2"><Phone className="size-4" /> Contacto</TabsTrigger>
                     <TabsTrigger value="address" disabled={!isEditMode} className="gap-2"><MapPin className="size-4" /> Ubicación</TabsTrigger>
                     <TabsTrigger value="family" disabled={!isEditMode} className="gap-2"><Users className="size-4" /> Familia</TabsTrigger>
+                    <TabsTrigger value="bank" disabled={!isEditMode} className="gap-2"><Landmark className="size-4" /> Banco</TabsTrigger>
                     <TabsTrigger value="talent" disabled={!isEditMode} className="gap-2">
                         <GraduationCap className="size-4" /> Talento
                     </TabsTrigger>
@@ -250,7 +264,6 @@ export function PersonForm({ personId, initialData }: PersonFormProps) {
                                             </div>
                                         </Label>
 
-                                        {/* Botón X Flotante (Solo si hay foto) */}
                                         {photoPreview && (
                                             <button
                                                 type="button"
@@ -258,142 +271,122 @@ export function PersonForm({ personId, initialData }: PersonFormProps) {
                                                 className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 shadow-md hover:bg-destructive/90 transition-transform hover:scale-110 z-20 flex items-center justify-center"
                                                 title="Eliminar foto"
                                             >
-                                                <X className="w-3 h-3" />
+                                                <X className="size-4" />
                                             </button>
                                         )}
-
-                                        <Input
-                                            id="photo-upload"
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handlePhotoChange}
-                                        />
                                     </div>
-                                    <span className="text-xs font-medium text-muted-foreground">Foto de Perfil</span>
+                                    <Input id="photo-upload" type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
                                 </div>
 
-                                {/* Campos de Texto */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 w-full">
+                                {/* Detalles Personales */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
                                     <div className="space-y-1">
                                         <Label className="text-sm">Primer Nombre <span className="text-destructive">*</span></Label>
-                                        <Input
-                                            {...register("first_name")}
-                                            placeholder="Ej: Juan"
-                                            className={cn("text-sm", errors.first_name && "border-destructive")}
-                                        />
+                                        <Input {...register("first_name")} placeholder="Ej: Juan" />
                                         {errors.first_name && <span className="text-xs text-destructive">{errors.first_name.message}</span>}
                                     </div>
                                     <div className="space-y-1">
                                         <Label className="text-sm">Segundo Nombre</Label>
-                                        <Input {...register("second_name")} placeholder="Ej: Carlos" className="text-sm" />
+                                        <Input {...register("second_name")} placeholder="Ej: Carlos" />
+                                        {errors.second_name && <span className="text-xs text-destructive">{errors.second_name.message}</span>}
                                     </div>
                                     <div className="space-y-1">
                                         <Label className="text-sm">Apellido Paterno <span className="text-destructive">*</span></Label>
-                                        <Input
-                                            {...register("paternal_surname")}
-                                            placeholder="Ej: Pérez"
-                                            className={cn("text-sm", errors.paternal_surname && "border-destructive")}
-                                        />
+                                        <Input {...register("paternal_surname")} placeholder="Ej: Pérez" />
                                         {errors.paternal_surname && <span className="text-xs text-destructive">{errors.paternal_surname.message}</span>}
                                     </div>
                                     <div className="space-y-1">
                                         <Label className="text-sm">Apellido Materno</Label>
-                                        <Input {...register("maternal_surname")} placeholder="Ej: González" className="text-sm" />
+                                        <Input {...register("maternal_surname")} placeholder="Ej: González" />
+                                        {errors.maternal_surname && <span className="text-xs text-destructive">{errors.maternal_surname.message}</span>}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-sm">Fecha de Nacimiento</Label>
+                                        <Controller
+                                            name="birthdate"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DatePicker
+                                                    selected={field.value ? new Date(field.value) : undefined}
+                                                    onSelect={field.onChange}
+                                                    placeholder="Seleccionar fecha"
+                                                />
+                                            )}
+                                        />
+                                        {errors.birthdate && <span className="text-xs text-destructive">{String(errors.birthdate.message)}</span>}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label className="text-sm">Género</Label>
+                                        <Controller
+                                            name="gender"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DynamicCombobox
+                                                    field={{ name: 'gender', label: 'Género', type: 'select', optionsEndpoint: '/api/core/genders/' }}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Seleccione..."
+                                                />
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label className="text-sm">Estado Civil</Label>
+                                        <Controller
+                                            name="marital_status"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DynamicCombobox
+                                                    field={{ name: 'marital_status', label: 'Estado Civil', type: 'select', optionsEndpoint: '/api/core/marital-statuses/' }}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Seleccione..."
+                                                />
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-sm">País de Nacimiento</Label>
+                                        <Controller
+                                            name="country_of_birth"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DynamicCombobox
+                                                    field={{ name: 'country_of_birth', label: 'País', type: 'select', optionsEndpoint: '/api/core/countries/' }}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Buscar país..."
+                                                />
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-sm">Tratamiento (Saludo)</Label>
+                                        <Controller
+                                            name="salutation"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <DynamicCombobox
+                                                    field={{ name: 'salutation', label: 'Saludo', type: 'select', optionsEndpoint: '/api/core/salutations/' }}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Sr./Sra./Dr..."
+                                                />
+                                            )}
+                                        />
                                     </div>
                                 </div>
+
+                                <div className="flex gap-2 justify-end pt-4">
+                                    <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                                        {isSubmitting ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
+                                        {isEditMode ? "Guardar Cambios" : "Crear y Continuar"}
+                                    </Button>
+                                </div>
+
                             </div>
-
-                            <Separator />
-
-                            {/* Detalles Personales */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div className="space-y-1">
-                                    <Label className="text-sm">Fecha de Nacimiento</Label>
-                                    <Controller
-                                        name="birthdate"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <DatePicker
-                                                selected={field.value ? new Date(field.value) : undefined}
-                                                onSelect={field.onChange}
-                                                placeholder="Seleccionar fecha"
-                                            />
-                                        )}
-                                    />
-                                    {errors.birthdate && <span className="text-xs text-destructive">{String(errors.birthdate.message)}</span>}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label className="text-sm">Género</Label>
-                                    <Controller
-                                        name="gender"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <DynamicCombobox
-                                                field={{ name: 'gender', label: 'Género', type: 'select', optionsEndpoint: '/api/core/genders/' }}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Seleccione..."
-                                            />
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label className="text-sm">Estado Civil</Label>
-                                    <Controller
-                                        name="marital_status"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <DynamicCombobox
-                                                field={{ name: 'marital_status', label: 'Estado Civil', type: 'select', optionsEndpoint: '/api/core/marital-statuses/' }}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Seleccione..."
-                                            />
-                                        )}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-sm">País de Nacimiento</Label>
-                                    <Controller
-                                        name="country_of_birth"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <DynamicCombobox
-                                                field={{ name: 'country_of_birth', label: 'País', type: 'select', optionsEndpoint: '/api/core/countries/' }}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Buscar país..."
-                                            />
-                                        )}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-sm">Tratamiento (Saludo)</Label>
-                                    <Controller
-                                        name="salutation"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <DynamicCombobox
-                                                field={{ name: 'salutation', label: 'Saludo', type: 'select', optionsEndpoint: '/api/core/salutations/' }}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Sr./Sra./Dr..."
-                                            />
-                                        )}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 justify-end pt-4">
-                                <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-                                    {isSubmitting ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
-                                    {isEditMode ? "Guardar Cambios" : "Crear y Continuar"}
-                                </Button>
-                            </div>
-
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -430,6 +423,15 @@ export function PersonForm({ personId, initialData }: PersonFormProps) {
                         <CardHeader><CardTitle>Cargas y Emergencias</CardTitle><CardDescription>Datos familiares.</CardDescription></CardHeader>
                         <CardContent>
                             {personId ? <PersonFamilyManager personId={personId} /> : <p className="text-sm text-muted-foreground">Guarde primero.</p>}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="bank">
+                    <Card>
+                        <CardHeader><CardTitle>Cuentas Bancarias</CardTitle><CardDescription>Información bancaria de nómina.</CardDescription></CardHeader>
+                        <CardContent>
+                            {personId ? <PersonBankAccountManager personId={personId} /> : <p className="text-sm text-muted-foreground">Guarde primero.</p>}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -482,3 +484,4 @@ export function PersonForm({ personId, initialData }: PersonFormProps) {
         </form>
     );
 }
+

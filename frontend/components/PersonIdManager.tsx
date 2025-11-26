@@ -236,7 +236,7 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium flex items-center gap-2">Identificaciones</h3>
-                <Button size="sm" onClick={handleCreate}><Plus className="h-4 w-4 mr-2" /> Agregar</Button>
+                <Button type="button" size="sm" onClick={handleCreate}><Plus className="h-4 w-4 mr-2" /> Agregar</Button>
             </div>
 
             <div className="border rounded-md overflow-hidden">
@@ -266,13 +266,19 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
                                     </TableCell>
                                     <TableCell>
                                         {item.file ? (
-                                            <a href={item.file} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center text-sm"><FileText className="h-4 w-4 mr-1" /> Ver</a>
-                                        ) : <span className="text-xs italic text-muted-foreground opacity-50">---</span>}
+                                            <a href={item.file} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline text-xs">
+                                                <FileText className="h-3 w-3 mr-1" /> Ver
+                                            </a>
+                                        ) : <span className="text-muted-foreground text-xs">-</span>}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4" /></Button>
+                                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDelete(item.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -288,7 +294,7 @@ export function PersonIdManager({ personId }: PersonIdManagerProps) {
                         <DialogTitle>{editingId ? "Editar Documento" : "Nuevo Documento"}</DialogTitle>
                     </DialogHeader>
 
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); form.handleSubmit(onSubmit)(e); }} className="space-y-4 py-2">
 
                         {/* ALERT ROJO GLOBAL (Para errores que no son de campos) */}
                         {serverError && (

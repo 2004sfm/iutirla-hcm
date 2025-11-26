@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import apiClient from '@/lib/apiClient';
-import { Loader2, Plus, Trash2, Award, BadgeCheck, AlertCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, Award, BadgeCheck, AlertCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ const certSchema = z.object({
     name: z.string().min(2, "Nombre de la certificación requerido."),
     institution: z.string().min(2, "Institución requerida."),
     description: z.string().optional(),
-    effective_date: z.date({ required_error: "Fecha de emisión requerida." }),
+    effective_date: z.date({ message: "Fecha de emisión requerida." }),
     expiration_date: z.date().optional().nullable(),
 });
 
@@ -41,6 +41,7 @@ export function PersonCertificationManager({ personId }: { personId: number }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     // Estados Delete
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
@@ -67,9 +68,20 @@ export function PersonCertificationManager({ personId }: { personId: number }) {
         defaultValues: { name: "", institution: "", description: "", effective_date: undefined, expiration_date: null }
     });
 
-    const openModal = () => {
+    const openModal = (item?: any) => {
         setServerError(null);
-        form.reset({ name: "", institution: "", description: "", effective_date: undefined, expiration_date: null });
+        setEditingId(item?.id || null);
+        if (item) {
+            form.reset({
+                name: item.name,
+                institution: item.institution,
+                description: item.description || "",
+                effective_date: new Date(item.effective_date),
+                expiration_date: item.expiration_date ? new Date(item.expiration_date) : null,
+            });
+        } else {
+            form.reset({ name: "", institution: "", description: "", effective_date: undefined, expiration_date: null });
+        }
         setIsModalOpen(true);
     };
 
@@ -86,9 +98,14 @@ export function PersonCertificationManager({ personId }: { personId: number }) {
                 expiration_date: data.expiration_date ? format(data.expiration_date, "yyyy-MM-dd") : null,
             };
 
-            await apiClient.post('/api/talent/certifications/', payload);
+            if (editingId) {
+                await apiClient.patch(`/api/talent/certifications/${editingId}/`, payload);
+                toast.success("Certificación actualizada exitosamente.");
+            } else {
+                await apiClient.post('/api/talent/certifications/', payload);
+                toast.success("Certificación agregada exitosamente.");
+            }
 
-            toast.success("Certificación agregada exitosamente.");
             setIsModalOpen(false);
             fetchCertifications();
         } catch (error) {
@@ -118,7 +135,7 @@ export function PersonCertificationManager({ personId }: { personId: number }) {
                     <Award className="size-5" />
                     Certificaciones y Cursos
                 </h3>
-                <Button size="sm" onClick={openModal}>
+                <Button type="button" size="sm" onClick={() => openModal()}>
                     <Plus className="size-4 mr-2" /> Agregar
                 </Button>
             </div>
@@ -155,14 +172,20 @@ export function PersonCertificationManager({ personId }: { personId: number }) {
                                         {item.expiration_date || 'Permanente'}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive h-8 w-8 hover:bg-destructive/10"
-                                            onClick={() => handleDeleteClick(item)}
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
+                                        <div className="flex justify-end gap-1">
+                                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(item)}>
+                                                <Pencil className="size-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-destructive h-8 w-8 hover:bg-destructive/10"
+                                                onClick={() => handleDeleteClick(item)}
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -174,9 +197,9 @@ export function PersonCertificationManager({ personId }: { personId: number }) {
             {/* MODAL */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader><DialogTitle>Agregar Certificación</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>{editingId ? "Editar Certificación" : "Agregar Certificación"}</DialogTitle></DialogHeader>
 
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); form.handleSubmit(onSubmit)(e); }} className="space-y-4 py-2">
 
                         {serverError && (
                             <Alert variant="destructive" className="mb-2">
@@ -238,7 +261,7 @@ export function PersonCertificationManager({ personId }: { personId: number }) {
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                             <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Guardar"}
+                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (editingId ? "Guardar Cambios" : "Guardar")}
                             </Button>
                         </DialogFooter>
                     </form>

@@ -36,7 +36,7 @@ const breadcrumbItems: BreadcrumbItemType[] = [
 const CATALOG_CONFIG = {
     name: "Títulos de Cargo",
     singularName: "Título de Cargo", // Agregado
-    endpoint: "/api/organization/jobtitles/",
+    endpoint: "/api/organization/job-titles/",
     columns: jobTitleColumns,
     formFields: jobTitleFields,
 };

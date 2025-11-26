@@ -78,9 +78,11 @@ const generateZodSchema = (fields: FormFieldDef[]) => {
         // CASO TEXTO
         else {
             let baseStringSchema = z.string();
-            if (field.label.toLowerCase().includes('nombre') || field.label.toLowerCase().includes('país')) {
-                baseStringSchema = baseStringSchema.regex(/^[^0-9]*$/, {
-                    message: "No se permiten números en este campo."
+
+            // Validación para campos de nombre (catálogos): solo letras, números, espacios y tildes
+            if (field.name === 'name' || field.label.toLowerCase().includes('nombre')) {
+                baseStringSchema = baseStringSchema.regex(/^[a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ\s]*$/, {
+                    message: "Solo se permiten letras, números, espacios y tildes (sin signos especiales)."
                 });
             }
 
@@ -122,6 +124,10 @@ export function CatalogForm({
             // Aseguramos que los booleanos tengan valor por defecto
             if (field.type === 'boolean' && defaults[field.name] === undefined) {
                 defaults[field.name] = false;
+            }
+            // Si no hay initialData y el campo tiene defaultValue, lo usamos
+            if (!initialData && field.defaultValue !== undefined && defaults[field.name] === undefined) {
+                defaults[field.name] = field.defaultValue;
             }
         });
         return defaults;

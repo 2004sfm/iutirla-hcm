@@ -53,7 +53,8 @@ export function CourseEnrollModal({ isOpen, setIsOpen, course, onSuccess }: Cour
                 course: course.id,
                 person: user.person.id,
                 role: 'EST',
-                status: 'SOL'
+                enrollment_status: 'REQ',
+                academic_status: 'NEV'
             };
 
             await apiClient.post('/api/training/participants/', payload);

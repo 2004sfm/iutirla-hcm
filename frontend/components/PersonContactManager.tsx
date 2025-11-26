@@ -284,7 +284,7 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium flex items-center gap-2">Teléfonos</h3>
-                    <Button size="sm" onClick={handlePhoneCreate}><Plus className="h-4 w-4 " /> Agregar</Button>
+                    <Button type="button" size="sm" onClick={handlePhoneCreate}><Plus className="h-4 w-4 " /> Agregar</Button>
                 </div>
                 <div className="border rounded-md overflow-hidden">
                     <Table>
@@ -312,8 +312,8 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePhoneEdit(item)}><Pencil className="h-4 w-4" /></Button>
-                                                <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDeletePhone(item.id)}><Trash2 className="h-4 w-4" /></Button>
+                                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePhoneEdit(item)}><Pencil className="h-4 w-4" /></Button>
+                                                <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDeletePhone(item.id)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -330,7 +330,7 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium flex items-center gap-2">Correos Electrónicos</h3>
-                    <Button size="sm" onClick={handleEmailCreate}><Plus className="h-4 w-4 " /> Agregar</Button>
+                    <Button type="button" size="sm" onClick={handleEmailCreate}><Plus className="h-4 w-4 " /> Agregar</Button>
                 </div>
                 <div className="border rounded-md overflow-hidden">
                     <Table>
@@ -353,8 +353,8 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailEdit(item)}><Pencil className="h-4 w-4" /></Button>
-                                                <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDeleteEmail(item.id)}><Trash2 className="h-4 w-4" /></Button>
+                                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailEdit(item)}><Pencil className="h-4 w-4" /></Button>
+                                                <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDeleteEmail(item.id)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -370,7 +370,7 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
                 <DialogContent className="max-w-[425px]">
                     <DialogHeader><DialogTitle>{editingPhoneId ? "Editar Teléfono" : "Nuevo Teléfono"}</DialogTitle></DialogHeader>
 
-                    <form onSubmit={phoneForm.handleSubmit(onSubmitPhone)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); phoneForm.handleSubmit(onSubmitPhone)(e); }} className="space-y-4 py-2">
 
                         {/* ALERTA GLOBAL */}
                         {serverError && (
@@ -444,7 +444,7 @@ export function PersonContactManager({ personId }: PersonContactManagerProps) {
             <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
                 <DialogContent className="max-w-[425px]">
                     <DialogHeader><DialogTitle>{editingEmailId ? "Editar Correo" : "Nuevo Correo"}</DialogTitle></DialogHeader>
-                    <form onSubmit={emailForm.handleSubmit(onSubmitEmail)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); emailForm.handleSubmit(onSubmitEmail)(e); }} className="space-y-4 py-2">
 
                         {serverError && <Alert variant="destructive" className="mb-2"><AlertCircle className="h-4 w-4" /><AlertTitle>Atención</AlertTitle><AlertDescription>{serverError}</AlertDescription></Alert>}
 

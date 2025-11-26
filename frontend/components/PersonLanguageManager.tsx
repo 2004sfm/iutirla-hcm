@@ -38,6 +38,7 @@ export function PersonLanguageManager({ personId }: { personId: number }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     // Estados Delete
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
@@ -63,11 +64,21 @@ export function PersonLanguageManager({ personId }: { personId: number }) {
         resolver: zodResolver(languageSchema)
     });
 
-    const openModal = () => {
+    const openModal = (item?: any) => {
         setServerError(null);
-        form.reset({
-            language: '', speaking_proficiency: '', reading_proficiency: '', writing_proficiency: ''
-        });
+        setEditingId(item?.id || null);
+        if (item) {
+            form.reset({
+                language: String(item.language),
+                speaking_proficiency: item.speaking_proficiency ? String(item.speaking_proficiency) : '',
+                reading_proficiency: item.reading_proficiency ? String(item.reading_proficiency) : '',
+                writing_proficiency: item.writing_proficiency ? String(item.writing_proficiency) : '',
+            });
+        } else {
+            form.reset({
+                language: '', speaking_proficiency: '', reading_proficiency: '', writing_proficiency: ''
+            });
+        }
         setIsModalOpen(true);
     };
 
@@ -83,8 +94,14 @@ export function PersonLanguageManager({ personId }: { personId: number }) {
                 writing_proficiency: data.writing_proficiency ? Number(data.writing_proficiency) : null,
             };
 
-            await apiClient.post('/api/talent/person-languages/', payload);
-            toast.success("Idioma agregado exitosamente.");
+            if (editingId) {
+                await apiClient.patch(`/api/talent/person-languages/${editingId}/`, payload);
+                toast.success("Idioma actualizado exitosamente.");
+            } else {
+                await apiClient.post('/api/talent/person-languages/', payload);
+                toast.success("Idioma agregado exitosamente.");
+            }
+
             setIsModalOpen(false);
             fetchLanguages();
         } catch (error: any) {
@@ -126,7 +143,7 @@ export function PersonLanguageManager({ personId }: { personId: number }) {
                     <Languages className="size-5" />
                     Idiomas Dominados
                 </h3>
-                <Button size="sm" onClick={openModal}>
+                <Button type="button" size="sm" onClick={() => openModal()}>
                     <Plus className="size-4 mr-2" /> Agregar
                 </Button>
             </div>
@@ -156,14 +173,20 @@ export function PersonLanguageManager({ personId }: { personId: number }) {
                                     <TableCell>{item.reading_proficiency_name || '-'}</TableCell>
                                     <TableCell>{item.writing_proficiency_name || '-'}</TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive h-8 w-8 hover:bg-destructive/10"
-                                            onClick={() => handleDeleteClick(item)}
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
+                                        <div className="flex justify-end gap-1">
+                                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(item)}>
+                                                <Pencil className="size-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-destructive h-8 w-8 hover:bg-destructive/10"
+                                                onClick={() => handleDeleteClick(item)}
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -175,9 +198,9 @@ export function PersonLanguageManager({ personId }: { personId: number }) {
             {/* MODAL AGREGAR */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader><DialogTitle>Agregar Idioma</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>{editingId ? "Editar Idioma" : "Agregar Idioma"}</DialogTitle></DialogHeader>
 
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); form.handleSubmit(onSubmit)(e); }} className="space-y-4 py-2">
 
                         {serverError && (
                             <Alert variant="destructive" className="mb-2">
@@ -237,7 +260,7 @@ export function PersonLanguageManager({ personId }: { personId: number }) {
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                             <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Guardar"}
+                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (editingId ? "Guardar Cambios" : "Guardar")}
                             </Button>
                         </DialogFooter>
                     </form>

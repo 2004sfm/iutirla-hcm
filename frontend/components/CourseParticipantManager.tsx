@@ -28,7 +28,8 @@ const participantSchema = z.object({
     person: z.string().min(1, "Debe seleccionar una persona."),
     role: z.string().min(1, "Debe seleccionar un rol."),
     // Nuevos campos opcionales (para edición)
-    status: z.string().optional(),
+    enrollment_status: z.string().optional(),
+    academic_status: z.string().optional(),
     grade: z.coerce.number().min(0).max(20).optional().nullable(), // Escala 0-20 (ajusta si usas 100)
 });
 
@@ -56,7 +57,8 @@ export function CourseParticipantManager({ courseId }: { courseId: number }) {
         defaultValues: {
             person: "",
             role: "EST",
-            status: "PEN",
+            enrollment_status: "ENR",
+            academic_status: "PEN",
             grade: null // o undefined, dependiendo de tu preferencia
         }
     });
@@ -90,13 +92,14 @@ export function CourseParticipantManager({ courseId }: { courseId: number }) {
             reset({
                 person: String(item.person_id), // Asumiendo que el serializer envía person_id
                 role: item.role,
-                status: item.status,
+                enrollment_status: item.enrollment_status,
+                academic_status: item.academic_status,
                 grade: item.grade
             });
         } else {
             // MODO CREACIÓN (Inscribir)
             setEditingId(null);
-            reset({ person: "", role: "EST", status: "PEN", grade: null });
+            reset({ person: "", role: "EST", enrollment_status: "ENR", academic_status: "PEN", grade: null });
         }
         setIsModalOpen(true);
     };
@@ -113,7 +116,8 @@ export function CourseParticipantManager({ courseId }: { courseId: number }) {
                 // NO enviamos 'person' ni 'course', así evitamos el error de "nulo".
                 const editPayload = {
                     role: data.role,
-                    status: data.status,
+                    enrollment_status: data.enrollment_status,
+                    academic_status: data.academic_status,
                     grade: data.grade
                 };
 
@@ -127,7 +131,8 @@ export function CourseParticipantManager({ courseId }: { courseId: number }) {
                     course: courseId,
                     person: Number(data.person), // Aquí data.person sí tiene valor del combobox
                     role: data.role,
-                    status: 'INS', // Estatus inicial por defecto
+                    enrollment_status: 'ENR', // Estatus inicial por defecto (Inscrito)
+                    academic_status: 'PEN', // Estatus académico inicial (Pendiente)
                     grade: null
                 };
 
@@ -169,12 +174,22 @@ export function CourseParticipantManager({ courseId }: { courseId: number }) {
         return <Badge variant="secondary"><GraduationCap className="w-3 h-3 mr-1" /> {roleName}</Badge>;
     };
 
-    const getStatusBadge = (status: string, statusName: string) => {
+    const getEnrollmentStatusBadge = (status: string, statusName: string) => {
+        switch (status) {
+            case 'REQ': return <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50">{statusName}</Badge>;
+            case 'ENR': return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">{statusName}</Badge>;
+            case 'REJ': return <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50">{statusName}</Badge>;
+            case 'DRP': return <Badge variant="outline" className="text-gray-600 border-gray-200 bg-gray-50">{statusName}</Badge>;
+            default: return <span className="text-muted-foreground text-xs">{statusName}</span>;
+        }
+    };
+
+    const getAcademicStatusBadge = (status: string, statusName: string) => {
         switch (status) {
             case 'APR': return <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">{statusName}</Badge>;
             case 'REP': return <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50">{statusName}</Badge>;
-            case 'PEN': return <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50">{statusName}</Badge>;
-            case 'INS': return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">{statusName}</Badge>;
+            case 'PEN': return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">{statusName}</Badge>;
+            case 'NEV': return <Badge variant="outline" className="text-gray-400 border-gray-200">{statusName}</Badge>;
             default: return <span className="text-muted-foreground text-xs">{statusName}</span>;
         }
     };
@@ -196,22 +211,24 @@ export function CourseParticipantManager({ courseId }: { courseId: number }) {
                         <TableRow>
                             <TableHead>Participante</TableHead>
                             <TableHead>Rol</TableHead>
-                            <TableHead>Estatus</TableHead>
+                            <TableHead>Inscripción</TableHead>
+                            <TableHead>Académico</TableHead>
                             <TableHead>Nota</TableHead>
                             <TableHead className="text-right w-[100px]">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
-                            <TableRow><TableCell colSpan={5} className="text-center py-6">Cargando...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={6} className="text-center py-6">Cargando...</TableCell></TableRow>
                         ) : items.length === 0 ? (
-                            <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">No hay participantes inscritos.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">No hay participantes inscritos.</TableCell></TableRow>
                         ) : (
                             items.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell className="font-medium">{item.person_name}</TableCell>
                                     <TableCell>{getRoleBadge(item.role, item.role_name)}</TableCell>
-                                    <TableCell>{getStatusBadge(item.status, item.status_name)}</TableCell>
+                                    <TableCell>{getEnrollmentStatusBadge(item.enrollment_status, item.enrollment_status_name)}</TableCell>
+                                    <TableCell>{getAcademicStatusBadge(item.academic_status, item.academic_status_name)}</TableCell>
                                     <TableCell className="font-mono font-bold text-sm">{item.grade ? item.grade : '-'}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
@@ -298,28 +315,42 @@ export function CourseParticipantManager({ courseId }: { courseId: number }) {
                         {(currentRole === 'EST') && (
                             <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border">
                                 <div className="space-y-1">
-                                    <Label className="text-xs uppercase text-muted-foreground font-bold">Estatus Final</Label>
+                                    <Label className="text-xs uppercase text-muted-foreground font-bold">Estatus Inscripción</Label>
                                     <Controller
-                                        name="status"
+                                        name="enrollment_status"
                                         control={control}
                                         render={({ field }) => (
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="SOL">Solicitud Enviada</SelectItem>
-
-                                                    {/* <SelectItem value="PEN">Pendiente</SelectItem> */}
-                                                    <SelectItem value="INS">Inscrito</SelectItem>
-                                                    <SelectItem value="APR">Aprobado</SelectItem>
-                                                    <SelectItem value="REP">Reprobado</SelectItem>
-                                                    <SelectItem value="RET">Retirado</SelectItem>
+                                                    <SelectItem value="REQ">Solicitud Enviada</SelectItem>
+                                                    <SelectItem value="ENR">Inscrito / Matriculado</SelectItem>
                                                     <SelectItem value="REJ">Solicitud Rechazada</SelectItem>
+                                                    <SelectItem value="DRP">Retirado</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         )}
                                     />
                                 </div>
                                 <div className="space-y-1">
+                                    <Label className="text-xs uppercase text-muted-foreground font-bold">Estatus Académico</Label>
+                                    <Controller
+                                        name="academic_status"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="NEV">No Evaluado / N/A</SelectItem>
+                                                    <SelectItem value="PEN">En Curso / Pendiente</SelectItem>
+                                                    <SelectItem value="APR">Aprobado</SelectItem>
+                                                    <SelectItem value="REP">Reprobado</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
+                                <div className="space-y-1 col-span-2">
                                     <Label className="text-xs uppercase text-muted-foreground font-bold">Nota (0-20)</Label>
                                     <Input
                                         type="number"

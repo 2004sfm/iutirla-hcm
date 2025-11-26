@@ -42,6 +42,7 @@ export interface FormFieldDef {
     optionsEndpoint?: string;
     optionsLabelKey?: string;
     helpText?: string;
+    defaultValue?: string | number | boolean;
 }
 
 export interface ColumnDef {

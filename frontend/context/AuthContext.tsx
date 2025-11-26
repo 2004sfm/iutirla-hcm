@@ -3,7 +3,6 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import apiClient from "../lib/apiClient";
 import { useRouter } from "next/navigation";
-// import { AxiosError } from "axios";
 
 // --- Tipos ---
 
@@ -16,7 +15,6 @@ export interface Person {
     maternal_surname?: string | null;
     photo?: string | null;
     birthdate?: string | null;
-    // ... otros campos si son necesarios para mostrar en el header/perfil
 }
 
 // Definimos User alineado con tu backend
@@ -30,7 +28,6 @@ export interface User {
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
-    // Login devuelve Promise<void>, pero ahora sabemos que puede fallar
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
 }
@@ -42,24 +39,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
-    // 1. Inicialización: Recuperar sesión al recargar la página
+    // 1. Inicialización: Recuperar sesión y refrescar datos
     useEffect(() => {
-        const initAuth = () => {
-            const storedUser = localStorage.getItem("user");
+        const initAuth = async () => {
             const storedToken = localStorage.getItem("access_token");
 
-            if (storedUser && storedToken) {
+            if (storedToken) {
                 try {
-                    const parsedUser = JSON.parse(storedUser) as User;
-                    setUser(parsedUser);
-                    // Restauramos el header para axios
+                    // 1. Restaurar header
                     if (apiClient.defaults.headers.common) {
                         apiClient.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
                     }
-                } catch (e) {
-                    console.error("Error parsing user from storage", e);
-                    localStorage.removeItem("user");
-                    localStorage.removeItem("access_token");
+
+                    // 2. Obtener datos frescos del usuario
+                    const { data } = await apiClient.get("/api/auth/user/");
+
+                    // 3. Actualizar estado y storage
+                    setUser(data);
+                    localStorage.setItem("user", JSON.stringify(data));
+
+                } catch (e: any) {
+                    console.error("Error validando sesión", e);
+                    // Si el token es inválido (401/403), cerramos sesión
+                    if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+                        localStorage.removeItem("user");
+                        localStorage.removeItem("access_token");
+                        if (apiClient.defaults.headers.common) {
+                            delete apiClient.defaults.headers.common["Authorization"];
+                        }
+                        setUser(null);
+                    } else {
+                        // Si es otro error (ej. red), intentamos usar lo que hay en storage como fallback
+                        const storedUser = localStorage.getItem("user");
+                        if (storedUser) {
+                            try {
+                                setUser(JSON.parse(storedUser));
+                            } catch (parseError) {
+                                console.error("Error parsing stored user fallback", parseError);
+                            }
+                        }
+                    }
                 }
             }
             setIsLoading(false);
@@ -98,9 +117,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
         } catch (error) {
-            // IMPORTANTE: No "tragamos" el error. Lo lanzamos hacia arriba.
-            // Así el formulario de Login puede hacer: 
-            // try { await login(...) } catch (err) { setError("Credenciales inválidas") }
             throw error;
         }
     };
@@ -108,13 +124,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // 3. Logout
     const logout = async () => {
         try {
-            // Intentamos avisar al backend (blacklist token)
-            // No importa si falla (ej: sin internet), igual cerramos sesión local
             await apiClient.post("/api/auth/logout/");
         } catch (error) {
-            console.warn("Logout en servidor falló (posiblemente token ya vencido), cerrando sesión local.", error);
+            console.warn("Logout en servidor falló, cerrando sesión local.", error);
         } finally {
-            // Limpieza Local (Siempre se ejecuta)
             setUser(null);
             localStorage.removeItem("user");
             localStorage.removeItem("access_token");

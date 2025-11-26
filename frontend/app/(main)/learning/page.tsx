@@ -18,8 +18,10 @@ const DEFAULT_COVER = "/images/course-placeholder.png";
 // 1. INTERFAZ ACTUALIZADA PARA LEER EL ESTATUS
 interface CourseStudent {
     person_id: number;
-    status: string;      // 'SOL', 'INS', 'APR'...
-    status_name: string; // 'Solicitado', 'Inscrito'...
+    enrollment_status: string;
+    enrollment_status_name: string;
+    academic_status: string;
+    academic_status_name: string;
 }
 
 interface Course {
@@ -153,8 +155,14 @@ function CourseCard({ course, isMyCourse, currentUserId, onEnrollSuccess }: any)
         // Buscarme en la lista de estudiantes
         const studentRecord = course.students.find((s: any) => s.person_id === currentUserId);
         if (studentRecord) {
-            myStatus = studentRecord.status;       // 'SOL', 'INS', 'APR'
-            myStatusLabel = studentRecord.status_name; // 'Solicitado', 'Inscrito'
+            // Prioridad: Estatus Académico Final > Estatus Inscripción
+            if (['APR', 'REP'].includes(studentRecord.academic_status)) {
+                myStatus = studentRecord.academic_status;
+                myStatusLabel = studentRecord.academic_status_name;
+            } else {
+                myStatus = studentRecord.enrollment_status;
+                myStatusLabel = studentRecord.enrollment_status_name;
+            }
         } else {
             // Si no soy estudiante, soy instructor
             myStatus = 'INS_ROLE';
@@ -163,7 +171,7 @@ function CourseCard({ course, isMyCourse, currentUserId, onEnrollSuccess }: any)
     }
 
     // Lógica visual según estatus
-    const isPending = myStatus === 'SOL';
+    const isPending = myStatus === 'REQ';
 
     return (
         <>
@@ -227,7 +235,15 @@ function CourseCard({ course, isMyCourse, currentUserId, onEnrollSuccess }: any)
                         // LÓGICA BOTÓN MIS CURSOS
                         isPending ? (
                             <Button className="w-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border border-yellow-200" disabled>
-                                <Clock className="mr-2 h-4 w-4" /> Esperando Aprobación
+                                <Clock className="mr-2 h-4 w-4" /> Solicitud Enviada
+                            </Button>
+                        ) : myStatus === 'REJ' ? (
+                            <Button className="w-full" variant="destructive" disabled>
+                                Solicitud Rechazada
+                            </Button>
+                        ) : myStatus === 'DRP' ? (
+                            <Button className="w-full" variant="secondary" disabled>
+                                Retirado del Curso
                             </Button>
                         ) : (
                             <Button className="w-full" asChild>

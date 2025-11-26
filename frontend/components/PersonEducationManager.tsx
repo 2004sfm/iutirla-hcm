@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import apiClient from '@/lib/apiClient';
-import { Loader2, Plus, Trash2, GraduationCap, AlertCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, GraduationCap, AlertCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from '@/lib/utils';
@@ -28,7 +28,7 @@ const educationSchema = z.object({
     school_name: z.string().min(2, "Nombre de la institución requerido."),
     level: z.string().min(1, "Seleccione el nivel."),
     field_of_study: z.string().min(1, "Seleccione el área de estudio."),
-    start_date: z.date({ required_error: "Fecha de inicio requerida." }),
+    start_date: z.date({ message: "Fecha de inicio requerida." }),
     end_date: z.date().optional().nullable(),
 }).refine((data) => {
     if (data.end_date && data.start_date && data.end_date < data.start_date) {
@@ -47,6 +47,7 @@ export function PersonEducationManager({ personId }: { personId: number }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [serverError, setServerError] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     // Estados Delete
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
@@ -73,9 +74,20 @@ export function PersonEducationManager({ personId }: { personId: number }) {
         defaultValues: { school_name: "", level: "", field_of_study: "", start_date: undefined, end_date: null }
     });
 
-    const openModal = () => {
+    const openModal = (item?: any) => {
         setServerError(null);
-        form.reset({ school_name: "", level: "", field_of_study: "", start_date: undefined, end_date: null });
+        setEditingId(item?.id || null);
+        if (item) {
+            form.reset({
+                school_name: item.school_name,
+                level: String(item.level),
+                field_of_study: String(item.field_of_study),
+                start_date: new Date(item.start_date),
+                end_date: item.end_date ? new Date(item.end_date) : null,
+            });
+        } else {
+            form.reset({ school_name: "", level: "", field_of_study: "", start_date: undefined, end_date: null });
+        }
         setIsModalOpen(true);
     };
 
@@ -92,9 +104,14 @@ export function PersonEducationManager({ personId }: { personId: number }) {
                 end_date: data.end_date ? format(data.end_date, "yyyy-MM-dd") : null,
             };
 
-            await apiClient.post('/api/talent/education/', payload);
+            if (editingId) {
+                await apiClient.patch(`/api/talent/education/${editingId}/`, payload);
+                toast.success("Registro educativo actualizado exitosamente.");
+            } else {
+                await apiClient.post('/api/talent/education/', payload);
+                toast.success("Registro educativo agregado exitosamente.");
+            }
 
-            toast.success("Registro educativo agregado exitosamente.");
             setIsModalOpen(false);
             fetchEducation();
         } catch (error) {
@@ -124,7 +141,7 @@ export function PersonEducationManager({ personId }: { personId: number }) {
                     <GraduationCap className="size-5" />
                     Formación Académica
                 </h3>
-                <Button size="sm" onClick={openModal}>
+                <Button type="button" size="sm" onClick={() => openModal()}>
                     <Plus className="size-4 mr-2" /> Agregar
                 </Button>
             </div>
@@ -153,17 +170,17 @@ export function PersonEducationManager({ personId }: { personId: number }) {
                                     <TableCell>{item.level_name}</TableCell>
                                     <TableCell>{item.field_of_study_name}</TableCell>
                                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                                        {item.start_date} — {item.end_date || 'Actualidad'}
+                                        {item.start_date} - {item.end_date || "Actualidad"}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive h-8 w-8 hover:bg-destructive/10"
-                                            onClick={() => handleDeleteClick(item)}
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
+                                        <div className="flex justify-end gap-1">
+                                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(item)}>
+                                                <Pencil className="size-4" />
+                                            </Button>
+                                            <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDeleteClick(item)}>
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -175,9 +192,9 @@ export function PersonEducationManager({ personId }: { personId: number }) {
             {/* MODAL */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="sm:max-w-[550px]">
-                    <DialogHeader><DialogTitle>Agregar Estudio</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>{editingId ? "Editar Estudio" : "Agregar Estudio"}</DialogTitle></DialogHeader>
 
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); form.handleSubmit(onSubmit)(e); }} className="space-y-4 py-2">
 
                         {serverError && (
                             <Alert variant="destructive" className="mb-2">
@@ -267,7 +284,7 @@ export function PersonEducationManager({ personId }: { personId: number }) {
                         <DialogFooter>
                             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
                             <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Guardar"}
+                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (editingId ? "Guardar Cambios" : "Guardar")}
                             </Button>
                         </DialogFooter>
                     </form>

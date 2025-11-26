@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useForm, Controller, type Resolver } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import apiClient from '@/lib/apiClient';
@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Plus, Trash2, Pencil, AlertCircle, MapPin } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DynamicCombobox } from "@/components/DynamicCombobox";
 import { Separator } from "@/components/ui/separator";
@@ -85,7 +85,7 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
         }
     });
 
-    const { watch, reset, setError, handleSubmit, control, formState: { errors } } = form;
+    const { watch, reset, handleSubmit, control, formState: { errors } } = form;
     const selectedCountryId = watch('country');
 
     // --- CARGA DE DATOS ---
@@ -147,12 +147,12 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
             country: String(item.country),
             state: String(item.state),
             city: item.city,
-            postal_code: item.postal_code,
+            postal_code: item.postal_code || "",
             street_name_and_number: item.street_name_and_number,
-            extra_address_line: item.extra_address_line as string | null | undefined,
-            house_number: item.house_number as string | null | undefined,
-            apartment: item.apartment as string | null | undefined,
-            street_2: item.street_2 as string | null | undefined,
+            extra_address_line: (item.extra_address_line as string) || "",
+            house_number: (item.house_number as string) || "",
+            apartment: (item.apartment as string) || "",
+            street_2: (item.street_2 as string) || "",
         });
         setIsModalOpen(true);
     };
@@ -207,7 +207,7 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium flex items-center gap-2">Direcciones</h3>
-                <Button size="sm" onClick={handleCreate}><Plus className="size-4" /> Agregar</Button>
+                <Button type="button" size="sm" onClick={handleCreate}><Plus className="size-4" /> Agregar</Button>
             </div>
 
             <div className="border rounded-md overflow-hidden">
@@ -236,9 +236,8 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}><Pencil className="size-4" /></Button>
-                                            {/* Llamada al nuevo manejador que abre el diálogo */}
-                                            <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDelete(item.id)}><Trash2 className="size-4" /></Button>
+                                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}><Pencil className="size-4" /></Button>
+                                            <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => handleDelete(item.id)}><Trash2 className="size-4" /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -253,7 +252,7 @@ export function PersonAddressManager({ personId }: PersonAddressManagerProps) {
                 <DialogContent className="max-w-[500px]">
                     <DialogHeader><DialogTitle>{editingId ? "Editar Dirección" : "Nueva Dirección"}</DialogTitle></DialogHeader>
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+                    <form onSubmit={(e) => { e.stopPropagation(); handleSubmit(onSubmit)(e); }} className="space-y-4 py-2">
 
                         {serverError && <Alert variant="destructive" className="mb-2"><AlertCircle className="size-4" /><AlertTitle>Atención</AlertTitle><AlertDescription>{serverError}</AlertDescription></Alert>}
 
