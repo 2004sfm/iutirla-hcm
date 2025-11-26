@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.serializers import check_uniqueness, title_case_cleaner
+from core.serializers import check_uniqueness, title_case_cleaner, validate_alphanumeric_with_spaces
 from .models import Department, JobTitle, Position, PositionObjective, PositionRequirement
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -11,7 +11,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(value)
+        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
         return check_uniqueness(Department, 'name', cleaned, self.instance, "Ya existe un departamento con este nombre.")
 
     def validate(self, data):
@@ -28,7 +28,7 @@ class JobTitleSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(value)
+        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
         return check_uniqueness(JobTitle, 'name', cleaned, self.instance, "Ya existe un cargo con este nombre.")
 
 class PositionSerializer(serializers.ModelSerializer):

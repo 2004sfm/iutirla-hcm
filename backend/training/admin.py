@@ -15,7 +15,7 @@ class ParticipantInline(admin.TabularInline):
     readonly_fields = ('get_person_name',) 
     
     # Campos a mostrar en la tabla (usamos un método para mostrar el nombre completo)
-    fields = ('person', 'get_person_name', 'role', 'status', 'grade')
+    fields = ('person', 'get_person_name', 'role', 'enrollment_status', 'academic_status', 'grade')
     
     # Método auxiliar para mostrar el nombre completo de la persona
     def get_person_name(self, obj):
@@ -66,20 +66,6 @@ class CourseAdmin(admin.ModelAdmin):
     readonly_fields = ('enrolled_count', 'is_full') 
 
     # Agregamos las secciones inlines al formulario de edición
-    inlines = [ResourceInline, SessionInline, ParticipantInline]
-
-
-@admin.register(models.CourseParticipant)
-class CourseParticipantAdmin(admin.ModelAdmin):
-    """Admin para gestionar inscripciones individuales."""
-    list_display = ('person', 'course', 'role', 'status', 'grade')
-    list_filter = ('role', 'status', 'course')
-    search_fields = ('person__first_name', 'course__name')
-    # Permite navegar a la persona y al curso
-    list_select_related = ('person', 'course')
-
-
-@admin.register(models.AttendanceRecord)
 class AttendanceRecordAdmin(admin.ModelAdmin):
     """Admin para auditar registros de asistencia."""
     list_display = ('session', 'participant_person', 'status', 'notes')

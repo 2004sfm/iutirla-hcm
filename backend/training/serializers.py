@@ -13,8 +13,6 @@ from .models import (
 )
 
 # --- SERIALIZERS DE AYUDA Y AUDITORÍA ---
-# (Se mantienen ParticipantListSerializer y AttendanceRecordSerializer sin cambios,
-# solo necesitan los helpers en el Contexto)
 class AttendanceRecordSerializer(serializers.ModelSerializer):
     person_name = serializers.CharField(source='participant.person.__str__', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -27,11 +25,12 @@ class ParticipantListSerializer(serializers.ModelSerializer):
     person_name = serializers.CharField(source='person.__str__', read_only=True)
     person_id = serializers.IntegerField(source='person.id', read_only=True)
     role_name = serializers.CharField(source='get_role_display', read_only=True)
-    status_name = serializers.CharField(source='get_status_display', read_only=True)
+    enrollment_status_name = serializers.CharField(source='get_enrollment_status_display', read_only=True)
+    academic_status_name = serializers.CharField(source='get_academic_status_display', read_only=True)
 
     class Meta:
         model = CourseParticipant
-        fields = ['id', 'person_id', 'person_name', 'role', 'role_name', 'status', 'status_name', 'grade']
+        fields = ['id', 'person_id', 'person_name', 'role', 'role_name', 'enrollment_status', 'enrollment_status_name', 'academic_status', 'academic_status_name', 'grade']
 
 
 # --- 1. RECURSOS (Con Limpieza y Validación) ---
@@ -101,7 +100,8 @@ class CourseSessionSerializer(serializers.ModelSerializer):
 class CourseParticipantSerializer(serializers.ModelSerializer):
     person_name = serializers.CharField(source='person.__str__', read_only=True)
     role_name = serializers.CharField(source='get_role_display', read_only=True)
-    status_name = serializers.CharField(source='get_status_display', read_only=True)
+    enrollment_status_name = serializers.CharField(source='get_enrollment_status_display', read_only=True)
+    academic_status_name = serializers.CharField(source='get_academic_status_display', read_only=True)
     
     class Meta:
         model = CourseParticipant
@@ -192,14 +192,11 @@ class CourseSerializer(serializers.ModelSerializer):
         Calcula el número de estudiantes que ocupan un cupo oficialmente (Inscrito o Aprobado).
         """
         # Aseguramos que solo contamos a los estudiantes, no a los instructores.
-        approved_statuses = [
-            CourseParticipant.EvaluationStatus.ENROLLED, # INS
-            CourseParticipant.EvaluationStatus.PASSED,    # APR
-        ]
+        # Contamos a los que están oficialmente inscritos (ENR)
         
         return obj.participants.filter(
             role=CourseParticipant.Role.STUDENT, 
-            status__in=approved_statuses
+            enrollment_status=CourseParticipant.EnrollmentStatus.ENROLLED
         ).count()
     
     # 🚨 INTEGRACIÓN DE LIMPIEZA Y UNICIDAD EN EL MODELO PRINCIPAL 🚨

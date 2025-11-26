@@ -39,7 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-db.sqlite3
+# db.sqlite3
 
 /media
 

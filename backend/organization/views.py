@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
-from .models import Department, JobTitle, Position
-from .serializers import DepartmentSerializer, JobTitleSerializer, PositionSerializer
+from .models import Department, JobTitle, Position, PositionObjective, PositionRequirement
+from .serializers import DepartmentSerializer, JobTitleSerializer, PositionSerializer, PositionObjectiveSerializer, PositionRequirementSerializer
 
 class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.all()
@@ -16,3 +16,31 @@ class PositionViewSet(viewsets.ModelViewSet):
     queryset = Position.objects.all()
     serializer_class = PositionSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+class PositionObjectiveViewSet(viewsets.ModelViewSet):
+    serializer_class = PositionObjectiveSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    
+    def get_queryset(self):
+        position_id = self.kwargs.get('position_pk')
+        if position_id:
+            return PositionObjective.objects.filter(position_id=position_id)
+        return PositionObjective.objects.all()
+    
+    def perform_create(self, serializer):
+        position_id = self.kwargs.get('position_pk')
+        serializer.save(position_id=position_id)
+
+class PositionRequirementViewSet(viewsets.ModelViewSet):
+    serializer_class = PositionRequirementSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    
+    def get_queryset(self):
+        position_id = self.kwargs.get('position_pk')
+        if position_id:
+            return PositionRequirement.objects.filter(position_id=position_id)
+        return PositionRequirement.objects.all()
+    
+    def perform_create(self, serializer):
+        position_id = self.kwargs.get('position_pk')
+        serializer.save(position_id=position_id)

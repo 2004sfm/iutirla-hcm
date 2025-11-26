@@ -98,19 +98,36 @@ class CourseParticipant(models.Model):
         INSTRUCTOR = 'INS', 'Instructor'
         STUDENT = 'EST', 'Estudiante'
 
-    class EvaluationStatus(models.TextChoices):
-        REQUESTED = 'SOL', 'Solicitud Enviada'  #
-        PENDING = 'PEN', 'Pendiente'
+    class EnrollmentStatus(models.TextChoices):
+        REQUESTED = 'REQ', 'Solicitud Enviada'
+        ENROLLED = 'ENR', 'Inscrito / Matriculado'
+        REJECTED = 'REJ', 'Solicitud Rechazada'
+        DROPPED = 'DRP', 'Retirado'
+
+    class AcademicStatus(models.TextChoices):
+        NOT_EVALUATED = 'NEV', 'No Evaluado / N/A'
+        PENDING = 'PEN', 'En Curso / Pendiente'
         PASSED = 'APR', 'Aprobado'
         FAILED = 'REP', 'Reprobado'
-        ENROLLED = 'INS', 'Inscrito'
-        DROPPED = 'RET', 'Retirado'
-        REJECTED = 'REJ', 'Solicitud Rechazada'
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='participants')
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='training_courses')
     role = models.CharField(max_length=3, choices=Role.choices, default=Role.STUDENT)
-    status = models.CharField(max_length=3, choices=EvaluationStatus.choices, default=EvaluationStatus.PENDING)
+    
+    # Nuevos campos de estado separados
+    enrollment_status = models.CharField(
+        max_length=3, 
+        choices=EnrollmentStatus.choices, 
+        default=EnrollmentStatus.REQUESTED,
+        verbose_name="Estado de Inscripción"
+    )
+    academic_status = models.CharField(
+        max_length=3, 
+        choices=AcademicStatus.choices, 
+        default=AcademicStatus.NOT_EVALUATED,
+        verbose_name="Estado Académico"
+    )
+    
     grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     
     class Meta:

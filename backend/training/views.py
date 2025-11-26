@@ -7,11 +7,11 @@ from .serializers import (
     CourseParticipantSerializer, AttendanceRecordSerializer
 )
 from django.db.models import Q
-from .permissions import IsInstructorOrAdmin # <--- Importar
+from .permissions import IsInstructorOrAdmin
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
-    permission_classes = [permissions.IsAuthenticated, IsInstructorOrAdmin] # Tu permiso custom
+    permission_classes = [permissions.IsAuthenticated, IsInstructorOrAdmin]
 
     def get_queryset(self):
         queryset = Course.objects.all().order_by('-start_date')
@@ -43,7 +43,14 @@ class CourseResourceViewSet(viewsets.ModelViewSet):
 
         # Filtro de Seguridad
         if hasattr(user, 'person') and not user.is_staff:
-            queryset = queryset.filter(course__participants__person=user.person).distinct()
+            # SOLO si estoy INSCRITO (ENR) o soy INSTRUCTOR (INS)
+            queryset = queryset.filter(
+                Q(course__participants__person=user.person) &
+                (
+                    Q(course__participants__enrollment_status='ENR') | 
+                    Q(course__participants__role='INS')
+                )
+            ).distinct()
 
         # 👇 FILTRO ESPECÍFICO (Crucial) 👇
         course_id = self.request.query_params.get('course')
@@ -64,7 +71,14 @@ class CourseSessionViewSet(viewsets.ModelViewSet):
             return queryset
 
         if hasattr(user, 'person'):
-            return queryset.filter(course__participants__person=user.person).distinct()
+            # SOLO si estoy INSCRITO (ENR) o soy INSTRUCTOR (INS)
+            return queryset.filter(
+                Q(course__participants__person=user.person) &
+                (
+                    Q(course__participants__enrollment_status='ENR') | 
+                    Q(course__participants__role='INS')
+                )
+            ).distinct()
         
         # Agregamos el filtro por curso específico también aquí por seguridad
         course_id = self.request.query_params.get('course')
@@ -73,15 +87,12 @@ class CourseSessionViewSet(viewsets.ModelViewSet):
 
         return CourseSession.objects.none()
 
-    # 👇👇👇 AGREGA ESTE BLOQUE QUE ES EL QUE FALTA 👇👇👇
     @action(detail=True, methods=['get'])
     def attendance(self, request, pk=None):
         session = self.get_object()
         records = session.attendance_records.select_related('participant__person').all()
         serializer = AttendanceRecordSerializer(records, many=True)
         return Response(serializer.data)
-
-# training/views.py
 
 class CourseParticipantViewSet(viewsets.ModelViewSet):
     queryset = CourseParticipant.objects.all()
@@ -92,7 +103,7 @@ class CourseParticipantViewSet(viewsets.ModelViewSet):
         # OPTIMIZACIÓN: Cargar la persona junto con el participante
         queryset = CourseParticipant.objects.select_related('person')
         
-        # Filtro por curso (Ya lo tenías, pero lo repasamos)
+        # Filtro por curso
         course_id = self.request.query_params.get('course')
         if course_id:
             queryset = queryset.filter(course_id=course_id)

@@ -201,7 +201,7 @@ class PersonBankAccount(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name="bank_accounts")
     bank = models.ForeignKey(Bank, on_delete=models.SET_NULL, null=True)
     bank_account_type = models.ForeignKey(BankAccountType, on_delete=models.SET_NULL, null=True)
-    account_number = models.CharField(max_length=20, unique=True)
+    account_number = models.CharField(max_length=20, unique=True, error_messages={'unique': "Este número de cuenta ya está registrado."})
     is_primary = models.BooleanField(default=False)
 
 class PersonDocument(models.Model):
