@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     LayoutDashboard,
     Users,
@@ -111,11 +112,7 @@ const adminMenuItems: MenuItem[] = [
     {
         label: "Organización",
         icon: Network,
-        children: [
-            { label: "Departamentos", href: "/admin/organization/departments", icon: Circle },
-            { label: "Títulos de cargo", href: "/admin/organization/job-titles", icon: Circle },
-            { label: "Posiciones", href: "/admin/organization/positions", icon: Circle },
-        ],
+        href: "/admin/organization"
     },
     {
         label: "Capacitación",
@@ -162,6 +159,7 @@ const adminMenuItems: MenuItem[] = [
 
 export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boolean; role?: "admin" | "employee" }) {
     const [expandedItems, setExpandedItems] = useState<string[]>(["Personal"]);
+    const pathname = usePathname();
     const menuItems = role === "admin" ? adminMenuItems : employeeMenuItems;
 
     const toggleItem = (label: string) => {
@@ -183,6 +181,9 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
         }
     };
 
+    const isActive = (href: string) => pathname === href || pathname?.startsWith(href + "/");
+    const isChildActive = (children: { href: string }[]) => children.some(child => isActive(child.href));
+
     return (
         <div className="flex flex-col h-full">
             {/* Sidebar Header (Brand) */}
@@ -200,15 +201,25 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
                         const hasChildren = item.children && item.children.length > 0;
                         const isLink = !hasChildren && item.href;
 
+                        // Determine active states
+                        const isItemActive = isLink && item.href ? isActive(item.href) : false;
+                        const isParentActive = hasChildren && item.children ? isChildActive(item.children) : false;
+
                         const ItemContent = (
                             <>
-                                <div className="w-12 flex items-center justify-center shrink-0 text-muted-foreground group-hover:text-brand-primary transition-colors self-stretch">
+                                <div className={cn(
+                                    "w-12 flex items-center justify-center shrink-0 transition-colors self-stretch",
+                                    isItemActive ? "text-white" : (isParentActive ? "text-brand-primary" : "text-muted-foreground")
+                                )}>
                                     <item.icon className="size-5" />
                                 </div>
 
                                 {!collapsed && (
                                     <div className="flex-1 flex items-center min-w-0 pr-3 py-2.5">
-                                        <span className="flex-1 text-sm text-foreground text-left font-medium truncate">
+                                        <span className={cn(
+                                            "flex-1 text-sm text-left font-medium truncate",
+                                            isItemActive ? "text-white" : (isParentActive ? "text-brand-primary" : "text-foreground")
+                                        )}>
                                             {item.label}
                                         </span>
 
@@ -222,7 +233,10 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
                                         )}
 
                                         {hasChildren && (
-                                            <div className="text-muted-foreground ml-2">
+                                            <div className={cn(
+                                                "ml-2",
+                                                isParentActive ? "text-brand-primary" : "text-muted-foreground"
+                                            )}>
                                                 {isExpanded ? (
                                                     <ChevronDown className="w-4 h-4" />
                                                 ) : (
@@ -253,9 +267,13 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
                         );
 
                         const itemClasses = cn(
-                            "flex items-center transition-colors relative group min-h-[44px] mx-2 rounded-lg w-[calc(100%-16px)]",
-                            "hover:bg-accent",
-                            isExpanded && hasChildren && "bg-muted"
+                            "flex items-center transition-colors relative group min-h-[44px] mx-2 rounded-lg w-[calc(100%-16px)] cursor-pointer",
+                            isItemActive
+                                ? "bg-brand-primary hover:bg-brand-primary/90"
+                                : (isParentActive
+                                    ? "bg-brand-primary/10 hover:bg-brand-primary/20"
+                                    : "hover:bg-accent"),
+                            isExpanded && hasChildren && !isParentActive && "bg-muted"
                         );
 
                         return (
@@ -278,33 +296,48 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
                                 {/* Children Items */}
                                 {hasChildren && isExpanded && (
                                     <ul className="mt-1 space-y-1">
-                                        {item.children?.map((child, childIndex) => (
-                                            <li key={childIndex}>
-                                                <Link
-                                                    href={child.href}
-                                                    className="flex items-center transition-colors relative group min-h-[44px] mx-2 rounded-lg w-[calc(100%-16px)] hover:bg-accent"
-                                                >
-                                                    <div className="w-12 flex items-center justify-center shrink-0 text-muted-foreground group-hover:text-brand-primary transition-colors self-stretch">
-                                                        <child.icon className="size-5" />
-                                                    </div>
-                                                    {!collapsed && (
-                                                        <div className="flex-1 flex items-center min-w-0 pr-3 py-2.5">
-                                                            <span className="flex-1 text-sm text-foreground text-left font-medium truncate">
-                                                                {child.label}
-                                                            </span>
+                                        {item.children?.map((child, childIndex) => {
+                                            const isChildItemActive = isActive(child.href);
+
+                                            return (
+                                                <li key={childIndex}>
+                                                    <Link
+                                                        href={child.href}
+                                                        className={cn(
+                                                            "flex items-center transition-colors relative group min-h-[44px] mx-2 rounded-lg w-[calc(100%-16px)]",
+                                                            isChildItemActive
+                                                                ? "bg-brand-primary hover:bg-brand-primary/90"
+                                                                : "hover:bg-accent"
+                                                        )}
+                                                    >
+                                                        <div className={cn(
+                                                            "w-12 flex items-center justify-center shrink-0 transition-colors self-stretch",
+                                                            isChildItemActive ? "text-white" : "text-muted-foreground"
+                                                        )}>
+                                                            <child.icon className="size-5" />
                                                         </div>
-                                                    )}
-                                                    {/* Tooltip for collapsed state (Child) */}
-                                                    {collapsed && (
-                                                        <div className="absolute left-full ml-2 px-3 py-2 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 top-0">
-                                                            <span className="text-sm text-foreground font-medium">
-                                                                {child.label}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </Link>
-                                            </li>
-                                        ))}
+                                                        {!collapsed && (
+                                                            <div className="flex-1 flex items-center min-w-0 pr-3 py-2.5">
+                                                                <span className={cn(
+                                                                    "flex-1 text-sm text-left font-medium truncate",
+                                                                    isChildItemActive ? "text-white" : "text-foreground"
+                                                                )}>
+                                                                    {child.label}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {/* Tooltip for collapsed state (Child) */}
+                                                        {collapsed && (
+                                                            <div className="absolute left-full ml-2 px-3 py-2 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 top-0">
+                                                                <span className="text-sm text-foreground font-medium">
+                                                                    {child.label}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </Link>
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 )}
                             </li>

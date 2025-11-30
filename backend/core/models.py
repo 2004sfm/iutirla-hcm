@@ -76,7 +76,7 @@ class State(models.Model):
 
 class PhoneCarrierCode(models.Model):
     carrier = models.ForeignKey(PhoneCarrier, on_delete=models.CASCADE)
-    code = models.CharField(max_length=5)
+    code = models.CharField(max_length=4)
     class Meta: unique_together = ('carrier', 'code')
     def __str__(self): return f"{self.code} ({self.carrier})"
 

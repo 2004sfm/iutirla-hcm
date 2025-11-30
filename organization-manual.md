@@ -1,3 +1,5 @@
+# Manual de Organización
+
 ## Tabla de Contenido
 
 - [VI.- DESCRIPCIÓN DE CARGOS Y FUNCIONES](#vi--descripción-de-cargos-y-funciones)

@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CatalogCard } from "@/components/catalogs/catalog-card";
 import { Input } from "@/components/ui/input";
 import {
     Globe2,
@@ -17,7 +17,6 @@ import {
     Search,
     Hash,
 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 
 const catalogs = [
@@ -152,27 +151,10 @@ export default function GeneralConfigPage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredCatalogs.map((catalog) => (
-                    <Link key={catalog.href} href={catalog.href}>
-                        <Card className={`relative h-[140px] flex flex-col p-5 overflow-hidden bg-linear-to-br ${catalog.gradient} hover:scale-105 hover:contrast-125 hover:shadow-xl transition-all duration-300 ease-out group cursor-pointer text-white border-0`}>
-                            <div className="h-full relative z-10 flex flex-col justify-between gap-1">
-                                <CardHeader className="p-0 space-y-0">
-                                    <CardTitle className="mr-20 text-xl font-bold leading-tight">
-                                        {catalog.title}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-0">
-                                    <CardDescription className="mr-26 text-white/90 text-sm font-medium line-clamp-2">
-                                        {catalog.description}
-                                    </CardDescription>
-                                </CardContent>
-                            </div>
-
-                            <catalog.icon
-                                strokeWidth={1.5}
-                                className={`absolute -right-6 -bottom-6 size-32 ${catalog.iconColor} -rotate-6 group-hover:rotate-6 group-hover:text-white group-hover:scale-110 transition-all duration-300 ease-in-out`}
-                            />
-                        </Card>
-                    </Link>
+                    <CatalogCard
+                        key={catalog.href}
+                        {...catalog}
+                    />
                 ))}
             </div>
         </div>

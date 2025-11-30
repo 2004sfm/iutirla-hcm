@@ -6,7 +6,9 @@ from core.models import Person
 from core.serializers import ( 
     title_case_cleaner, 
     sentence_case_cleaner, 
-    check_uniqueness 
+    check_uniqueness,
+    validate_text_with_spaces,
+    validate_min_length
 )
 from .models import (
     Course, CourseResource, CourseSession, CourseParticipant, AttendanceRecord
@@ -42,8 +44,9 @@ class CourseResourceSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
     def validate_name(self, value):
-        # Limpieza de nombre (Título)
-        cleaned_value = title_case_cleaner(value)
+        # Limpieza y validación de nombre (Título)
+        cleaned_value = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned_value, 2)
         
         # Validación de unicidad GLOBAL para Recursos (Evita dos PDF con el mismo nombre)
         return check_uniqueness(self.Meta.model, 'name', cleaned_value, self.instance, 
@@ -201,7 +204,8 @@ class CourseSerializer(serializers.ModelSerializer):
     
     # 🚨 INTEGRACIÓN DE LIMPIEZA Y UNICIDAD EN EL MODELO PRINCIPAL 🚨
     def validate_name(self, value):
-        cleaned_value = title_case_cleaner(value)
+        cleaned_value = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned_value, 2)
         return check_uniqueness(Course, 'name', cleaned_value, self.instance, error_msg="Ya existe un curso con este nombre.")
 
     def validate_description(self, value):

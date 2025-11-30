@@ -13,21 +13,28 @@ from .serializers import (
     RoleSerializer, EmploymentTypeSerializer, EmploymentStatusSerializer, 
     EmploymentSerializer, EmployeeListSerializer, EmploymentStatusLogSerializer # <--- NOMBRE CORREGIDO
 )
+from core.filters import UnaccentSearchFilter
 
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class EmploymentTypeViewSet(viewsets.ModelViewSet):
     queryset = EmploymentType.objects.all()
     serializer_class = EmploymentTypeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class EmploymentStatusViewSet(viewsets.ModelViewSet):
     queryset = EmploymentStatus.objects.all()
     serializer_class = EmploymentStatusSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class EmploymentViewSet(viewsets.ModelViewSet):
     queryset = Employment.objects.all()

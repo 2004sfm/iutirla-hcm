@@ -5,11 +5,12 @@ import {
     flexRender,
     getCoreRowModel,
     useReactTable,
-    getPaginationRowModel,
     SortingState,
     getSortedRowModel,
     ColumnFiltersState,
     getFilteredRowModel,
+    PaginationState,
+    OnChangeFn,
 } from "@tanstack/react-table"
 
 import {
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import {
     Select,
@@ -36,30 +37,51 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     searchKey?: string
+    rowCount?: number
+    pagination?: PaginationState
+    onPaginationChange?: OnChangeFn<PaginationState>
+    onSearch?: (value: string) => void
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
     searchKey,
+    rowCount,
+    pagination,
+    onPaginationChange,
+    onSearch,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+    const [searchValue, setSearchValue] = useState("")
 
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
+        manualPagination: true, // Enable server-side pagination
+        pageCount: rowCount && pagination ? Math.ceil(rowCount / pagination.pageSize) : -1,
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
+        onPaginationChange: onPaginationChange,
         state: {
             sorting,
             columnFilters,
+            pagination: pagination,
         },
     })
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (onSearch) {
+                onSearch(searchValue)
+            }
+        }, 500)
+        return () => clearTimeout(timeoutId)
+    }, [searchValue, onSearch])
 
     return (
         <div className="flex flex-col gap-6">
@@ -67,10 +89,8 @@ export function DataTable<TData, TValue>({
                 <div className="flex items-center">
                     <Input
                         placeholder="Buscar..."
-                        value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-                        onChange={(event) =>
-                            table.getColumn(searchKey)?.setFilterValue(event.target.value)
-                        }
+                        value={searchValue}
+                        onChange={(event) => setSearchValue(event.target.value)}
                         className="max-w-sm"
                     />
                 </div>

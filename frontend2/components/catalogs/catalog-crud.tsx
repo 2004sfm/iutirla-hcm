@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 import { DataTable } from "./data-table";
 import { Button } from "@/components/ui/button";
@@ -42,12 +42,13 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export interface CatalogField {
     name: string;
     label: string;
-    type: "text" | "number" | "email" | "select";
+    type: "text" | "number" | "email" | "select" | "checkbox";
     required?: boolean;
     optionsUrl?: string; // API endpoint to fetch options
     optionLabelKey?: string; // Key to display (default: name)
@@ -71,8 +72,15 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
     const [currentItem, setCurrentItem] = useState<any | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [fieldOptions, setFieldOptions] = useState<Record<string, any[]>>({});
-    const [serverError, setServerError] = useState<string | null>(null);
+    const [serverError, setServerError] = useState<string | string[] | null>(null);
     const [pendingFormData, setPendingFormData] = useState<any>(null);
+
+    const [pagination, setPagination] = useState({
+        pageIndex: 0,
+        pageSize: 10,
+    });
+    const [rowCount, setRowCount] = useState(0);
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Dynamic Zod Schema Generation
     const formSchema = useMemo(() => {
@@ -81,17 +89,19 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
             let fieldSchema;
             if (field.type === "number") {
                 fieldSchema = z.coerce.number();
-            } else {
-                fieldSchema = z.string();
-            }
-
-            if (field.required) {
-                if (field.type === "number") {
-                    fieldSchema = fieldSchema.min(1, { message: `${field.label} es requerido` });
-                } else {
+                if (field.required) {
                     fieldSchema = fieldSchema.min(1, { message: `${field.label} es requerido` });
                 }
+            } else if (field.type === "checkbox") {
+                fieldSchema = z.boolean().default(false);
             } else {
+                fieldSchema = z.string();
+                if (field.required) {
+                    fieldSchema = fieldSchema.min(1, { message: `${field.label} es requerido` });
+                }
+            }
+
+            if (!field.required && field.type !== "checkbox") {
                 fieldSchema = fieldSchema.optional();
             }
             shape[field.name] = fieldSchema;
@@ -108,12 +118,27 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
 
     // Fetch Data
     const fetchData = async () => {
-        setIsLoading(true);
+        // setIsLoading(true); // Removed to prevent unmounting DataTable on updates
         try {
-            const response = await apiClient.get(apiUrl);
-            setData(response.data.results || response.data); // Handle pagination or list
+            const params: any = {
+                page: pagination.pageIndex + 1,
+                page_size: pagination.pageSize,
+            };
+            if (searchTerm) {
+                params.search = searchTerm;
+            }
+            const response = await apiClient.get(apiUrl, { params });
+
+            if (response.data.results) {
+                setData(response.data.results);
+                setRowCount(response.data.count);
+            } else {
+                // Fallback for non-paginated responses
+                setData(response.data);
+                setRowCount(response.data.length);
+            }
         } catch (error) {
-            console.error("Error fetching data:", error);
+            // console.error("Error fetching data:", error);
             toast.error("Error al cargar los datos.");
         } finally {
             setIsLoading(false);
@@ -129,7 +154,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
                     const response = await apiClient.get(field.optionsUrl);
                     options[field.name] = response.data.results || response.data;
                 } catch (error) {
-                    console.error(`Error fetching options for ${field.name}:`, error);
+                    // console.error(`Error fetching options for ${field.name}:`, error);
                 }
             }
         }
@@ -139,7 +164,12 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
     useEffect(() => {
         fetchData();
         fetchOptions();
-    }, [apiUrl]);
+    }, [apiUrl, pagination.pageIndex, pagination.pageSize, searchTerm]);
+
+    const handleSearch = useCallback((term: string) => {
+        setSearchTerm(term);
+        setPagination(prev => ({ ...prev, pageIndex: 0 })); // Reset to first page on search
+    }, []);
 
     // Open Create Dialog
     const handleCreate = () => {
@@ -207,29 +237,41 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
             setIsDialogOpen(false);
             fetchData();
         } catch (error: any) {
-            console.error("Error saving data:", error);
+            // console.error("Error saving data:", error);
             if (error.response) {
                 const data = error.response.data;
+                const generalErrors: string[] = [];
+
                 if (error.response.status === 400) {
                     // Field validation errors
                     if (data.non_field_errors) {
-                        setServerError(data.non_field_errors[0]);
-                    } else if (data.detail) {
-                        setServerError(data.detail);
-                    } else {
-                        // Set field errors in react-hook-form
-                        Object.keys(data).forEach((key) => {
+                        generalErrors.push(...data.non_field_errors);
+                    }
+                    if (data.detail) {
+                        generalErrors.push(data.detail);
+                    }
+
+                    // Handle field errors
+                    Object.keys(data).forEach((key) => {
+                        if (key !== 'non_field_errors' && key !== 'detail') {
+                            const msg = Array.isArray(data[key]) ? data[key][0] : data[key];
+
                             // Check if key exists in fields
                             if (fields.some(f => f.name === key)) {
+                                // Set error on field to show message below input
                                 form.setError(key, {
                                     type: "manual",
-                                    message: Array.isArray(data[key]) ? data[key][0] : data[key],
+                                    message: msg,
                                 });
                             } else {
                                 // If error is for a field not in the form, show as general error
-                                setServerError(`${key}: ${Array.isArray(data[key]) ? data[key][0] : data[key]}`);
+                                generalErrors.push(`${key}: ${msg}`);
                             }
-                        });
+                        }
+                    });
+
+                    if (generalErrors.length > 0) {
+                        setServerError(generalErrors);
                     }
                 } else {
                     setServerError(data.detail || "Ocurrió un error al guardar el registro.");
@@ -252,7 +294,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
             setIsDeleteDialogOpen(false);
             fetchData();
         } catch (error) {
-            console.error("Error deleting data:", error);
+            // console.error("Error deleting data:", error);
             toast.error("Error al eliminar el registro.");
         }
     };
@@ -289,7 +331,15 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
             {isLoading ? (
                 <TableSkeleton columnCount={tableColumns.length} />
             ) : (
-                <DataTable columns={tableColumns} data={data} searchKey={searchKey} />
+                <DataTable
+                    columns={tableColumns}
+                    data={data}
+                    searchKey={searchKey}
+                    rowCount={rowCount}
+                    pagination={pagination}
+                    onPaginationChange={setPagination}
+                    onSearch={handleSearch}
+                />
             )}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col">
@@ -306,7 +356,19 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertTitle>Error</AlertTitle>
                                 <AlertDescription>
-                                    {serverError}
+                                    {Array.isArray(serverError) ? (
+                                        serverError.length > 1 ? (
+                                            <ul className="list-disc list-inside">
+                                                {serverError.map((err, index) => (
+                                                    <li key={index}>{err}</li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            serverError[0]
+                                        )
+                                    ) : (
+                                        serverError
+                                    )}
                                 </AlertDescription>
                             </Alert>
                         )}
@@ -333,6 +395,14 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
                                                             placeholder="Seleccione una opción"
                                                             emptyText="No se encontraron resultados."
                                                         />
+                                                    ) : field.type === "checkbox" ? (
+                                                        <div className="flex items-center space-x-2">
+                                                            <Switch
+                                                                checked={!!formField.value}
+                                                                onCheckedChange={formField.onChange}
+                                                            />
+                                                            <Label>{field.label}</Label>
+                                                        </div>
                                                     ) : (
                                                         <Input
                                                             type={field.type}

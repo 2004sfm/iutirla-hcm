@@ -1,0 +1,1255 @@
+[
+    {
+        "model": "core.salutation",
+        "pk": 1,
+        "fields": {
+            "name": "Sr."
+        }
+    },
+    {
+        "model": "core.salutation",
+        "pk": 2,
+        "fields": {
+            "name": "Sra."
+        }
+    },
+    {
+        "model": "core.salutation",
+        "pk": 3,
+        "fields": {
+            "name": "Srta."
+        }
+    },
+    {
+        "model": "core.salutation",
+        "pk": 4,
+        "fields": {
+            "name": "Dr."
+        }
+    },
+    {
+        "model": "core.salutation",
+        "pk": 5,
+        "fields": {
+            "name": "Dra."
+        }
+    },
+    {
+        "model": "core.salutation",
+        "pk": 6,
+        "fields": {
+            "name": "Lic."
+        }
+    },
+    {
+        "model": "core.salutation",
+        "pk": 7,
+        "fields": {
+            "name": "Ing."
+        }
+    },
+    {
+        "model": "core.gender",
+        "pk": 1,
+        "fields": {
+            "name": "Masculino"
+        }
+    },
+    {
+        "model": "core.gender",
+        "pk": 2,
+        "fields": {
+            "name": "Femenino"
+        }
+    },
+    {
+        "model": "core.maritalstatus",
+        "pk": 1,
+        "fields": {
+            "name": "Soltero/a"
+        }
+    },
+    {
+        "model": "core.maritalstatus",
+        "pk": 2,
+        "fields": {
+            "name": "Casado/a"
+        }
+    },
+    {
+        "model": "core.maritalstatus",
+        "pk": 3,
+        "fields": {
+            "name": "Divorciado/a"
+        }
+    },
+    {
+        "model": "core.maritalstatus",
+        "pk": 4,
+        "fields": {
+            "name": "Viudo/a"
+        }
+    },
+    {
+        "model": "core.maritalstatus",
+        "pk": 5,
+        "fields": {
+            "name": "Concubino/a"
+        }
+    },
+    {
+        "model": "core.addresstype",
+        "pk": 1,
+        "fields": {
+            "name": "Residencial"
+        }
+    },
+    {
+        "model": "core.addresstype",
+        "pk": 2,
+        "fields": {
+            "name": "Fiscal"
+        }
+    },
+    {
+        "model": "core.emailtype",
+        "pk": 1,
+        "fields": {
+            "name": "Personal"
+        }
+    },
+    {
+        "model": "core.emailtype",
+        "pk": 2,
+        "fields": {
+            "name": "Corporativo"
+        }
+    },
+    {
+        "model": "core.phonetype",
+        "pk": 1,
+        "fields": {
+            "name": "Móvil"
+        }
+    },
+    {
+        "model": "core.phonetype",
+        "pk": 2,
+        "fields": {
+            "name": "Casa"
+        }
+    },
+    {
+        "model": "core.phonetype",
+        "pk": 3,
+        "fields": {
+            "name": "Trabajo"
+        }
+    },
+    {
+        "model": "core.bankaccounttype",
+        "pk": 1,
+        "fields": {
+            "name": "Corriente"
+        }
+    },
+    {
+        "model": "core.bankaccounttype",
+        "pk": 2,
+        "fields": {
+            "name": "Ahorro"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 1,
+        "fields": {
+            "name": "Padre"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 2,
+        "fields": {
+            "name": "Madre"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 3,
+        "fields": {
+            "name": "Hijo/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 4,
+        "fields": {
+            "name": "Esposo/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 5,
+        "fields": {
+            "name": "Hermano/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 6,
+        "fields": {
+            "name": "Tío/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 7,
+        "fields": {
+            "name": "Sobrino/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 8,
+        "fields": {
+            "name": "Primo/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 9,
+        "fields": {
+            "name": "Abuelo/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 10,
+        "fields": {
+            "name": "Nieto/a"
+        }
+    },
+    {
+        "model": "core.relationshiptype",
+        "pk": 11,
+        "fields": {
+            "name": "Amigo/a"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 1,
+        "fields": {
+            "name": "Venezuela",
+            "iso_2": "VE"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 2,
+        "fields": {
+            "name": "Argentina",
+            "iso_2": "AR"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 3,
+        "fields": {
+            "name": "Bolivia",
+            "iso_2": "BO"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 4,
+        "fields": {
+            "name": "Brasil",
+            "iso_2": "BR"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 5,
+        "fields": {
+            "name": "Canadá",
+            "iso_2": "CA"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 6,
+        "fields": {
+            "name": "Chile",
+            "iso_2": "CL"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 7,
+        "fields": {
+            "name": "Colombia",
+            "iso_2": "CO"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 8,
+        "fields": {
+            "name": "Costa Rica",
+            "iso_2": "CR"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 9,
+        "fields": {
+            "name": "Cuba",
+            "iso_2": "CU"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 10,
+        "fields": {
+            "name": "Ecuador",
+            "iso_2": "EC"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 11,
+        "fields": {
+            "name": "El Salvador",
+            "iso_2": "SV"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 12,
+        "fields": {
+            "name": "Estados Unidos",
+            "iso_2": "US"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 13,
+        "fields": {
+            "name": "Guatemala",
+            "iso_2": "GT"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 14,
+        "fields": {
+            "name": "Honduras",
+            "iso_2": "HN"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 15,
+        "fields": {
+            "name": "México",
+            "iso_2": "MX"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 16,
+        "fields": {
+            "name": "Nicaragua",
+            "iso_2": "NI"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 17,
+        "fields": {
+            "name": "Panamá",
+            "iso_2": "PA"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 18,
+        "fields": {
+            "name": "Paraguay",
+            "iso_2": "PY"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 19,
+        "fields": {
+            "name": "Perú",
+            "iso_2": "PE"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 20,
+        "fields": {
+            "name": "República Dominicana",
+            "iso_2": "DO"
+        }
+    },
+    {
+        "model": "core.country",
+        "pk": 21,
+        "fields": {
+            "name": "Uruguay",
+            "iso_2": "UY"
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 1,
+        "fields": {
+            "name": "Amazonas",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 2,
+        "fields": {
+            "name": "Anzoátegui",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 3,
+        "fields": {
+            "name": "Apure",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 4,
+        "fields": {
+            "name": "Aragua",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 5,
+        "fields": {
+            "name": "Barinas",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 6,
+        "fields": {
+            "name": "Bolívar",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 7,
+        "fields": {
+            "name": "Carabobo",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 8,
+        "fields": {
+            "name": "Cojedes",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 9,
+        "fields": {
+            "name": "Delta Amacuro",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 10,
+        "fields": {
+            "name": "Distrito Capital",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 11,
+        "fields": {
+            "name": "Falcón",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 12,
+        "fields": {
+            "name": "Guárico",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 13,
+        "fields": {
+            "name": "La Guaira",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 14,
+        "fields": {
+            "name": "Lara",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 15,
+        "fields": {
+            "name": "Mérida",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 16,
+        "fields": {
+            "name": "Miranda",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 17,
+        "fields": {
+            "name": "Monagas",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 18,
+        "fields": {
+            "name": "Nueva Esparta",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 19,
+        "fields": {
+            "name": "Portuguesa",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 20,
+        "fields": {
+            "name": "Sucre",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 21,
+        "fields": {
+            "name": "Táchira",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 22,
+        "fields": {
+            "name": "Trujillo",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 23,
+        "fields": {
+            "name": "Yaracuy",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.state",
+        "pk": 24,
+        "fields": {
+            "name": "Zulia",
+            "country": 1
+        }
+    },
+    {
+        "model": "core.phonecarrier",
+        "pk": 1,
+        "fields": {
+            "name": "Digitel"
+        }
+    },
+    {
+        "model": "core.phonecarrier",
+        "pk": 2,
+        "fields": {
+            "name": "Movistar"
+        }
+    },
+    {
+        "model": "core.phonecarrier",
+        "pk": 3,
+        "fields": {
+            "name": "Movilnet"
+        }
+    },
+    {
+        "model": "core.phonecarriercode",
+        "pk": 1,
+        "fields": {
+            "carrier": 1,
+            "code": "0412"
+        }
+    },
+    {
+        "model": "core.phonecarriercode",
+        "pk": 2,
+        "fields": {
+            "carrier": 2,
+            "code": "0414"
+        }
+    },
+    {
+        "model": "core.phonecarriercode",
+        "pk": 3,
+        "fields": {
+            "carrier": 2,
+            "code": "0424"
+        }
+    },
+    {
+        "model": "core.phonecarriercode",
+        "pk": 4,
+        "fields": {
+            "carrier": 3,
+            "code": "0416"
+        }
+    },
+    {
+        "model": "core.phonecarriercode",
+        "pk": 5,
+        "fields": {
+            "carrier": 3,
+            "code": "0426"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 1,
+        "fields": {
+            "name": "Banco de Venezuela",
+            "code": "0102"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 2,
+        "fields": {
+            "name": "Venezolano de Crédito",
+            "code": "0104"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 3,
+        "fields": {
+            "name": "Banco Mercantil",
+            "code": "0105"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 4,
+        "fields": {
+            "name": "Banco Provincial",
+            "code": "0108"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 5,
+        "fields": {
+            "name": "Banco del Caribe",
+            "code": "0114"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 6,
+        "fields": {
+            "name": "Banco Exterior",
+            "code": "0115"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 7,
+        "fields": {
+            "name": "Banco Caroní",
+            "code": "0128"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 8,
+        "fields": {
+            "name": "Banesco",
+            "code": "0134"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 9,
+        "fields": {
+            "name": "Banco Sofitasa",
+            "code": "0137"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 10,
+        "fields": {
+            "name": "Banco Plaza",
+            "code": "0138"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 11,
+        "fields": {
+            "name": "Bangente",
+            "code": "0146"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 12,
+        "fields": {
+            "name": "Banco Fondo Común",
+            "code": "0151"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 13,
+        "fields": {
+            "name": "100% Banco",
+            "code": "0156"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 14,
+        "fields": {
+            "name": "Delsur",
+            "code": "0157"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 15,
+        "fields": {
+            "name": "Banco del Tesoro",
+            "code": "0163"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 16,
+        "fields": {
+            "name": "Banco Agrícola de Venezuela",
+            "code": "0166"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 17,
+        "fields": {
+            "name": "Bancrecer",
+            "code": "0168"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 18,
+        "fields": {
+            "name": "Mi Banco",
+            "code": "0169"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 19,
+        "fields": {
+            "name": "Banco Activo",
+            "code": "0171"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 20,
+        "fields": {
+            "name": "Bancamiga",
+            "code": "0172"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 21,
+        "fields": {
+            "name": "Banplus",
+            "code": "0174"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 22,
+        "fields": {
+            "name": "Banco Bicentenario",
+            "code": "0175"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 23,
+        "fields": {
+            "name": "Banco de la Fuerza Armada Nacional Bolivariana",
+            "code": "0177"
+        }
+    },
+    {
+        "model": "core.bank",
+        "pk": 24,
+        "fields": {
+            "name": "Banco Nacional de Crédito",
+            "code": "0191"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 1,
+        "fields": {
+            "name": "Desarrollador",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 2,
+        "fields": {
+            "name": "Analista",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 3,
+        "fields": {
+            "name": "Gerente",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 4,
+        "fields": {
+            "name": "Director",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 5,
+        "fields": {
+            "name": "Asistente",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 6,
+        "fields": {
+            "name": "Coordinador",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 7,
+        "fields": {
+            "name": "Docente",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 8,
+        "fields": {
+            "name": "Administrativo",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.role",
+        "pk": 9,
+        "fields": {
+            "name": "Obrero",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "employment.employmenttype",
+        "pk": 1,
+        "fields": {
+            "name": "Tiempo Completo"
+        }
+    },
+    {
+        "model": "employment.employmenttype",
+        "pk": 2,
+        "fields": {
+            "name": "Medio Tiempo"
+        }
+    },
+    {
+        "model": "employment.employmenttype",
+        "pk": 3,
+        "fields": {
+            "name": "Por Hora"
+        }
+    },
+    {
+        "model": "employment.employmenttype",
+        "pk": 4,
+        "fields": {
+            "name": "Contrato Temporal"
+        }
+    },
+    {
+        "model": "employment.employmenttype",
+        "pk": 5,
+        "fields": {
+            "name": "Pasantía"
+        }
+    },
+    {
+        "model": "employment.employmentstatus",
+        "pk": 1,
+        "fields": {
+            "name": "Activo",
+            "is_active_relationship": true
+        }
+    },
+    {
+        "model": "employment.employmentstatus",
+        "pk": 2,
+        "fields": {
+            "name": "Suspendido",
+            "is_active_relationship": true
+        }
+    },
+    {
+        "model": "employment.employmentstatus",
+        "pk": 3,
+        "fields": {
+            "name": "De Permiso",
+            "is_active_relationship": true
+        }
+    },
+    {
+        "model": "employment.employmentstatus",
+        "pk": 4,
+        "fields": {
+            "name": "Finalizado",
+            "is_active_relationship": false
+        }
+    },
+    {
+        "model": "employment.employmentstatus",
+        "pk": 5,
+        "fields": {
+            "name": "Renuncia",
+            "is_active_relationship": false
+        }
+    },
+    {
+        "model": "employment.employmentstatus",
+        "pk": 6,
+        "fields": {
+            "name": "Despido",
+            "is_active_relationship": false
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 1,
+        "fields": {
+            "name": "Tecnología"
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 2,
+        "fields": {
+            "name": "Recursos Humanos"
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 3,
+        "fields": {
+            "name": "Finanzas"
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 4,
+        "fields": {
+            "name": "Operaciones"
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 5,
+        "fields": {
+            "name": "Ventas"
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 6,
+        "fields": {
+            "name": "Marketing"
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 7,
+        "fields": {
+            "name": "Legal"
+        }
+    },
+    {
+        "model": "talent.businessfunction",
+        "pk": 8,
+        "fields": {
+            "name": "Académico"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 1,
+        "fields": {
+            "name": "Primaria"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 2,
+        "fields": {
+            "name": "Bachillerato"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 3,
+        "fields": {
+            "name": "Técnico Superior"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 4,
+        "fields": {
+            "name": "Licenciatura"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 5,
+        "fields": {
+            "name": "Ingeniería"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 6,
+        "fields": {
+            "name": "Maestría"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 7,
+        "fields": {
+            "name": "Doctorado"
+        }
+    },
+    {
+        "model": "talent.educationlevel",
+        "pk": 8,
+        "fields": {
+            "name": "Diplomado"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 1,
+        "fields": {
+            "name": "Informática"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 2,
+        "fields": {
+            "name": "Administración"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 3,
+        "fields": {
+            "name": "Contaduría"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 4,
+        "fields": {
+            "name": "Educación"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 5,
+        "fields": {
+            "name": "Derecho"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 6,
+        "fields": {
+            "name": "Psicología"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 7,
+        "fields": {
+            "name": "Ingeniería Industrial"
+        }
+    },
+    {
+        "model": "talent.fieldofstudy",
+        "pk": 8,
+        "fields": {
+            "name": "Diseño Gráfico"
+        }
+    },
+    {
+        "model": "talent.language",
+        "pk": 1,
+        "fields": {
+            "name": "Español"
+        }
+    },
+    {
+        "model": "talent.language",
+        "pk": 2,
+        "fields": {
+            "name": "Inglés"
+        }
+    },
+    {
+        "model": "talent.language",
+        "pk": 3,
+        "fields": {
+            "name": "Portugués"
+        }
+    },
+    {
+        "model": "talent.language",
+        "pk": 4,
+        "fields": {
+            "name": "Francés"
+        }
+    },
+    {
+        "model": "talent.language",
+        "pk": 5,
+        "fields": {
+            "name": "Italiano"
+        }
+    },
+    {
+        "model": "talent.language",
+        "pk": 6,
+        "fields": {
+            "name": "Alemán"
+        }
+    },
+    {
+        "model": "talent.languageproficiency",
+        "pk": 1,
+        "fields": {
+            "name": "Básico"
+        }
+    },
+    {
+        "model": "talent.languageproficiency",
+        "pk": 2,
+        "fields": {
+            "name": "Intermedio"
+        }
+    },
+    {
+        "model": "talent.languageproficiency",
+        "pk": 3,
+        "fields": {
+            "name": "Avanzado"
+        }
+    },
+    {
+        "model": "talent.languageproficiency",
+        "pk": 4,
+        "fields": {
+            "name": "Nativo"
+        }
+    }
+]

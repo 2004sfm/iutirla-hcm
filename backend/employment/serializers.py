@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
-from core.serializers import check_uniqueness, title_case_cleaner
+from core.serializers import check_uniqueness, title_case_cleaner, validate_text_with_spaces, validate_min_length
 # Importamos utilidades y modelos necesarios de las apps correctas:
 from organization.models import Position 
 from .models import (
@@ -13,19 +13,22 @@ from .models import (
 class RoleSerializer(serializers.ModelSerializer):
     class Meta: model = Role; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(value)
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(Role, 'name', cleaned, self.instance, "Ya existe un rol con este nombre.")
 
 class EmploymentTypeSerializer(serializers.ModelSerializer):
     class Meta: model = EmploymentType; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(value)
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(EmploymentType, 'name', cleaned, self.instance, "Ya existe un tipo de empleo con este nombre.")
 
 class EmploymentStatusSerializer(serializers.ModelSerializer):
     class Meta: model = EmploymentStatus; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(value)
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(EmploymentStatus, 'name', cleaned, self.instance, "Ya existe un estatus de empleo con este nombre.")
 
 

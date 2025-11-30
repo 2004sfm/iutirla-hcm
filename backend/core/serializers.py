@@ -94,6 +94,26 @@ def validate_alphanumeric_with_spaces(value, field_name):
         raise serializers.ValidationError("Este campo solo puede contener letras y números.")
     return value
 
+def validate_min_length(value, min_len):
+    """
+    Valida que el valor tenga al menos min_len caracteres.
+    """
+    if not value:
+        return value
+    if len(value.strip()) < min_len:
+        raise serializers.ValidationError(f"Este campo debe tener al menos {min_len} caracteres.")
+    return value
+
+def validate_exact_length(value, exact_len):
+    """
+    Valida que el valor tenga exactamente exact_len caracteres.
+    """
+    if not value:
+        return value
+    if len(value.strip()) != exact_len:
+        raise serializers.ValidationError(f"Este campo debe tener exactamente {exact_len} caracteres.")
+    return value
+
 def validate_single_primary(serializer_instance, validated_data, model, primary_field_name):
     is_primary = validated_data.get('is_primary', getattr(serializer_instance.instance, 'is_primary', False))
     person = validated_data.get('person')
@@ -107,6 +127,69 @@ def validate_single_primary(serializer_instance, validated_data, model, primary_
             raise serializers.ValidationError({
                 'is_primary': f"Ya existe un registro principal."
             })
+    return validated_data
+
+def validate_unique_together(serializer_instance, validated_data, model, field_names, error_template=None):
+    """
+    Función genérica para validar unique_together con mensajes amigables.
+    Los errores se retornan como non_field_errors para mostrarse en el Alert superior.
+    
+    Args:
+        serializer_instance: La instancia del serializer (self)
+        validated_data: Los datos validados
+        model: El modelo a validar
+        field_names: Tupla de nombres de campos que forman el unique_together (ej: ('country', 'name'))
+        error_template: Template del mensaje de error. Si no se proporciona, se genera automáticamente.
+                       Puede usar {field_name} como placeholders.
+    
+    Ejemplo de uso:
+        validate_unique_together(self, data, State, ('country', 'name'), 
+                                error_template='Ya existe un estado con este nombre en {country}.')
+    """
+    # Obtener valores de los campos
+    field_values = {}
+    for field_name in field_names:
+        value = validated_data.get(field_name)
+        if value is not None:
+            field_values[field_name] = value
+    
+    # Si no tenemos todos los valores, no validar
+    if len(field_values) != len(field_names):
+        return validated_data
+    
+    # Construir el queryset
+    filter_kwargs = {}
+    for field_name, value in field_values.items():
+        # Para campos de texto, usar case-insensitive
+        if isinstance(value, str):
+            filter_kwargs[f'{field_name}__iexact'] = value
+        else:
+            filter_kwargs[field_name] = value
+    
+    queryset = model.objects.filter(**filter_kwargs)
+    if serializer_instance.instance:
+        queryset = queryset.exclude(pk=serializer_instance.instance.pk)
+    
+    if queryset.exists():
+        # Generar el mensaje de error
+        if error_template:
+            # Reemplazar placeholders con valores reales
+            error_msg = error_template
+            for field_name, value in field_values.items():
+                # Si el valor tiene un atributo name (es un objeto), usarlo
+                if hasattr(value, 'name'):
+                    error_msg = error_msg.replace(f'{{{field_name}}}', value.name)
+                else:
+                    error_msg = error_msg.replace(f'{{{field_name}}}', str(value))
+        else:
+            # Mensaje genérico automático
+            error_msg = "Ya existe un registro con esta combinación de valores."
+        
+        # Retornar como non_field_errors para que aparezca en el Alert superior
+        raise serializers.ValidationError({
+            'non_field_errors': [error_msg]
+        })
+    
     return validated_data
 
 def check_uniqueness(model, field_name, value, instance=None, error_msg="Ya existe un registro con este valor."):
@@ -164,86 +247,165 @@ class SalutationSerializer(serializers.ModelSerializer):
     class Meta: model = Salutation; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(Salutation, 'name', cleaned, self.instance)
 class GenderSerializer(serializers.ModelSerializer):
     class Meta: model = Gender; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(Gender, 'name', cleaned, self.instance)
 class MaritalStatusSerializer(serializers.ModelSerializer):
     class Meta: model = MaritalStatus; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(MaritalStatus, 'name', cleaned, self.instance)
 class CountrySerializer(serializers.ModelSerializer):
     class Meta: model = Country; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(Country, 'name', cleaned, self.instance)
     def validate_iso_2(self, value): 
         validated = validate_letters_only_no_spaces(value, 'Código ISO')
+        validate_exact_length(validated, 2)
         return check_uniqueness(Country, 'iso_2', validated.strip().upper(), self.instance)
 
 class DisabilityGroupSerializer(serializers.ModelSerializer):
     class Meta: model = DisabilityGroup; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(DisabilityGroup, 'name', cleaned, self.instance)
 class DisabilityTypeSerializer(serializers.ModelSerializer):
     class Meta: model = DisabilityType; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(DisabilityType, 'name', cleaned, self.instance)
 class DisabilityStatusSerializer(serializers.ModelSerializer):
     class Meta: model = DisabilityStatus; fields = '__all__'
     def validate_name(self, value): 
         cleaned = sentence_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(DisabilityStatus, 'name', cleaned, self.instance)
 class AddressTypeSerializer(serializers.ModelSerializer):
     class Meta: model = AddressType; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(AddressType, 'name', cleaned, self.instance)
 class EmailTypeSerializer(serializers.ModelSerializer):
     class Meta: model = EmailType; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(EmailType, 'name', cleaned, self.instance)
 class PhoneTypeSerializer(serializers.ModelSerializer):
     class Meta: model = PhoneType; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(PhoneType, 'name', cleaned, self.instance)
 class PhoneCarrierSerializer(serializers.ModelSerializer):
     class Meta: model = PhoneCarrier; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(PhoneCarrier, 'name', cleaned, self.instance)
 class BankSerializer(serializers.ModelSerializer):
     class Meta: model = Bank; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(Bank, 'name', cleaned, self.instance)
     def validate_code(self, value): 
         validated = validate_numeric_only(value, 'Código')
+        validate_exact_length(validated, 4)
         return check_uniqueness(Bank, 'code', validated.strip(), self.instance)
 class BankAccountTypeSerializer(serializers.ModelSerializer):
     class Meta: model = BankAccountType; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(BankAccountType, 'name', cleaned, self.instance)
 class RelationshipTypeSerializer(serializers.ModelSerializer):
     class Meta: model = RelationshipType; fields = '__all__'
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
         return check_uniqueness(RelationshipType, 'name', cleaned, self.instance)
 class StateSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
-    class Meta: model = State; fields = '__all__'
-    def validate_name(self, value): return title_case_cleaner(value)
+    # Include nested country object for display
+    country = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = State
+        fields = '__all__'
+        # Deshabilitar validación automática de unique_together para manejarla manualmente
+        validators = []
+    
+    def get_country(self, obj):
+        if obj.country:
+            return {'id': obj.country.id, 'name': obj.country.name}
+        return None
+    
+    def validate_name(self, value):
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
+        return cleaned
+    
+    def validate(self, data):
+        # Usar helper genérico para unique_together
+        return validate_unique_together(
+            self, data, State, ('country', 'name'),
+            error_template='Ya existe un estado con este nombre en {country}.'
+        )
 class PhoneCarrierCodeSerializer(serializers.ModelSerializer):
     carrier_name = serializers.CharField(source='carrier.name', read_only=True)
-    class Meta: model = PhoneCarrierCode; fields = '__all__'
+    # Include nested carrier object for display
+    carrier = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PhoneCarrierCode
+        fields = '__all__'
+        # Deshabilitar validación automática de unique_together
+        validators = []
+    
+    def get_carrier(self, obj):
+        if obj.carrier:
+            return {'id': obj.carrier.id, 'name': obj.carrier.name}
+        return None
+    
+    def validate_code(self, value):
+        value = value.strip()
+        
+        # Normalización: Si tiene 3 dígitos, agregar '0' al inicio
+        if len(value) == 3 and value.isdigit():
+            value = '0' + value
+        
+        # Validar que solo contenga números
+        if not value.isdigit():
+            raise serializers.ValidationError("Este campo solo puede contener números.")
+        
+        # Validar longitud exacta de 4 caracteres
+        if len(value) != 4:
+            raise serializers.ValidationError("Este campo debe tener exactamente 4 dígitos.")
+        
+        # Validar que comience con '0'
+        if not value.startswith('0'):
+            raise serializers.ValidationError("El código debe comenzar con '0'.")
+        
+        return value
+    
+    def validate(self, data):
+        # Validación manual de unique_together con mensaje personalizado
+        return validate_unique_together(
+            self, data, PhoneCarrierCode, ('carrier', 'code'),
+            error_template='Ya existe este código para la operadora {carrier}.'
+        )
 
 # --- SERIALIZERS PRINCIPALES ---
 
@@ -321,7 +483,11 @@ class PersonPhoneSerializer(serializers.ModelSerializer):
         return obj.subscriber_number
 
     def validate_subscriber_number(self, value):
-        if not value.isdigit() or len(value) > 10: raise serializers.ValidationError("Este campo solo puede contener números.")
+        value = value.strip()
+        if not value.isdigit():
+            raise serializers.ValidationError("Este campo solo puede contener números.")
+        if len(value) != 7:
+            raise serializers.ValidationError("Este campo debe tener exactamente 7 dígitos.")
         return value
 
     def validate(self, data):

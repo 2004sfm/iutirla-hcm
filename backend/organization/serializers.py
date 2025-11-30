@@ -17,10 +17,17 @@ class PositionFunctionSerializer(serializers.ModelSerializer):
 class DepartmentSerializer(serializers.ModelSerializer):
     # Campo extra para mostrar el nombre del padre
     parent_name = serializers.CharField(source='parent.name', read_only=True)
+    # Include nested parent object for display
+    parent = serializers.SerializerMethodField()
 
     class Meta:
         model = Department
         fields = '__all__'
+    
+    def get_parent(self, obj):
+        if obj.parent:
+            return {'id': obj.parent.id, 'name': obj.parent.name}
+        return None
 
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
@@ -67,6 +74,8 @@ class PositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
         fields = '__all__'
+        # Deshabilitar validación automática de unique_together
+        validators = []
 
     def get_full_name(self, obj):
         return str(obj)
@@ -98,7 +107,13 @@ class PositionSerializer(serializers.ModelSerializer):
             for manager in obj.manager_positions.all()
         ]
 
+
     def validate(self, data):
-        # La validación de auto-referencia se maneja en el save del modelo o en el frontend
-        # M2M no permite validación directa aquí del mismo modo que FK
-        return data
+        # Importar aquí para evitar import circular
+        from core.serializers import validate_unique_together
+        
+        # Usar helper genérico para unique_together
+        return validate_unique_together(
+            self, data, Position, ('department', 'job_title'),
+            error_template='Ya existe una posición con este cargo en {department}.'
+        )

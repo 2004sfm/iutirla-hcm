@@ -155,8 +155,8 @@ const catalogs: Record<string, CatalogConfig> = {
         ],
         columns: [
 
-            { accessorKey: "code", header: "Código", cell: ({ row }) => <div className="max-w-[100px] truncate">{row.getValue("code")}</div> },
-            { accessorKey: "carrier.name", header: "Operadora", cell: ({ row }) => <div className="max-w-[150px] truncate">{row.original.carrier?.name}</div> },
+            { accessorKey: "code", header: "Código", cell: ({ row }) => <div className="truncate">{row.getValue("code")}</div> },
+            { accessorKey: "carrier.name", header: "Operadora", cell: ({ row }) => <div className="truncate">{row.original.carrier?.name}</div> },
         ],
         searchKey: "code",
     },

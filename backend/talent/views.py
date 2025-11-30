@@ -11,6 +11,7 @@ from .serializers import (
     PersonEducationSerializer, PersonVolunteerExperienceSerializer, PersonAwardSerializer, PersonMembershipSerializer,
     LanguageSerializer, LanguageProficiencySerializer, PersonLanguageSerializer
 )
+from core.filters import UnaccentSearchFilter
 
 class PersonSpecialAssignmentViewSet(viewsets.ModelViewSet):
     queryset = PersonSpecialAssignment.objects.all()
@@ -21,6 +22,8 @@ class BusinessFunctionViewSet(viewsets.ModelViewSet):
     queryset = BusinessFunction.objects.all()
     serializer_class = BusinessFunctionSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class PersonFunctionalExperienceViewSet(viewsets.ModelViewSet):
     queryset = PersonFunctionalExperience.objects.all()
@@ -50,11 +53,15 @@ class EducationLevelViewSet(viewsets.ModelViewSet):
     queryset = EducationLevel.objects.all()
     serializer_class = EducationLevelSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class FieldOfStudyViewSet(viewsets.ModelViewSet):
     queryset = FieldOfStudy.objects.all()
     serializer_class = FieldOfStudySerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class PersonEducationViewSet(viewsets.ModelViewSet):
     serializer_class = PersonEducationSerializer
@@ -91,11 +98,15 @@ class LanguageViewSet(viewsets.ModelViewSet):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class LanguageProficiencyViewSet(viewsets.ModelViewSet):
     queryset = LanguageProficiency.objects.all()
     serializer_class = LanguageProficiencySerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['name__unaccent']
 
 class PersonLanguageViewSet(viewsets.ModelViewSet):
     serializer_class = PersonLanguageSerializer

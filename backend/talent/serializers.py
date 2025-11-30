@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from datetime import date
-from core.serializers import check_uniqueness, title_case_cleaner
+from core.serializers import check_uniqueness, title_case_cleaner, validate_text_with_spaces, validate_min_length
 
 from .models import (
     PersonSpecialAssignment, BusinessFunction, PersonFunctionalExperience,
@@ -25,15 +25,24 @@ def validate_date_range(data, start_field='start_date', end_field='end_date'):
 
 class BusinessFunctionSerializer(serializers.ModelSerializer):
     class Meta: model = BusinessFunction; fields = '__all__'
-    def validate_name(self, value): return title_case_cleaner(value)
+    def validate_name(self, value):
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
+        return cleaned
 
 class EducationLevelSerializer(serializers.ModelSerializer):
     class Meta: model = EducationLevel; fields = '__all__'
-    def validate_name(self, value): return title_case_cleaner(value)
+    def validate_name(self, value):
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
+        return cleaned
 
 class FieldOfStudySerializer(serializers.ModelSerializer):
     class Meta: model = FieldOfStudy; fields = '__all__'
-    def validate_name(self, value): return title_case_cleaner(value)
+    def validate_name(self, value):
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
+        return cleaned
 
 # --- Serializers Transaccionales ---
 
@@ -121,11 +130,17 @@ class PersonMembershipSerializer(serializers.ModelSerializer):
 
 class LanguageProficiencySerializer(serializers.ModelSerializer):
     class Meta: model = LanguageProficiency; fields = '__all__'
-    def validate_name(self, value): return check_uniqueness(LanguageProficiency, 'name', title_case_cleaner(value), self.instance)
+    def validate_name(self, value):
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
+        return check_uniqueness(LanguageProficiency, 'name', cleaned, self.instance)
 
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta: model = Language; fields = '__all__'
-    def validate_name(self, value): return check_uniqueness(Language, 'name', title_case_cleaner(value), self.instance)
+    def validate_name(self, value):
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
+        validate_min_length(cleaned, 2)
+        return check_uniqueness(Language, 'name', cleaned, self.instance)
 
 class PersonLanguageSerializer(serializers.ModelSerializer):
     language_name = serializers.CharField(source='language.name', read_only=True)
