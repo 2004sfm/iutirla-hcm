@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { cn } from '@/lib/utils';
@@ -13,13 +13,16 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { DynamicCombobox } from "@/components/DynamicCombobox";
+import { MultiSelectCombobox } from "@/components/MultiSelectCombobox";
+
+import { Switch } from "@/components/ui/switch";
+import { useState } from 'react';
 
 const positionSchema = z.object({
     job_title: z.string().min(1, "El cargo es obligatorio."),
     department: z.string().min(1, "El departamento es obligatorio."),
     vacancies: z.number().min(1, "Debe haber al menos 1 vacante."),
-    manager_position: z.string().optional().nullable(),
-    name: z.string().optional().nullable(),
+    manager_positions: z.array(z.string()).default([]),
 });
 
 type PositionFormData = z.infer<typeof positionSchema>;
@@ -30,8 +33,8 @@ interface PositionFormProps {
         job_title: number;
         department: number;
         vacancies: number;
-        manager_position: number | null;
-        name: string | null;
+        manager_positions: number[];
+        manager_positions_data?: Array<{ id: number; job_title_name: string | null; department_id: number | null; }>;
     };
     onUpdate?: () => void;
 }
@@ -43,8 +46,7 @@ export function PositionForm({ positionId, initialData, onUpdate }: PositionForm
             job_title: String(initialData.job_title),
             department: String(initialData.department),
             vacancies: initialData.vacancies,
-            manager_position: initialData.manager_position ? String(initialData.manager_position) : null,
-            name: initialData.name,
+            manager_positions: initialData.manager_positions.map(id => String(id)),
         }
     });
 
@@ -56,7 +58,7 @@ export function PositionForm({ positionId, initialData, onUpdate }: PositionForm
                 ...data,
                 job_title: parseInt(data.job_title),
                 department: parseInt(data.department),
-                manager_position: data.manager_position ? parseInt(data.manager_position) : null,
+                manager_positions: data.manager_positions.map(id => parseInt(id)),
             });
             toast.success("Posición actualizada exitosamente");
             if (onUpdate) onUpdate();
@@ -134,39 +136,63 @@ export function PositionForm({ positionId, initialData, onUpdate }: PositionForm
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-sm">Jefe Inmediato</Label>
+                    <Label className="text-sm">Jefes Inmediatos (Reporta a)</Label>
                     <Controller
-                        name="manager_position"
+                        name="manager_positions"
                         control={control}
-                        render={({ field }) => (
-                            <DynamicCombobox
-                                field={{
-                                    name: 'manager_position',
-                                    label: 'Jefe',
-                                    type: 'select',
-                                    optionsEndpoint: `/api/organization/positions/?exclude=${positionId}`,
-                                    optionsLabelKey: 'full_name'
-                                }}
-                                value={field.value}
-                                onChange={field.onChange}
-                                placeholder="Seleccione la posición del jefe..."
-                                hasError={!!errors.manager_position}
-                            />
-                        )}
+                        render={({ field }) => {
+                            // Watch department to filter managers
+                            const selectedDepartment = useWatch({ control, name: 'department' });
+
+                            // Initialize showAll based on whether ANY current manager is from a different department
+                            const [showAll, setShowAll] = useState(() => {
+                                if (initialData.manager_positions_data && initialData.manager_positions_data.length > 0) {
+                                    // If ANY manager is from a different department, enable showAll
+                                    return initialData.manager_positions_data.some(
+                                        manager => String(manager.department_id) !== String(initialData.department)
+                                    );
+                                }
+                                return false;
+                            });
+
+                            // Construct endpoint: exclude current position + filter by department (if selected and not showing all)
+                            let endpoint = `/api/organization/positions/?exclude=${positionId}`;
+                            if (selectedDepartment && !showAll) {
+                                endpoint += `&department=${selectedDepartment}`;
+                            }
+
+                            return (
+                                <div className="space-y-2">
+                                    <MultiSelectCombobox
+                                        field={{
+                                            name: 'manager_positions',
+                                            label: 'Jefes Inmediatos',
+                                            type: 'multiselect',
+                                            optionsEndpoint: endpoint,
+                                            optionsLabelKey: showAll ? 'full_name' : 'job_title_name'
+                                        }}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Seleccione las posiciones de los jefes..."
+                                        hasError={!!errors.manager_positions}
+                                    />
+                                    <div className="flex items-center space-x-2">
+                                        <Switch
+                                            id="show-all-managers"
+                                            checked={showAll}
+                                            onCheckedChange={setShowAll}
+                                        />
+                                        <Label htmlFor="show-all-managers" className="text-xs font-normal text-muted-foreground cursor-pointer">
+                                            Reporta a otro departamento
+                                        </Label>
+                                    </div>
+                                </div>
+                            );
+                        }}
                     />
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
-                    <Label className="text-sm">Nombre Descriptivo (Opcional)</Label>
-                    <Input
-                        {...register("name")}
-                        placeholder="Ej: Gerente de Finanzas (VE)"
-                        className="text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                        Nombre personalizado para diferenciar posiciones con el mismo cargo
-                    </p>
-                </div>
+
             </div>
 
             <div className="flex justify-end pt-4 border-t">

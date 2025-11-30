@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 # Importaciones de otras apps
 from core.models import Person
@@ -124,6 +125,9 @@ class Employment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Historial de cambios
+    history = HistoricalRecords()
+
     # Lógica interna para detectar cambios
     __original_status = None
 
@@ -188,10 +192,25 @@ class Employment(models.Model):
         # Suponiendo que mantienes la lógica del __init__ que definimos antes:
         status_changed = self.current_status_id != self.__original_status
 
-        # 4. GUARDADO REAL EN BASE DE DATOS
+        # 4. DECREMENTO AUTOMÁTICO DE VACANTES (NUEVO)
+        # Si es un nuevo contrato y el estatus es activo (ocupa silla)
+        if is_created and self.current_status.is_active_relationship:
+            # Bloqueamos la posición para evitar condiciones de carrera
+            # Nota: select_for_update() requiere estar dentro de una transacción.
+            # Como save() puede llamarse fuera, usamos F() expressions o asumimos transacción externa.
+            # Para mayor seguridad y simplicidad aquí, usamos lógica directa, pero lo ideal es que
+            # la vista/servicio envuelva esto en transaction.atomic()
+            
+            if self.position.vacancies > 0:
+                self.position.vacancies -= 1
+                self.position.save()
+            # Si es 0, técnicamente no debería haber pasado la validación del serializer/clean,
+            # pero por seguridad no restamos más allá de 0.
+
+        # 5. GUARDADO REAL EN BASE DE DATOS
         super().save(*args, **kwargs)
         
-        # 5. CREACIÓN DEL LOG (Tu código original)
+        # 6. CREACIÓN DEL LOG (Tu código original)
         # Se hace DESPUÉS del super().save() para asegurar que tenemos un ID válido
         if is_created or status_changed:
             self._create_status_log(is_created)

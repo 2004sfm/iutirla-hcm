@@ -6,7 +6,8 @@ import {
     Network,
     FileText,
     GraduationCap,
-    ClipboardCheck, // <--- 1. IMPORTAMOS EL NUEVO ICONO
+    ClipboardCheck,
+    Briefcase, // Para el módulo ATS
 } from "lucide-react";
 import { type LucideIcon } from "lucide-react";
 
@@ -61,6 +62,15 @@ export const adminSidebarItems: AdminNavItem[] = [
         items: [
             { name: "Catálogo de Cursos", href: "/admin/training/courses" },
             // Más adelante podrías agregar: { name: "Mis Clases", href: "/admin/training/my-sessions" }
+        ],
+    },
+
+    {
+        name: "Reclutamiento",
+        icon: Briefcase,
+        items: [
+            { name: "Vacantes", href: "/admin/ats/jobs" },
+            { name: "Candidatos", href: "/admin/ats/candidates" },
         ],
     },
 

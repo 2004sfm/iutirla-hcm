@@ -9,7 +9,12 @@ const positionColumns: ColumnDef[] = [
     { header: "Título", accessorKey: "job_title_name" },
     { header: "Departamento", accessorKey: "department_name" },
     { header: "Vacantes", accessorKey: "vacancies" },
-    { header: "Jefe Inmediato", accessorKey: "manager_position_name" },
+    {
+        header: "Jefe Inmediato", accessorKey: "manager_positions_names", render: (value: string[]) => {
+            if (!value || value.length === 0) return <span className="text-muted-foreground">-</span>;
+            return value.join(" / ");
+        }
+    },
 ];
 
 // --- CAMPOS DEL FORMULARIO (SIMPLIFICADO) ---
@@ -41,12 +46,15 @@ const positionFields: FormFieldDef[] = [
         helpText: "Número de vacantes disponibles para esta posición"
     },
     {
-        name: "manager_position",
+        name: "manager_positions",
         label: "Jefe Inmediato (Reporta a)",
-        type: "select",
+        type: "multiselect",
         optionsEndpoint: "/api/organization/positions/",
-        optionsLabelKey: "full_name",
-        helpText: "Opcional. Seleccione la posición a la que debe reportar."
+        optionsLabelKey: "job_title_name",
+        helpText: "Opcional. Seleccione las posiciones a las que debe reportar.",
+        dependsOn: "department", // <-- Filtra por departamento seleccionado
+        ignoreDependencyLabel: "Reporta a otro departamento", // <-- Permite ver todos
+        optionsLabelKeyOnIgnore: "full_name" // <-- Muestra "Cargo - Depto" al ver todos
     }
     // ELIMINADO: Campo 'name' manual. 
     // Ahora el sistema confiará en la combinación Título + Departamento.

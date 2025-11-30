@@ -1,4 +1,5 @@
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 # Configuración base para mensajes de error
 UNIQUE_ERR_MSG = {'unique': "Ya existe un registro con este nombre."}
@@ -22,7 +23,6 @@ class MaritalStatus(models.Model):
 class Country(models.Model):
     name = models.CharField(max_length=100, unique=True, error_messages=UNIQUE_ERR_MSG)
     iso_2 = models.CharField(max_length=2, help_text="Ej: US, VE.", unique=True, error_messages=ISO_UNIQUE_ERR_MSG)
-    phone_prefix = models.CharField(max_length=10, help_text="Prefijo telefónico (ej: +58).", unique=True, error_messages={'unique': "Ya existe un país con este prefijo."})
     def __str__(self): return self.name
 
 class DisabilityGroup(models.Model):
@@ -74,13 +74,11 @@ class State(models.Model):
     class Meta: unique_together = ('country', 'name')
     def __str__(self): return f"{self.name}, {self.country.name}"
 
-class PhoneAreaCode(models.Model):
-    country = models.ForeignKey(Country, on_delete=models.CASCADE)
-    carrier = models.ForeignKey(PhoneCarrier, on_delete=models.SET_NULL, null=True, blank=True)
+class PhoneCarrierCode(models.Model):
+    carrier = models.ForeignKey(PhoneCarrier, on_delete=models.CASCADE)
     code = models.CharField(max_length=5)
-    type = models.CharField(max_length=20)
-    class Meta: unique_together = ('country', 'code', 'carrier')
-    def __str__(self): return f"{self.code} ({self.carrier or self.type})"
+    class Meta: unique_together = ('carrier', 'code')
+    def __str__(self): return f"{self.code} ({self.carrier})"
 
 class Person(models.Model):
     first_name = models.CharField(max_length=100)
@@ -95,6 +93,10 @@ class Person(models.Model):
     photo = models.ImageField(upload_to='photos/person/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Historial de cambios
+    history = HistoricalRecords()
+    
     def __str__(self): return f"{self.first_name} {self.paternal_surname}"
 
 # --- IDENTIFICACIÓN VENEZOLANA ROBUSTA ---
@@ -176,16 +178,16 @@ class PersonEmail(models.Model):
 class PersonPhone(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name="phones")
     phone_type = models.ForeignKey(PhoneType, on_delete=models.SET_NULL, null=True)
-    area_code = models.ForeignKey(PhoneAreaCode, on_delete=models.SET_NULL, null=True)
+    carrier_code = models.ForeignKey(PhoneCarrierCode, on_delete=models.SET_NULL, null=True)
     subscriber_number = models.CharField(max_length=10)
     is_primary = models.BooleanField(default=False)
     
-    def __str__(self): return f"({self.area_code.code}) {self.subscriber_number}"
+    def __str__(self): return f"({self.carrier_code.code}) {self.subscriber_number}"
     
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['area_code', 'subscriber_number'],
+                fields=['carrier_code', 'subscriber_number'],
                 name="phone_unique",
                 violation_error_message="Este número de teléfono ya se encuentra registrado.",
             ),
@@ -233,6 +235,6 @@ class EmergencyContact(models.Model):
     paternal_surname = models.CharField(max_length=100)
     maternal_surname = models.CharField(max_length=100, blank=True, null=True)
     relationship = models.ForeignKey(RelationshipType, on_delete=models.SET_NULL, null=True)
-    phone_area_code = models.ForeignKey(PhoneAreaCode, on_delete=models.SET_NULL, null=True)
+    phone_carrier_code = models.ForeignKey(PhoneCarrierCode, on_delete=models.SET_NULL, null=True)
     phone_number = models.CharField(max_length=10)
     is_primary = models.BooleanField(default=False)

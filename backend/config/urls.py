@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/talent/', include('talent.urls')),
     path('api/training/', include('training.urls')),
     path('api/performance/', include('performance.urls')),
+    path('api/ats/', include('ats.urls')),  # ATS: incluye /public y admin
 ]
 
 if settings.DEBUG:

@@ -19,15 +19,13 @@ const generalCatalogs: CatalogConfig[] = [
         singularName: 'País', // Agregado
         endpoint: '/api/core/countries/',
         columns: [
-            { header: "Id", accessorKey: "id" },
+            { header: "ID", accessorKey: "id" },
             { header: "Nombre", accessorKey: "name" },
-            { header: "Iso", accessorKey: "iso_2" },
-            { header: "Prefijo", accessorKey: "phone_prefix" }
+            { header: "ISO 2", accessorKey: "iso_2" }
         ],
         formFields: [
-            { name: "name", label: "Nombre", type: "text", required: true },
-            { name: "iso_2", label: "Código iso (2 letras)", type: "text", required: true },
-            { name: "phone_prefix", label: "Prefijo telefónico (ej. +58)", type: "text", required: true }
+            { name: "name", label: "Nombre del país", type: "text", required: true },
+            { name: "iso_2", label: "Código ISO-2 (ej. VE)", type: "text", required: true }
         ]
     },
     {

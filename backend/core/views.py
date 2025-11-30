@@ -4,7 +4,7 @@ from .models import (
     DisabilityGroup, DisabilityType, DisabilityStatus,
     PersonDisabilityVE, AddressType, State, Address, 
     NationalId, EmailType, PersonEmail, PhoneType, PhoneCarrier, 
-    PhoneAreaCode, PersonPhone, Bank, BankAccountType, PersonBankAccount, 
+    PhoneCarrierCode, PersonPhone, Bank, BankAccountType, PersonBankAccount, 
     PersonDocument, RelationshipType, PersonNationality, 
     Dependent, EmergencyContact
 )
@@ -15,7 +15,7 @@ from .serializers import (
     PersonDisabilityVESerializer, AddressTypeSerializer, StateSerializer, 
     AddressSerializer, NationalIdSerializer, 
     EmailTypeSerializer, PersonEmailSerializer, PhoneTypeSerializer, 
-    PhoneCarrierSerializer, PhoneAreaCodeSerializer, PersonPhoneSerializer, 
+    PhoneCarrierSerializer, PhoneCarrierCodeSerializer, PersonPhoneSerializer, 
     BankSerializer, BankAccountTypeSerializer, PersonBankAccountSerializer, 
     PersonDocumentSerializer, RelationshipTypeSerializer, 
     PersonNationalitySerializer,
@@ -113,9 +113,9 @@ class StateViewSet(viewsets.ModelViewSet):
     queryset = State.objects.all()
     serializer_class = StateSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-class PhoneAreaCodeViewSet(viewsets.ModelViewSet):
-    queryset = PhoneAreaCode.objects.all()
-    serializer_class = PhoneAreaCodeSerializer
+class PhoneCarrierCodeViewSet(viewsets.ModelViewSet):
+    queryset = PhoneCarrierCode.objects.all()
+    serializer_class = PhoneCarrierCodeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
 # --- ViewSets de Datos de Person ---

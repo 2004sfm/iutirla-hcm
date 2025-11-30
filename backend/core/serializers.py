@@ -8,7 +8,7 @@ from .models import (
     DisabilityGroup, DisabilityType, DisabilityStatus,
     PersonDisabilityVE, AddressType, State, Address, 
     NationalId, EmailType, PersonEmail, PhoneType, PhoneCarrier, 
-    PhoneAreaCode, PersonPhone, Bank, BankAccountType, PersonBankAccount, 
+    PhoneCarrierCode, PersonPhone, Bank, BankAccountType, PersonBankAccount, 
     PersonDocument, RelationshipType, PersonNationality, 
     Dependent, EmergencyContact
 )
@@ -48,9 +48,39 @@ def validate_only_letters(value, field_name):
     if not value:
         return value
     if not re.fullmatch(r"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]+$", value):
-        raise serializers.ValidationError(
-            f"El campo '{field_name}' solo puede contener letras y tildes (sin espacios)."
-        )
+        raise serializers.ValidationError("Este campo solo puede contener letras.")
+    return value
+
+def validate_text_with_spaces(value, field_name):
+    """
+    Valida que el valor solo contenga letras, espacios y tildes (sin números ni signos especiales).
+    Usado para nombres de países, estados, tipos de catálogos, etc.
+    """
+    if not value:
+        return value
+    if not re.fullmatch(r"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$", value):
+        raise serializers.ValidationError("Este campo solo puede contener letras.")
+    return value
+
+def validate_letters_only_no_spaces(value, field_name):
+    """
+    Valida que el valor solo contenga letras sin espacios ni tildes (para códigos ISO).
+    """
+    if not value:
+        return value
+    if not re.fullmatch(r"^[a-zA-Z]+$", value):
+        raise serializers.ValidationError("Este campo solo puede contener letras.")
+    return value
+
+def validate_numeric_only(value, field_name):
+    """
+    Valida que el valor solo contenga números.
+    Usado para códigos de banco, etc.
+    """
+    if not value:
+        return value
+    if not re.fullmatch(r"^[0-9]+$", value):
+        raise serializers.ValidationError("Este campo solo puede contener números.")
     return value
 
 def validate_alphanumeric_with_spaces(value, field_name):
@@ -61,9 +91,7 @@ def validate_alphanumeric_with_spaces(value, field_name):
     if not value:
         return value
     if not re.fullmatch(r"^[a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ\s]+$", value):
-        raise serializers.ValidationError(
-            f"El campo '{field_name}' solo puede contener letras, números, espacios y tildes (sin signos especiales)."
-        )
+        raise serializers.ValidationError("Este campo solo puede contener letras y números.")
     return value
 
 def validate_single_primary(serializer_instance, validated_data, model, primary_field_name):
@@ -77,7 +105,7 @@ def validate_single_primary(serializer_instance, validated_data, model, primary_
 
         if queryset.exists():
             raise serializers.ValidationError({
-                'is_primary': f"Ya existe un registro {primary_field_name} marcado como principal."
+                'is_primary': f"Ya existe un registro principal."
             })
     return validated_data
 
@@ -100,7 +128,7 @@ class AddressSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         if data.get('state') and data.get('country') and data['state'].country != data['country']:
-            raise serializers.ValidationError({"state": "El estado no pertenece al país seleccionado."})
+            raise serializers.ValidationError({"state": "El estado no pertenece al país."})
         return data
     
 class EmergencyContactSerializer(serializers.ModelSerializer):
@@ -116,13 +144,14 @@ class EmergencyContactSerializer(serializers.ModelSerializer):
         return obj.relationship.name if obj.relationship else None
     
     def get_phone_country_code(self, obj):
-        return obj.phone_area_code.country.phone_prefix if obj.phone_area_code and obj.phone_area_code.country else None
+        # Venezuela solamente, prefijo fijo +58
+        return "+58" if obj.phone_carrier_code else None
     
     def get_phone_carrier_code(self, obj):
-        return obj.phone_area_code.code if obj.phone_area_code else None
+        return obj.phone_carrier_code.code if obj.phone_carrier_code else None
     
     def validate_phone_number(self, value):
-        if not value.isdigit(): raise serializers.ValidationError("Solo números.")
+        if not value.isdigit(): raise serializers.ValidationError("Este campo solo puede contener números.")
         return value
     def validate(self, data): return validate_single_primary(self, data, EmergencyContact, "Contacto")
     def validate_first_name(self, value): return title_case_cleaner(validate_only_letters(value, "Nombre"))
@@ -134,58 +163,56 @@ class EmergencyContactSerializer(serializers.ModelSerializer):
 class SalutationSerializer(serializers.ModelSerializer):
     class Meta: model = Salutation; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(Salutation, 'name', cleaned, self.instance)
 class GenderSerializer(serializers.ModelSerializer):
     class Meta: model = Gender; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(Gender, 'name', cleaned, self.instance)
 class MaritalStatusSerializer(serializers.ModelSerializer):
     class Meta: model = MaritalStatus; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(MaritalStatus, 'name', cleaned, self.instance)
 class CountrySerializer(serializers.ModelSerializer):
     class Meta: model = Country; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(Country, 'name', cleaned, self.instance)
-    def validate_iso_2(self, value): return check_uniqueness(Country, 'iso_2', value.strip().upper(), self.instance)
-    def validate_phone_prefix(self, value):
-        val = value.strip().lstrip('+')
-        if not val.isdigit(): raise serializers.ValidationError("Solo dígitos.")
-        return check_uniqueness(Country, 'phone_prefix', '+' + val, self.instance)
+    def validate_iso_2(self, value): 
+        validated = validate_letters_only_no_spaces(value, 'Código ISO')
+        return check_uniqueness(Country, 'iso_2', validated.strip().upper(), self.instance)
 
 class DisabilityGroupSerializer(serializers.ModelSerializer):
     class Meta: model = DisabilityGroup; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(DisabilityGroup, 'name', cleaned, self.instance)
 class DisabilityTypeSerializer(serializers.ModelSerializer):
     class Meta: model = DisabilityType; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(DisabilityType, 'name', cleaned, self.instance)
 class DisabilityStatusSerializer(serializers.ModelSerializer):
     class Meta: model = DisabilityStatus; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = sentence_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = sentence_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(DisabilityStatus, 'name', cleaned, self.instance)
 class AddressTypeSerializer(serializers.ModelSerializer):
     class Meta: model = AddressType; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(AddressType, 'name', cleaned, self.instance)
 class EmailTypeSerializer(serializers.ModelSerializer):
     class Meta: model = EmailType; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(EmailType, 'name', cleaned, self.instance)
 class PhoneTypeSerializer(serializers.ModelSerializer):
     class Meta: model = PhoneType; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(PhoneType, 'name', cleaned, self.instance)
 class PhoneCarrierSerializer(serializers.ModelSerializer):
     class Meta: model = PhoneCarrier; fields = '__all__'
@@ -197,25 +224,26 @@ class BankSerializer(serializers.ModelSerializer):
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
         return check_uniqueness(Bank, 'name', cleaned, self.instance)
-    def validate_code(self, value): return check_uniqueness(Bank, 'code', value.strip().upper(), self.instance)
+    def validate_code(self, value): 
+        validated = validate_numeric_only(value, 'Código')
+        return check_uniqueness(Bank, 'code', validated.strip(), self.instance)
 class BankAccountTypeSerializer(serializers.ModelSerializer):
     class Meta: model = BankAccountType; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(BankAccountType, 'name', cleaned, self.instance)
 class RelationshipTypeSerializer(serializers.ModelSerializer):
     class Meta: model = RelationshipType; fields = '__all__'
     def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
+        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         return check_uniqueness(RelationshipType, 'name', cleaned, self.instance)
 class StateSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
     class Meta: model = State; fields = '__all__'
     def validate_name(self, value): return title_case_cleaner(value)
-class PhoneAreaCodeSerializer(serializers.ModelSerializer):
-    country_name = serializers.CharField(source='country.name', read_only=True)
+class PhoneCarrierCodeSerializer(serializers.ModelSerializer):
     carrier_name = serializers.CharField(source='carrier.name', read_only=True)
-    class Meta: model = PhoneAreaCode; fields = '__all__'
+    class Meta: model = PhoneCarrierCode; fields = '__all__'
 
 # --- SERIALIZERS PRINCIPALES ---
 
@@ -236,7 +264,7 @@ class NationalIdSerializer(serializers.ModelSerializer):
     def get_full_document(self, obj): return f"{obj.document_type}-{obj.number}"
     
     def validate_number(self, value):
-        if not value.strip().isdigit(): raise serializers.ValidationError("El número debe contener solo dígitos.")
+        if not value.strip().isdigit(): raise serializers.ValidationError("Este campo solo puede contener números.")
         return value.strip()
         
     def validate(self, data): return validate_single_primary(self, data, NationalId, "ID Nacional")
@@ -266,13 +294,13 @@ class PersonEmailSerializer(serializers.ModelSerializer):
             queryset = PersonEmail.objects.filter(person=person, is_primary=True)
             if self.instance: queryset = queryset.exclude(pk=self.instance.pk)
             if queryset.exists():
-                raise serializers.ValidationError({'is_primary': "Ya existe un Correo Electrónico principal para esta persona."})
+                raise serializers.ValidationError({'is_primary': "Ya existe un correo principal."}) 
         return data
 
 
 class PersonPhoneSerializer(serializers.ModelSerializer):
     phone_type_name = serializers.CharField(source='phone_type.name', read_only=True)
-    area_code_val = serializers.CharField(source='area_code.code', read_only=True) # Ej: 0414
+    carrier_code_val = serializers.CharField(source='carrier_code.code', read_only=True) # Ej: 0414
     full_number = serializers.SerializerMethodField()
 
     class Meta: 
@@ -281,18 +309,19 @@ class PersonPhoneSerializer(serializers.ModelSerializer):
         validators = [
             UniqueTogetherValidator(
                 queryset=PersonPhone.objects.all(),
-                fields=['area_code', 'subscriber_number'],
+                fields=['carrier_code', 'subscriber_number'],
                 message="Este número de teléfono ya se encuentra registrado."
             )
         ]
     
     def get_full_number(self, obj):
-        if obj.area_code:
-            return f"{obj.area_code.country.phone_prefix} {obj.area_code.code} {obj.subscriber_number}"
+        # Venezuela solamente, prefijo fijo +58
+        if obj.carrier_code:
+            return f"+58 {obj.carrier_code.code} {obj.subscriber_number}"
         return obj.subscriber_number
 
     def validate_subscriber_number(self, value):
-        if not value.isdigit() or len(value) > 10: raise serializers.ValidationError("Número inválido.")
+        if not value.isdigit() or len(value) > 10: raise serializers.ValidationError("Este campo solo puede contener números.")
         return value
 
     def validate(self, data):
@@ -302,7 +331,7 @@ class PersonPhoneSerializer(serializers.ModelSerializer):
             queryset = PersonPhone.objects.filter(person=person, is_primary=True)
             if self.instance: queryset = queryset.exclude(pk=self.instance.pk)
             if queryset.exists():
-                raise serializers.ValidationError({'is_primary': "Ya existe un Teléfono principal para esta persona."})
+                raise serializers.ValidationError({'is_primary': "Ya existe un teléfono principal."})
         return data
     
 class PersonBankAccountSerializer(serializers.ModelSerializer):
@@ -312,7 +341,7 @@ class PersonBankAccountSerializer(serializers.ModelSerializer):
 
     class Meta: model = PersonBankAccount; fields = '__all__'
     def validate_account_number(self, value):
-        if not value.isdigit() or len(value) != 20: raise serializers.ValidationError("Debe tener 20 dígitos.")
+        if not value.isdigit() or len(value) != 20: raise serializers.ValidationError("Este campo debe tener 20 dígitos.")
         return value
     def validate(self, data): return validate_single_primary(self, data, PersonBankAccount, "Cuenta Bancaria")
 
@@ -332,7 +361,7 @@ class DependentSerializer(serializers.ModelSerializer):
         return obj.relationship.name if obj.relationship else None
     
     def validate_birthdate(self, value):
-        if value > date.today(): raise serializers.ValidationError("Fecha futura.")
+        if value > date.today(): raise serializers.ValidationError("No se permiten fechas futuras.")
         return value
     def validate_first_name(self, value): return title_case_cleaner(validate_only_letters(value, "Nombre"))
     def validate_second_name(self, value): return title_case_cleaner(validate_only_letters(value, "Segundo Nombre")) if value else value
@@ -355,7 +384,7 @@ class PersonListSerializer(serializers.ModelSerializer):
     
     def get_primary_document(self, obj):
         doc = obj.national_ids.filter(is_primary=True).first()
-        return f"{doc.category} {doc.document_type}-{doc.number}" if doc else "—"
+        return f"{doc.get_category_display()} {doc.document_type}-{doc.number}" if doc else "—"
     
     def get_primary_email(self, obj):
         e = obj.emails.filter(is_primary=True).first()
@@ -363,7 +392,11 @@ class PersonListSerializer(serializers.ModelSerializer):
     
     def get_primary_phone(self, obj):
         p = obj.phones.filter(is_primary=True).first()
-        return f"({p.area_code.code}) {p.subscriber_number}" if p else "—"
+        if not p:
+            return "—"
+        if p.carrier_code:
+            return f"({p.carrier_code.code}) {p.subscriber_number}"
+        return p.subscriber_number
         
     def get_hiring_search(self, obj):
         doc = obj.national_ids.filter(is_primary=True).first()
@@ -395,7 +428,7 @@ class PersonSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
     def validate_birthdate(self, value):
-        if value and value > date.today(): raise serializers.ValidationError("Fecha futura no permitida.")
+        if value and value > date.today(): raise serializers.ValidationError("No se permiten fechas futuras.")
         return value
     def validate_first_name(self, value): return title_case_cleaner(validate_only_letters(value, "Primer Nombre"))
     def validate_second_name(self, value): return title_case_cleaner(validate_only_letters(value, "Segundo Nombre")) if value else value
@@ -422,13 +455,18 @@ class PersonSerializer(serializers.ModelSerializer):
         """Busca el teléfono marcado como principal"""
         # Usamos el related_name='phones'
         phone = obj.phones.filter(is_primary=True).first()
-        return str(phone) if phone else None
+        if not phone:
+            return None
+        # El __str__ del modelo PersonPhone también accede a carrier_code.code, así que manejamos el caso
+        if phone.carrier_code:
+            return str(phone)
+        return phone.subscriber_number
 
 class PersonDisabilityVESerializer(serializers.ModelSerializer):
     class Meta: model = PersonDisabilityVE; fields = '__all__'
     def validate(self, data):
         if data.get('date_learned') and data.get('date_of_determination') and data['date_learned'] > data['date_of_determination']:
-            raise serializers.ValidationError({"date_learned": "Fecha inconsistente."})
+            raise serializers.ValidationError({"date_learned": "Las fechas son inconsistentes."})
         return data
 
 

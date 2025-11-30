@@ -21,7 +21,7 @@ router.register(r'banks', views.BankViewSet)
 router.register(r'bank-account-types', views.BankAccountTypeViewSet)
 router.register(r'relationship-types', views.RelationshipTypeViewSet)
 router.register(r'states', views.StateViewSet)
-router.register(r'phone-area-codes', views.PhoneAreaCodeViewSet)
+router.register(r'phone-carrier-codes', views.PhoneCarrierCodeViewSet)
 
 # Datos de Persona
 router.register(r'person-disabilities', views.PersonDisabilityVEViewSet)

@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, Save, Loader2, Target, ListChecks } from "lucide-react";
+import { AlertCircle, ArrowLeft, Save, Loader2, Target, ListChecks, FileText } from "lucide-react";
 import apiClient from '@/lib/apiClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { PositionObjectiveManager } from '@/components/PositionObjectiveManager';
 import { PositionRequirementManager } from '@/components/PositionRequirementManager';
 import { PositionForm } from '@/components/PositionForm';
+import { FunctionsList } from '@/components/FunctionsList';
 
 interface PositionData {
     id: number;
@@ -21,9 +22,9 @@ interface PositionData {
     department: number;
     department_name: string;
     vacancies: number;
-    manager_position: number | null;
-    manager_position_name: string | null;
-    name: string | null;
+    manager_positions: number[];
+    manager_positions_names: string[];
+    manager_positions_data: Array<{ id: number; job_title_name: string | null; department_id: number | null; }>;
 }
 
 export default function PositionDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -120,9 +121,13 @@ export default function PositionDetailPage({ params }: { params: Promise<{ id: s
 
                     {/* Tabs */}
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="info" className="gap-2">
                                 Información
+                            </TabsTrigger>
+                            <TabsTrigger value="functions" className="gap-2">
+                                <FileText className="size-4" />
+                                Funciones
                             </TabsTrigger>
                             <TabsTrigger value="objectives" className="gap-2">
                                 <Target className="size-4" />
@@ -149,8 +154,8 @@ export default function PositionDetailPage({ params }: { params: Promise<{ id: s
                                                 job_title: positionData.job_title,
                                                 department: positionData.department,
                                                 vacancies: positionData.vacancies,
-                                                manager_position: positionData.manager_position,
-                                                name: positionData.name,
+                                                manager_positions: positionData.manager_positions || [],
+                                                manager_positions_data: positionData.manager_positions_data || [],
                                             }}
                                             onUpdate={async () => {
                                                 // Reload position data after update
@@ -159,6 +164,19 @@ export default function PositionDetailPage({ params }: { params: Promise<{ id: s
                                             }}
                                         />
                                     )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* Tab: Funciones */}
+                        <TabsContent value="functions">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Funciones del Cargo</CardTitle>
+                                    <CardDescription>Responsabilidades y funciones específicas de esta posición</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <FunctionsList positionId={positionId} />
                                 </CardContent>
                             </Card>
                         </TabsContent>

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import DepartmentViewSet, JobTitleViewSet, PositionViewSet, PositionObjectiveViewSet, PositionRequirementViewSet
+from .views import DepartmentViewSet, JobTitleViewSet, PositionViewSet, PositionObjectiveViewSet, PositionRequirementViewSet, PositionFunctionViewSet
 
 router = DefaultRouter()
 router.register(r'departments', DepartmentViewSet, basename='department')
@@ -14,4 +14,6 @@ urlpatterns = [
     path('positions/<int:position_pk>/objectives/<int:pk>/', PositionObjectiveViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='position-objectives-detail'),
     path('positions/<int:position_pk>/requirements/', PositionRequirementViewSet.as_view({'get': 'list', 'post': 'create'}), name='position-requirements-list'),
     path('positions/<int:position_pk>/requirements/<int:pk>/', PositionRequirementViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='position-requirements-detail'),
+    path('positions/<int:position_pk>/functions/', PositionFunctionViewSet.as_view({'get': 'list', 'post': 'create'}), name='position-functions-list'),
+    path('positions/<int:position_pk>/functions/<int:pk>/', PositionFunctionViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='position-functions-detail'),
 ]

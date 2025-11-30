@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import apiClient from '@/lib/apiClient';
 import { AxiosError } from 'axios';
-import { useForm, FieldValues, Controller, Resolver } from 'react-hook-form';
+import { useForm, FieldValues, Controller, Resolver, useWatch, Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 
 import { FormFieldDef } from './CatalogManager';
 import { DynamicCombobox } from './DynamicCombobox';
+import { MultiSelectCombobox } from './MultiSelectCombobox';
 
 // --- TIPOS ---
 
@@ -59,6 +60,14 @@ const generateZodSchema = (fields: FormFieldDef[]) => {
         if (field.type === 'boolean') {
             // Zod boolean: permite true/false y por defecto false si no viene
             fieldSchema = z.boolean().default(false);
+        }
+        // CASO MULTISELECT (Array de strings/números)
+        else if (field.type === 'multiselect') {
+            fieldSchema = z.array(z.string()).default([]);
+
+            if (field.required) {
+                fieldSchema = fieldSchema.min(1, "Debe seleccionar al menos un elemento.");
+            }
         }
         // CASO NUMBER / SELECT
         else if (field.type === 'number' || field.type === 'select') {
@@ -97,6 +106,150 @@ const generateZodSchema = (fields: FormFieldDef[]) => {
 
     return z.object(schemaFields);
 };
+
+// --- COMPONENTE INTERNO PARA SELECTS DEPENDIENTES ---
+interface DependentComboboxProps {
+    field: FormFieldDef;
+    control: Control<FormData>;
+    errors: any;
+}
+
+function DependentCombobox({ field, control, errors }: DependentComboboxProps) {
+    // Estado para ignorar la dependencia (mostrar todos)
+    const [ignoreDependency, setIgnoreDependency] = useState(false);
+
+    // Si el campo tiene una dependencia, observamos su valor
+    const dependencyValue = useWatch({
+        control,
+        name: field.dependsOn || '',
+        defaultValue: null
+    });
+
+    // Construimos el endpoint dinámico
+    const dynamicEndpoint = useMemo(() => {
+        if (!field.optionsEndpoint) return '';
+
+        if (field.dependsOn && !ignoreDependency) {
+            // Si depende de algo, NO ignoramos la dependencia, y ese algo no tiene valor...
+            if (!dependencyValue) return '';
+
+            // Si tiene valor, lo agregamos como query param
+            const separator = field.optionsEndpoint.includes('?') ? '&' : '?';
+            return `${field.optionsEndpoint}${separator}${field.dependsOn}=${dependencyValue}`;
+        }
+
+        // Si no hay dependencia o la ignoramos, devolvemos el endpoint base (todos)
+        return field.optionsEndpoint;
+    }, [field.optionsEndpoint, field.dependsOn, dependencyValue, ignoreDependency]);
+
+    return (
+        <div className="space-y-2">
+            <Controller
+                name={field.name}
+                control={control}
+                render={({ field: controllerField }) => (
+                    <DynamicCombobox
+                        field={{
+                            ...field,
+                            optionsEndpoint: dynamicEndpoint,
+                            // Si ignoramos dependencia y existe una key alternativa, la usamos. Si no, la normal.
+                            optionsLabelKey: (ignoreDependency && field.optionsLabelKeyOnIgnore)
+                                ? field.optionsLabelKeyOnIgnore
+                                : field.optionsLabelKey
+                        }}
+                        value={controllerField.value}
+                        onChange={controllerField.onChange}
+                        placeholder={field.helpText}
+                        hasError={!!errors[field.name]}
+                    />
+                )}
+            />
+
+            {/* Toggle para ignorar dependencia */}
+            {field.dependsOn && field.ignoreDependencyLabel && (
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id={`${field.name}-ignore-dep`}
+                        checked={ignoreDependency}
+                        onCheckedChange={setIgnoreDependency}
+                    />
+                    <Label htmlFor={`${field.name}-ignore-dep`} className="text-xs font-normal text-muted-foreground cursor-pointer">
+                        {field.ignoreDependencyLabel}
+                    </Label>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- COMPONENTE INTERNO PARA MULTI-SELECTS DEPENDIENTES ---
+function DependentMultiSelect({ field, control, errors }: DependentComboboxProps) {
+    // Estado para ignorar la dependencia (mostrar todos)
+    const [ignoreDependency, setIgnoreDependency] = useState(false);
+
+    // Si el campo tiene una dependencia, observamos su valor
+    const dependencyValue = useWatch({
+        control,
+        name: field.dependsOn || '',
+        defaultValue: null
+    });
+
+    // Construimos el endpoint dinámico
+    const dynamicEndpoint = useMemo(() => {
+        if (!field.optionsEndpoint) return '';
+
+        if (field.dependsOn && !ignoreDependency) {
+            // Si depende de algo, NO ignoramos la dependencia, y ese algo no tiene valor...
+            if (!dependencyValue) return '';
+
+            // Si tiene valor, lo agregamos como query param
+            const separator = field.optionsEndpoint.includes('?') ? '&' : '?';
+            return `${field.optionsEndpoint}${separator}${field.dependsOn}=${dependencyValue}`;
+        }
+
+        // Si no hay dependencia o la ignoramos, devolvemos el endpoint base (todos)
+        return field.optionsEndpoint;
+    }, [field.optionsEndpoint, field.dependsOn, dependencyValue, ignoreDependency]);
+
+    return (
+        <div className="space-y-2">
+            <Controller
+                name={field.name}
+                control={control}
+                render={({ field: controllerField }) => (
+                    <MultiSelectCombobox
+                        field={{
+                            ...field,
+                            optionsEndpoint: dynamicEndpoint,
+                            // Si ignoramos dependencia y existe una key alternativa, la usamos. Si no, la normal.
+                            optionsLabelKey: (ignoreDependency && field.optionsLabelKeyOnIgnore)
+                                ? field.optionsLabelKeyOnIgnore
+                                : field.optionsLabelKey
+                        }}
+                        value={controllerField.value}
+                        onChange={controllerField.onChange}
+                        placeholder={field.helpText}
+                        hasError={!!errors[field.name]}
+                    />
+                )}
+            />
+
+            {/* Toggle para ignorar dependencia */}
+            {field.dependsOn && field.ignoreDependencyLabel && (
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id={`${field.name}-ignore-dep`}
+                        checked={ignoreDependency}
+                        onCheckedChange={setIgnoreDependency}
+                    />
+                    <Label htmlFor={`${field.name}-ignore-dep`} className="text-xs font-normal text-muted-foreground cursor-pointer">
+                        {field.ignoreDependencyLabel}
+                    </Label>
+                </div>
+            )}
+        </div>
+    );
+}
 
 // --- COMPONENTE PRINCIPAL ---
 
@@ -252,24 +405,21 @@ export function CatalogForm({
                                 <>
                                     <Label
                                         htmlFor={field.name}
-                                        className={errors[field.name] ? "text-destructive" : ""}
                                     >
                                         {field.label} {field.required && <span className="text-destructive">*</span>}
                                     </Label>
 
                                     {field.type === 'select' ? (
-                                        <Controller
-                                            name={field.name}
+                                        <DependentCombobox
+                                            field={field}
                                             control={control}
-                                            render={({ field: controllerField }) => (
-                                                <DynamicCombobox
-                                                    field={field}
-                                                    value={controllerField.value}
-                                                    onChange={controllerField.onChange}
-                                                    placeholder={field.helpText}
-                                                    hasError={!!errors[field.name]}
-                                                />
-                                            )}
+                                            errors={errors}
+                                        />
+                                    ) : field.type === 'multiselect' ? (
+                                        <DependentMultiSelect
+                                            field={field}
+                                            control={control}
+                                            errors={errors}
                                         />
                                     ) : (
                                         <Input

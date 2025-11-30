@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { AxiosError } from 'axios';
 
-export type FieldType = "text" | "number" | "email" | "date" | "select" | "boolean";
+export type FieldType = "text" | "number" | "email" | "date" | "select" | "multiselect" | "boolean";
 
 export interface FormFieldDef {
     name: string;
@@ -43,11 +43,15 @@ export interface FormFieldDef {
     optionsLabelKey?: string;
     helpText?: string;
     defaultValue?: string | number | boolean;
+    dependsOn?: string; // Campo del cual depende (para filtrado en cascada)
+    ignoreDependencyLabel?: string; // Etiqueta para el toggle que desactiva la dependencia
+    optionsLabelKeyOnIgnore?: string; // Key del label a usar cuando se ignora la dependencia
 }
 
 export interface ColumnDef {
     header: string;
     accessorKey: string;
+    render?: (value: any) => string | React.ReactNode; // Función opcional para renderizado personalizado
 }
 
 interface CatalogItem {
@@ -243,7 +247,10 @@ export function CatalogManager({ endpoint, title, singularTitle, columns, formFi
                                     {activeColumns.map((col) => (
                                         <TableCell key={col.accessorKey}>
                                             <div className="truncate max-w-[300px]" title={item[col.accessorKey]?.toString()}>
-                                                {typeof item[col.accessorKey] === 'boolean' ? (
+                                                {col.render ? (
+                                                    // Usar función de render personalizada si existe
+                                                    col.render(item[col.accessorKey])
+                                                ) : typeof item[col.accessorKey] === 'boolean' ? (
                                                     // CASO BOOLEANO: Mostramos Badges
                                                     item[col.accessorKey] ? (
                                                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">

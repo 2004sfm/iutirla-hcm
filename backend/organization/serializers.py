@@ -1,6 +1,18 @@
 from rest_framework import serializers
 from core.serializers import check_uniqueness, title_case_cleaner, validate_alphanumeric_with_spaces
-from .models import Department, JobTitle, Position, PositionObjective, PositionRequirement
+from .models import Department, JobTitle, Position, PositionObjective, PositionRequirement, PositionFunction
+
+# Serializers simples para detalles
+class PositionObjectiveSerializer(serializers.ModelSerializer):
+    class Meta: model = PositionObjective; fields = '__all__'
+
+class PositionRequirementSerializer(serializers.ModelSerializer):
+    class Meta: model = PositionRequirement; fields = '__all__'
+
+class PositionFunctionSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = PositionFunction
+        fields = '__all__'
 
 class DepartmentSerializer(serializers.ModelSerializer):
     # Campo extra para mostrar el nombre del padre
@@ -37,12 +49,20 @@ class PositionSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)
     job_title_name = serializers.CharField(source='job_title.name', read_only=True)
     
-    # FIX: Usamos SerializerMethodField para el Jefe Inmediato.
-    # Esto evita el error "<method-wrapper>" cuando el jefe es None.
-    manager_position_name = serializers.SerializerMethodField()
+    # Campos para múltiples jefes (M2M)
+    manager_positions_names = serializers.SerializerMethodField()
+    manager_positions_data = serializers.SerializerMethodField()
     
     # Campo para el select (Combo box)
     full_name = serializers.SerializerMethodField()
+
+    # Detalles anidados
+    objectives = PositionObjectiveSerializer(many=True, read_only=True)
+    requirements = PositionRequirementSerializer(many=True, read_only=True)
+    functions = PositionFunctionSerializer(many=True, read_only=True)
+    
+    # Campo calculado para empleados activos
+    active_employees_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Position
@@ -50,24 +70,35 @@ class PositionSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return str(obj)
+    
+    def get_active_employees_count(self, obj):
+        """Devuelve el número de empleados activos en esta posición."""
+        from employment.models import Employment
+        return Employment.objects.filter(
+            position=obj,
+            current_status__is_active_relationship=True
+        ).count()
 
-    def get_manager_position_name(self, obj):
-        """Devuelve el nombre del jefe o '—' si no tiene."""
-        if obj.manager_position:
-            return str(obj.manager_position)
-        return None # O puedes retornar "—" si prefieres que se vea un guion
+    def get_manager_positions_names(self, obj):
+        """Devuelve una lista con los nombres de los cargos de los jefes."""
+        return [
+            manager.job_title.name 
+            for manager in obj.manager_positions.all() 
+            if manager.job_title
+        ]
+
+    def get_manager_positions_data(self, obj):
+        """Devuelve información completa de los jefes para detección de cross-department."""
+        return [
+            {
+                'id': manager.id,
+                'job_title_name': manager.job_title.name if manager.job_title else None,
+                'department_id': manager.department.id if manager.department else None,
+            }
+            for manager in obj.manager_positions.all()
+        ]
 
     def validate(self, data):
-        manager_position = data.get('manager_position')
-        if self.instance and manager_position and manager_position.id == self.instance.id:
-            raise serializers.ValidationError({
-                "manager_position": "Una posición no puede reportarse a sí misma."
-            })
+        # La validación de auto-referencia se maneja en el save del modelo o en el frontend
+        # M2M no permite validación directa aquí del mismo modo que FK
         return data
-
-# Serializers simples para detalles
-class PositionObjectiveSerializer(serializers.ModelSerializer):
-    class Meta: model = PositionObjective; fields = '__all__'
-
-class PositionRequirementSerializer(serializers.ModelSerializer):
-    class Meta: model = PositionRequirement; fields = '__all__'

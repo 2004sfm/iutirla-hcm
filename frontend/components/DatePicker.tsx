@@ -68,6 +68,8 @@ export function DatePicker({ selected, onSelect, placeholder = "Seleccione una f
                     locale={es} // Traduce el calendario (Lunes, Martes...)
                     // ESTA ES LA PROP CLAVE para habilitar los desplegables de mes/año
                     captionLayout="dropdown"
+                    fromYear={1925}
+                    toYear={2032}
                 />
             </PopoverContent>
         </Popover>

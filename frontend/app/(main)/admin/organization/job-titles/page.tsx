@@ -4,10 +4,10 @@ import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHead
 import { CatalogManager, ColumnDef, FormFieldDef } from "@/components/CatalogManager";
 
 // --- COLUMNAS ---
+// --- COLUMNAS ---
 const jobTitleColumns: ColumnDef[] = [
     { header: "ID", accessorKey: "id" },
     { header: "Nombre del Título", accessorKey: "name" },
-    { header: "Descripción", accessorKey: "description" },
 ];
 
 // --- CAMPOS ---
@@ -18,12 +18,6 @@ const jobTitleFields: FormFieldDef[] = [
         type: "text",
         required: true,
         helpText: "Ej: Director, Analista, Asistente Administrativo"
-    },
-    {
-        name: "description",
-        label: "Descripción",
-        type: "text",
-        helpText: "Breve descripción de las responsabilidades generales (Opcional)."
     }
 ];
 

@@ -7,6 +7,8 @@ from core.models import (
 # FIX: Importamos check_uniqueness para blindar el username contra Errores 500
 from core.serializers import PersonSerializer, check_uniqueness
 from .models import User
+from dj_rest_auth.serializers import LoginSerializer
+from django.utils.translation import gettext_lazy as _
 
 class UserReadSerializer(serializers.ModelSerializer):
     person = PersonSerializer(read_only=True)
@@ -182,3 +184,13 @@ class CustomUserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('pk', 'username', 'is_staff', 'person')
+
+class CustomLoginSerializer(LoginSerializer):
+    def validate(self, attrs):
+        try:
+            return super().validate(attrs)
+        except serializers.ValidationError:
+            # Capturamos cualquier error de validación (incluyendo credenciales inválidas)
+            # y lanzamos nuestro mensaje personalizado.
+            msg = _('Usuario o contraseña incorrectos. Por favor verifique sus datos e intente nuevamente.')
+            raise serializers.ValidationError(msg)

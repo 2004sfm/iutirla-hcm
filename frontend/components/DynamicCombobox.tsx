@@ -48,7 +48,10 @@ export function DynamicCombobox({ field, value, onChange, placeholder, hasError 
         if (!field.optionsEndpoint) return;
         let isMounted = true;
 
-        apiClient.get(field.optionsEndpoint)
+        const separator = field.optionsEndpoint.includes('?') ? '&' : '?';
+        const url = `${field.optionsEndpoint}${separator}page_size=100`;
+
+        apiClient.get(url)
             .then(res => {
                 if (isMounted) {
                     const data = Array.isArray(res.data) ? res.data : res.data.results || [];

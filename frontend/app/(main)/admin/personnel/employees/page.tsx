@@ -5,8 +5,6 @@ import { CatalogHeader, type BreadcrumbItemType } from "@/components/CatalogHead
 import { CatalogManager, ColumnDef } from "@/components/CatalogManager";
 import { Button } from "@/components/ui/button";
 import { Plus, Briefcase } from "lucide-react";
-import { EmployeeHireModal } from "@/components/EmployeeHireModal";
-import { useState } from 'react';
 
 const employeeColumns: ColumnDef[] = [
     { header: "ID", accessorKey: "id" },
@@ -32,16 +30,6 @@ const PEOPLE_CONFIG = {
 
 export default function EmployeesPage() {
     const router = useRouter();
-    const [isHireModalOpen, setIsHireModalOpen] = useState(false);
-
-    // 1. Estado para controlar la recarga de la tabla
-    const [refreshKey, setRefreshKey] = useState(0);
-
-    // 2. Función optimizada: Cambia la key en lugar de recargar la página
-    const refreshTable = () => {
-        setRefreshKey(prev => prev + 1); // Esto obliga a React a recargar solo el componente CatalogManager
-        router.refresh(); // Opcional: Refresca datos del servidor Next.js si usas Server Components
-    };
 
     return (
         <>
@@ -59,15 +47,13 @@ export default function EmployeesPage() {
                         </p>
                     </div>
 
-                    <Button onClick={() => setIsHireModalOpen(true)}>
+                    <Button onClick={() => router.push('/admin/personnel/employees/new')}>
                         <Plus className="mr-2 h-4 w-4" />
                         Contratar Nuevo
                     </Button>
                 </div>
 
-                {/* 3. Añadimos la prop 'key'. Al cambiar el número, el componente se reinicia y vuelve a pedir datos */}
                 <CatalogManager
-                    key={refreshKey}
                     endpoint={PEOPLE_CONFIG.endpoint}
                     title={PEOPLE_CONFIG.singularName}
                     singularTitle={PEOPLE_CONFIG.singularName}
@@ -75,13 +61,6 @@ export default function EmployeesPage() {
                     editUrl="/admin/personnel/employees"
                 />
             </div>
-
-            {/* Modal de Contratación */}
-            <EmployeeHireModal
-                isOpen={isHireModalOpen}
-                setIsOpen={setIsHireModalOpen}
-                onSuccess={refreshTable}
-            />
         </>
     );
 }

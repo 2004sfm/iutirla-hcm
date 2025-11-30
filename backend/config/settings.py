@@ -1,8 +1,17 @@
 from pathlib import Path
 from datetime import timedelta
+import os
+import environ
+
+# Initialise environ
+env = environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,6 +47,7 @@ THIRD_PARTY_APPS = [
     'allauth.account',
     # 'dj_rest_auth.registration',
     'corsheaders',
+    'simple_history',
 ]
 
 PROJECT_APPS = [
@@ -48,6 +58,7 @@ PROJECT_APPS = [
     'talent',
     'training',
     'performance',
+    'ats',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -62,6 +73,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -176,6 +188,7 @@ REST_AUTH = {
     'JWT_AUTH_SAMESITE': 'Lax',
     'JWT_AUTH_SECURE': False, # True en producción
     'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',
+    'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
 }
 
 SIMPLE_JWT = {
@@ -192,3 +205,13 @@ ACCOUNT_LOGIN_METHODS = ('username',)
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Email Configuration
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@iutirla.edu.ve')
