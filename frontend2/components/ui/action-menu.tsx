@@ -22,7 +22,8 @@ export function ActionMenu({
     onDelete,
     editLabel = "Editar",
     deleteLabel = "Eliminar",
-}: ActionMenuProps) {
+    children,
+}: ActionMenuProps & { children?: React.ReactNode }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -33,6 +34,7 @@ export function ActionMenu({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                {children}
                 <DropdownMenuItem onClick={onEdit}>
                     <Pencil className="mr-2 h-4 w-4" />
                     {editLabel}

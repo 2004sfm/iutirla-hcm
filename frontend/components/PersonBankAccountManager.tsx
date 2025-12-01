@@ -275,8 +275,8 @@ export function PersonBankAccountManager({ personId }: PersonBankAccountManagerP
                         ) : (
                             accounts.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell className="font-medium">{item.bank_name || "—"}</TableCell>
-                                    <TableCell>{item.bank_account_type_name || "—"}</TableCell>
+                                    <TableCell className="font-medium">{item.bank_name || "-"}</TableCell>
+                                    <TableCell>{item.bank_account_type_name || "-"}</TableCell>
                                     <TableCell className="font-mono text-sm">{item.account_number}</TableCell>
                                     <TableCell>
                                         {item.is_primary ? (

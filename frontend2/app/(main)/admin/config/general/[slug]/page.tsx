@@ -11,6 +11,7 @@ interface CatalogConfig {
     fields: CatalogField[];
     columns: ColumnDef<any>[];
     searchKey?: string;
+    searchOptions?: { label: string; value: string }[];
 }
 
 const simpleNameColumns: ColumnDef<any>[] = [
@@ -45,6 +46,10 @@ const catalogs: Record<string, CatalogConfig> = {
             { accessorKey: "iso_2", header: "ISO", cell: ({ row }) => <div className="max-w-[50px] truncate">{row.getValue("iso_2")}</div> },
         ],
         searchKey: "name",
+        searchOptions: [
+            { label: "Nombre", value: "name" },
+            { label: "Código ISO", value: "iso_2" }
+        ]
     },
     genders: {
         title: "Géneros",
@@ -101,6 +106,10 @@ const catalogs: Record<string, CatalogConfig> = {
             { accessorKey: "code", header: "Código", cell: ({ row }) => <div className="max-w-[100px] truncate">{row.getValue("code")}</div> },
         ],
         searchKey: "name",
+        searchOptions: [
+            { label: "Nombre", value: "name" },
+            { label: "Código", value: "code" }
+        ]
     },
     "bank-account-types": {
         title: "Tipos de Cuenta Bancaria",
@@ -137,6 +146,10 @@ const catalogs: Record<string, CatalogConfig> = {
             { accessorKey: "country.name", header: "País", cell: ({ row }) => <div className="truncate">{row.original.country?.name}</div> },
         ],
         searchKey: "name",
+        searchOptions: [
+            { label: "Nombre", value: "name" },
+            { label: "País", value: "country__name" }
+        ]
     },
     "phone-carrier-codes": {
         title: "Códigos de Operadora",
@@ -159,6 +172,10 @@ const catalogs: Record<string, CatalogConfig> = {
             { accessorKey: "carrier.name", header: "Operadora", cell: ({ row }) => <div className="truncate">{row.original.carrier?.name}</div> },
         ],
         searchKey: "code",
+        searchOptions: [
+            { label: "Código", value: "code" },
+            { label: "Operadora", value: "carrier__name" }
+        ]
     },
 };
 
@@ -177,6 +194,7 @@ export default function DynamicCatalogPage({ params }: { params: Promise<{ slug:
             fields={config.fields}
             columns={config.columns}
             searchKey={config.searchKey}
+            searchOptions={config.searchOptions}
         />
     );
 }

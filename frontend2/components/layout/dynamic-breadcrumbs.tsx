@@ -58,9 +58,12 @@ const routeNameMap: Record<string, string> = {
     "phone-carrier-codes": "Códigos de Operadora",
 };
 
+import { useBreadcrumb } from "@/context/breadcrumb-context";
+
 export function DynamicBreadcrumbs() {
     const pathname = usePathname();
     const segments = pathname.split("/").filter((segment) => segment !== "");
+    const { labels } = useBreadcrumb();
 
     // If we are at root, don't show breadcrumbs or show Home?
     // Usually dashboard is /admin/dashboard.
@@ -79,7 +82,8 @@ export function DynamicBreadcrumbs() {
                 {segments.map((segment, index) => {
                     const isLast = index === segments.length - 1;
                     const href = `/${segments.slice(0, index + 1).join("/")}`;
-                    const name = routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+                    // Check context for override (try both with and without trailing slash), then map, then fallback
+                    const name = labels[href] || labels[href + "/"] || routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
 
                     return (
                         <Fragment key={href}>

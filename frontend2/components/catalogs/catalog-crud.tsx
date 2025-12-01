@@ -44,13 +44,15 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface CatalogField {
     name: string;
     label: string;
-    type: "text" | "number" | "email" | "select" | "checkbox";
+    type: "text" | "number" | "email" | "select" | "checkbox" | "textarea" | "date";
     required?: boolean;
     optionsUrl?: string; // API endpoint to fetch options
+    options?: { label: string; value: string }[]; // Static options
     optionLabelKey?: string; // Key to display (default: name)
     optionValueKey?: string; // Key for value (default: id)
 }
@@ -61,9 +63,11 @@ interface CatalogCRUDProps {
     fields: CatalogField[];
     columns: ColumnDef<any>[];
     searchKey?: string;
+    searchOptions?: { label: string; value: string }[];
+    extraActions?: (item: any) => React.ReactNode;
 }
 
-export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: CatalogCRUDProps) {
+export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions }: CatalogCRUDProps) {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -81,6 +85,8 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
     });
     const [rowCount, setRowCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
+    // Default to first option if available, otherwise empty
+    const [currentSearchOption, setCurrentSearchOption] = useState(searchOptions?.[0]?.value || "");
 
     // Dynamic Zod Schema Generation
     const formSchema = useMemo(() => {
@@ -126,6 +132,9 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
             };
             if (searchTerm) {
                 params.search = searchTerm;
+                if (currentSearchOption) {
+                    params.search_field = currentSearchOption;
+                }
             }
             const response = await apiClient.get(apiUrl, { params });
 
@@ -164,7 +173,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
     useEffect(() => {
         fetchData();
         fetchOptions();
-    }, [apiUrl, pagination.pageIndex, pagination.pageSize, searchTerm]);
+    }, [apiUrl, pagination.pageIndex, pagination.pageSize, searchTerm, currentSearchOption]);
 
     const handleSearch = useCallback((term: string) => {
         setSearchTerm(term);
@@ -190,10 +199,27 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
         // For selects, we might need to map objects to IDs if the API returns objects
         const formattedItem = { ...item };
         fields.forEach(field => {
-            if (field.type === "select" && typeof item[field.name] === 'object' && item[field.name] !== null) {
-                formattedItem[field.name] = item[field.name].id.toString();
-            } else if (item[field.name] !== undefined && item[field.name] !== null) {
-                formattedItem[field.name] = item[field.name].toString();
+            const value = item[field.name];
+            if (field.type === "select" && value !== null && typeof value === 'object') {
+                if (Array.isArray(value)) {
+                    // Si es un array (M2M), tomamos el primer elemento si existe
+                    // Esto asume selección única para este campo en el frontend
+                    if (value.length > 0) {
+                        const firstItem = value[0];
+                        if (typeof firstItem === 'object' && firstItem.id) {
+                            formattedItem[field.name] = firstItem.id.toString();
+                        } else if (firstItem && typeof firstItem !== 'object') {
+                            formattedItem[field.name] = firstItem.toString();
+                        }
+                    } else {
+                        formattedItem[field.name] = "";
+                    }
+                } else if (value.id) {
+                    // Objeto único con ID
+                    formattedItem[field.name] = value.id.toString();
+                }
+            } else if (value !== undefined && value !== null) {
+                formattedItem[field.name] = value.toString();
             }
         });
         form.reset(formattedItem);
@@ -311,7 +337,9 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
                         <ActionMenu
                             onEdit={() => handleEdit(item)}
                             onDelete={() => handleDeleteClick(item)}
-                        />
+                        >
+                            {extraActions && extraActions(item)}
+                        </ActionMenu>
                     </div>
                 );
             },
@@ -335,6 +363,9 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
                     columns={tableColumns}
                     data={data}
                     searchKey={searchKey}
+                    searchOptions={searchOptions}
+                    currentSearchOption={currentSearchOption}
+                    onSearchOptionChange={setCurrentSearchOption}
                     rowCount={rowCount}
                     pagination={pagination}
                     onPaginationChange={setPagination}
@@ -386,10 +417,14 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
                                                 <FormControl>
                                                     {field.type === "select" ? (
                                                         <Combobox
-                                                            options={fieldOptions[field.name]?.map((option) => ({
-                                                                value: option[field.optionValueKey || "id"].toString(),
-                                                                label: option[field.optionLabelKey || "name"],
-                                                            })) || []}
+                                                            options={
+                                                                field.options
+                                                                    ? field.options
+                                                                    : (fieldOptions[field.name]?.map((option) => ({
+                                                                        value: option[field.optionValueKey || "id"].toString(),
+                                                                        label: option[field.optionLabelKey || "name"],
+                                                                    })) || [])
+                                                            }
                                                             value={formField.value?.toString() || ""}
                                                             onSelect={(value) => formField.onChange(value)}
                                                             placeholder="Seleccione una opción"
@@ -403,6 +438,12 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey }: Catal
                                                             />
                                                             <Label>{field.label}</Label>
                                                         </div>
+                                                    ) : field.type === "textarea" ? (
+                                                        <Textarea
+                                                            placeholder={field.label}
+                                                            {...formField}
+                                                            value={(formField.value as string) ?? ""}
+                                                        />
                                                     ) : (
                                                         <Input
                                                             type={field.type}

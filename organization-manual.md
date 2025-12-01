@@ -22,6 +22,16 @@
 
 **Dependencia:** Consejo Directivo
 
+**Objetivo General:**
+
+Planificar, organizar, dirigir y controlar todas las actividades que se realizan en la Extensión desde el punto de vista administrativo y académico. A través del liderazgo, la supervisión y delegación de funciones, se responsabiliza por la buena marcha de la Institución dentro del marco de la misión, visión, valores, políticas, objetivos y planes establecidos por la Dirección Nacional, asegurándose de que éstos sean ejecutados.
+
+**Requisitos:**
+
+- Profesional Universitario.
+- Cinco años de experiencia en cargos similares.
+- Ser miembro activo del personal ordinario de un Instituto, Colegio Universitario o Universidad venezolana.
+
 **Funciones:**
 
 - Planificar, Dirigir, Coordinar y Supervisar las actividades académicas y administrativas del Instituto.
@@ -42,6 +52,16 @@
 
 **Dependencia:** Dirección
 
+**Objetivo General:**
+
+Gestionar la imagen institucional y la comunicación externa del Instituto, estableciendo vínculos efectivos con los medios de comunicación y organismos públicos o privados para promover la oferta académica y las actividades de la extensión.
+
+**Requisitos:**
+
+- Licenciado en Comunicación Social, Periodismo o Relaciones Públicas.
+- Mínimo dos (2) años de experiencia en manejo de medios y relaciones institucionales.
+- Excelente redacción y oratoria.
+
 **Funciones:**
 
 - Asesorar sobre las relaciones Institucionales que debe mantener el Iutirla.
@@ -55,6 +75,16 @@
 #### Título del Cargo: Secretaria
 
 **Dependencia:** Dirección
+
+**Objetivo General:**
+
+Brindar apoyo administrativo y secretarial de alto nivel a la Dirección, gestionando la agenda, la correspondencia y la atención al público, garantizando la confidencialidad y fluidez de la información en el despacho del Director.
+
+**Requisitos:**
+
+- T.S.U. en Secretariado, Administración o carrera afín.
+- Mínimo tres (3) años de experiencia en cargos de asistencia a la dirección.
+- Manejo avanzado de herramientas ofimáticas y redacción de documentos.
 
 **Funciones:**
 
@@ -74,23 +104,50 @@
 
 **Dependencia:** Dirección
 
+**Objetivo General:**
+
+Atender a los visitantes que acuden a la Extensión a solicitar información y operar la central telefónica para recibir y efectuar las llamadas que le sean solicitadas.
+
+**Requisitos:**
+
+- Bachiller.
+- Haber realizado curso de Recepcionista.
+- Dos años de experiencia en trabajos similares.
+- Habilidad para tratar en forma educada y cortés al público en general.
+
 **Funciones:**
 
 - Brindar información a la comunidad estudiantil y al público en general.
 - Realizar inscripción de forma computarizada a los alumnos que ingresan a la institución.
-- Canjear recibos para solicitudes de constancias de notas, constancias de estudios, programas sellados y reingresos.
+- Canjear recibos para solicitudes de constancias de notas, constancias de estudios, programas sellados y - reingresos.
 - Atender amablemente las llamadas telefónicas y tener un control de las mismas.
-- Entregar los carnet a los estudiantes, cursantes del primer semestre.
 - Controlar y verificar la carpeta de asistencia personal docente.
-- Entregar memorándum y/o correspondencias al personal docente.
+- Entregar memorándum, correspondencias y/o circular al personal docente.
 - Verificar la existencia de los materiales utilizados por los docentes: tizas, borradores, y hoja para evaluaciones.
-- Prestar colaboración en cualquier actividad inherente a la Institución asignada por la Dirección.
+- Prestar colaboración en cualquier actividad inherente a la Institución.
+- Llevar un control computarizado de asistencias e inasistencias diarias, mensual y semestral del personal docente.
+- Recibir y llevar un control de la planificación de actividades entregadas por los profesores.
+- Recepción de Curricula de Profesionales que oferten sus servicios.
+- Elaborar comunicaciones, memorándum e informes, asignados por la Subdirección Académica.
+- Notificar a la Coordinación Administrativa sobre cualquier irregularidad en las aulas, baños, pasillos, etc.
+- Control y Supervisión del cumplimiento de horario del personal docente.
+- Publicación de control diario de asistencia.
 
 ### Unidad Departamental: Subdirección Académica
 
 #### Título del Cargo: Subdirector Académico
 
 **Dependencia:** Dirección
+
+**Objetivo General:**
+
+Prestar ayuda, apoyo y respaldo a la Jefatura de la Extensión, con el objeto de aportar su contribución, supervisando conjuntamente con el Jefe de la Extensión el desarrollo de las actividades que en las áreas académico-administrativo, deben realizarse para así mantener un mejor desenvolvimiento de la ejecución de todas las actividades de la Institución.
+
+**Requisitos:**
+
+- Profesional Universitario.
+- Cinco años de experiencia en cargos similares.
+- Ser miembro activo del personal ordinario de un Instituto, Colegio Universitario o Universidad venezolana.
 
 **Funciones:**
 
@@ -118,29 +175,51 @@
 
 **Dependencia:** Subdirección Académica
 
+**Objetivo General:**
+
+Asistir a la Subdirección Académica en la gestión operativa y administrativa de los procesos docentes, manteniendo actualizados los registros del personal, horarios y programación académica para garantizar el flujo eficiente de la información.
+
+**Requisitos:**
+
+- T.S.U. en Administración, Recursos Humanos o Educación.
+- Experiencia mínima de dos (2) años en instituciones educativas.
+- Capacidad de organización y manejo de archivos.
+
 **Funciones:**
 
-- Mantener un archivo de elegibles por área donde se encuentren los curricula del personal docente.
-- Elaborar un archivo del personal Docente actualizado que labora en la Institución, con sus respectivos soportes y fichas del personal.
-- Programar y Publicar el curso Introductorio.
-- Ayudar en el proceso de cuadre de horarios semestrales y curso de verano. Publicar horarios.
-- Elaboración del material a entregar al personal Docente y convocar a las reuniones.
-- Llevar un control de asistencias e inasistencias mensual y semestral del personal Docente.
+- Mantener actualizado un archivo de Profesionales elegibles por área donde se encuentren los curricula del personal - docente.
+- Elaborar un archivo del personal Docente actualizado que labora en la Institución, con sus respectivos soportes y - fichas del personal.
+- Programar y Publicar el curso Introductorio, para estudiantes de nuevo ingreso.
+- Colaborar en el proceso de elaboración y cuadre de horarios semestrales y curso de verano. Publicar horarios.
+- Elaboración del material a entregar al personal Docente y convocar a las reuniones semestrales.
+- Imprimir control de asistencia diario, listado de horas, horarios personal Docente, etc.
 - Revisar y Analizar la planificación de actividades semestrales entregadas por los profesores.
 - Programar charlas dirigidas a la población estudiantil de las diferentes especialidades.
 - Mantener un archivo de programas de asignaturas de las especialidades.
 - Elaborar y Actualizar las carteleras informativas para estudiantes y docentes.
 - Canalizar y Solucionar situaciones formuladas por docentes y estudiantes.
 - Elaborar Comunicaciones, Memorándum e Informes.
-- Efectuar una programación de charlas Institucionales en las Unidades Educativas Neoespartanas.
-- Notificar a la Coordinación Administrativa sobre cualquier irregularidad en las aulas.
+- Notificar a la Coordinación Administrativa sobre cualquier irregularidad en las aulas, baños, pasillos, etc.
+- Supervisión del cumplimiento de horarios del personal docente, etc.
 - Cualquier otra actividad asignada por la subdirección.
+- Llevar libro de Registro de irregularidades en relación personal docente: llamadas telefónicas, quejas, reclamos y sugerencias de los alumnos.
 
 ### Unidad Departamental: Coordinación de Control de Estudios y Evaluación
 
 #### Título del Cargo: Coordinador de Control de Estudios y Evaluación
 
 **Dependencia:** Dirección - Subdirección Académica
+
+**Objetivo General:**
+
+Planificar, organizar, coordinar y controlar las actividades de la Coordinación de Control de Estudios y Evaluación, desarrollando el programa de seguimiento de los estudiantes y profesores, para el registro de la documentación que deba procesarse a fin de garantizar el fiel cumplimiento de los objetivos de esta área.
+
+**Requisitos:**
+
+- Profesional Universitario.
+- Tres años de experiencia en cargos similares.
+- Ser miembro activo del personal ordinario de un Instituto, Colegio Universitario o Universidad venezolana.
+- Conocimientos en el manejo de microcomputadoras.
 
 **Funciones:**
 
@@ -163,6 +242,16 @@
 
 **Dependencia:** Coordinación de Control de Estudios y Evaluación
 
+**Objetivo General:**
+
+Ejecutar los procesos operativos de inscripción, registro y control de notas, así como brindar soporte técnico en la emisión de documentos académicos, asegurando la integridad de los datos de los estudiantes.
+
+**Requisitos:**
+
+- T.S.U. en Informática, Administración o carrera afín.
+- Experiencia en manejo de sistemas de registro académico.
+- Habilidad numérica y atención al detalle.
+
 **Funciones:**
 
 - Respaldar y Tener actualizados los archivos que forman parte del proceso de la unidad.
@@ -177,6 +266,16 @@
 #### Título del Cargo: Secretaria
 
 **Dependencia:** Coordinación de Control de Estudios y Evaluación
+
+**Objetivo General:**
+
+Atender directamente las solicitudes de los estudiantes y docentes en taquilla, organizando los expedientes y archivos físicos de notas, garantizando un servicio eficiente y ordenado en el departamento.
+
+**Requisitos:**
+
+- Bachiller o estudiante universitario.
+- Experiencia mínima de un (1) año en atención al público y archivo.
+- Buenas relaciones interpersonales y organización.
 
 **Funciones:**
 
@@ -197,6 +296,17 @@
 
 **Dependencia:** Dirección - Subdirección Académica
 
+**Objetivo General:**
+
+Planificar, coordinar, supervisar y evaluar las actividades administrativas de la Extensión, conducir y verificar los procedimientos administrativos vigentes así como los Registros Contables que se realizan en esta unidad, administrar las nóminas académicas y administrativas y ejecutar los pagos correspondientes a proveedores, para así lograr el buen funcionamiento administrativo de la Institución.
+
+**Requisitos:**
+
+- Graduado en una Universidad reconocida con el título de Administrador o su equivalente.
+- Cinco años de experiencia progresiva en cargos similares.
+- Habilidad para establecer adecuadas relaciones interpersonales.
+- Manejo de microcomputadoras.
+
 **Funciones:**
 
 - Planificar, Organizar, Coordinar y Dirigir el sistema de suministro de material, atendiendo el estricto cumplimiento de la Administración Nacional.
@@ -216,6 +326,16 @@
 
 **Dependencia:** Coordinación Administrativa
 
+**Objetivo General:**
+
+Apoyar en la ejecución de los procesos administrativos contables, gestionando pagos de servicios, suministros y atención a requerimientos logísticos de los departamentos, asegurando el soporte necesario para la operatividad de la extensión.
+
+**Requisitos:**
+
+- T.S.U. en Administración, Contaduría o carrera afín.
+- Experiencia de dos (2) años en procesos administrativos y manejo de caja chica.
+- Manejo de inventarios y atención a proveedores.
+
 **Funciones:**
 
 - Elaborar y entregar cheques de descuentos de I.S.L.R., convenios Institucionales, S.S.O., Ley de Política Habitacional, Cooperativa de Ahorro, Servicios Básicos, Gastos de Publicidad y cualquier otro gasto generado.
@@ -231,6 +351,16 @@
 #### Título del Cargo: Personal de Mantenimiento
 
 **Dependencia:** Coordinación Administrativa
+
+**Objetivo General:**
+
+Garantizar la operatividad de la infraestructura física y el mobiliario de la Institución, realizando reparaciones menores y mantenimiento preventivo a las instalaciones y equipos para asegurar un ambiente funcional.
+
+**Requisitos:**
+
+- Bachiller o Educación Básica aprobada.
+- Experiencia comprobable en oficios de mantenimiento general (plomería, electricidad básica, pintura, reparaciones).
+- Capacidad física para el trabajo.
 
 **Funciones:**
 
@@ -249,6 +379,16 @@
 
 **Dependencia:** Coordinación Administrativa
 
+**Objetivo General:**
+
+Mantener en óptimas condiciones de higiene y aseo todas las áreas de la Institución, asegurando un ambiente limpio y agradable para el desarrollo de las actividades académicas y administrativas.
+
+**Requisitos:**
+
+- Educación Básica.
+- Experiencia previa en labores de limpieza institucional o doméstica.
+- Responsabilidad y honestidad.
+
 **Funciones:**
 
 - Mantener en óptimo estado los pisos de la Institución.
@@ -263,6 +403,17 @@
 #### Título del Cargo: Coordinador de Pasantías
 
 **Dependencia:** Dirección - Subdirección Académica
+
+**Objetivo General:**
+
+Planificar, coordinar, supervisar, evaluar y controlar la ejecución de los programas de Pasantías y Trabajo Especial de Grado, a través del cumplimiento de los procedimientos vigentes que permitan realizar su seguimiento y evaluación.
+
+**Requisitos:**
+
+- Profesional Universitario.
+- Tres años de experiencia en cargos similares.
+- Ser miembro activo del personal ordinario de un Instituto, Colegio Universitario o Universidad venezolana.
+- Conocimientos en el manejo de microcomputadoras.
 
 **Funciones:**
 
@@ -290,6 +441,16 @@
 
 **Dependencia:** Coordinación de Pasantías
 
+**Objetivo General:**
+
+Apoyar en la gestión administrativa y logística de la Coordinación, sirviendo de enlace entre los estudiantes, tutores y la coordinación, facilitando el procesamiento de documentos y la atención a los requerimientos del proceso de pasantías.
+
+**Requisitos:**
+
+- T.S.U. en Administración, Relaciones Industriales o carrera afín.
+- Experiencia en atención al estudiante y procesos administrativos.
+- Manejo de herramientas de oficina.
+
 **Funciones:**
 
 - Suplir las ausencias Temporales al Coordinador de Pasantías.
@@ -306,6 +467,16 @@
 #### Título del Cargo: Coordinador de Informática
 
 **Dependencia:** Dirección - Subdirección Académica
+
+**Objetivo General:**
+
+Bajo supervisión de la Jefatura de la Extensión administra en detalle las funciones relativas al área de la Coordinación de Informática, vigilando el cumplimiento de los programas establecidos y asignados a su gestión. Presta apoyo y atención al profesorado de esta área y es responsable del buen funcionamiento del Laboratorio de Informática.
+
+**Requisitos:**
+
+- Ingeniero o Licenciado en Sistemas, Informática o Computación.
+- Tres años de experiencia en docencia y coordinación académica.
+- Conocimiento actualizado en hardware, software y redes.
 
 **Funciones:**
 
@@ -326,6 +497,16 @@
 #### Título del Cargo: Asistente del Laboratorio de Informática
 
 **Dependencia:** Coordinación de Informática
+
+**Objetivo General:**
+
+Coordinar y dirigir las actividades académicas de los estudiantes dentro del Laboratorio, prestando apoyo a los docentes y a la coordinación de las Carreras correspondientes, así como velar por el mantenimiento preventivo de los equipos.
+
+**Requisitos:**
+
+- T.S.U. en Informática o estudiante avanzado de la carrera de Ingeniería de Sistemas/Informática.
+- Conocimientos técnicos en mantenimiento de computadoras y redes.
+- Capacidad para asistir a usuarios en el uso de software.
 
 **Funciones:**
 
@@ -350,6 +531,16 @@
 
 **Dependencia:** Dirección - Subdirección Académica
 
+**Objetivo General:**
+
+Bajo supervisión de la Jefatura de la Extensión, coordina y dirige las actividades y programas establecidos para el área de Educación Preescolar, orientando su cumplimiento por parte del personal docente y organizando con el alumno lo relativo a las prácticas de la especialidad.
+
+**Requisitos:**
+
+- Licenciado en Educación Preescolar.
+- Experiencia docente y en coordinación de prácticas profesionales.
+- Capacidad de liderazgo y organización.
+
 **Funciones:**
 
 - Coordinar actividades Técnico - Docente y Técnico - Administrativa del diseño curricular de la especialidad.
@@ -372,6 +563,16 @@
 
 **Dependencia:** Coordinación de Preescolar
 
+**Objetivo General:**
+
+Asistir administrativamente a la Coordinación de Preescolar, apoyando en la organización de archivos, atención al público y gestión de los procesos de prácticas profesionales, asegurando la continuidad operativa en ausencia del Coordinador.
+
+**Requisitos:**
+
+- T.S.U. en Educación Preescolar o estudiante de los últimos semestres de la carrera.
+- Habilidad para el trato con docentes y estudiantes.
+- Conocimientos básicos de administración y archivo.
+
 **Funciones:**
 
 - Suplir las ausencias temporales del Coordinador de Preescolar.
@@ -390,6 +591,16 @@
 #### Título del Cargo: Coordinador de Investigación, Extensión y Post grado
 
 **Dependencia:** Dirección - Subdirección Académica
+
+**Objetivo General:**
+
+Promover, planificar y coordinar el desarrollo de la investigación científica, las actividades de extensión cultural y deportiva, y los estudios de postgrado, vinculando a la institución con su entorno y fomentando la formación continua de la comunidad Iutirlista.
+
+**Requisitos:**
+
+- Profesional Universitario con estudios de Postgrado (Maestría o Especialización).
+- Experiencia comprobable en gestión de proyectos de investigación o extensión universitaria.
+- Capacidad para establecer relaciones interinstitucionales.
 
 **Funciones:**
 
@@ -412,6 +623,16 @@
 #### Título del Cargo: Jefe de Biblioteca
 
 **Dependencia:** Dirección - Subdirección Académica
+
+**Objetivo General:**
+
+Administrar, coordinar y supervisar los servicios bibliotecarios de la Institución, garantizando la organización, actualización y conservación del acervo bibliográfico, así como la prestación de un servicio eficiente a la comunidad universitaria.
+
+**Requisitos:**
+
+- Licenciado en Bibliotecología o carrera afín.
+- Experiencia mínima de tres (3) años en gestión de bibliotecas o centros de documentación.
+- Conocimiento de sistemas automatizados de gestión bibliotecaria.
 
 **Funciones:**
 
@@ -436,6 +657,18 @@
 
 **Dependencia:** Jefe de Biblioteca
 
+**Objetivo General:**
+
+Atender a los estudiantes, personal docente y administrativo, para suministrarles la bibliografía que soliciten en la realización de investigaciones que favorezcan el proceso de enseñanza-aprendizaje, apoyando en la catalogación y control del material.
+
+**Requisitos:**
+
+- Bachiller.
+- Cursos Bibliotecología.
+- Tres años de experiencia en cargos similares.
+- Manejo de microcomputadoras.
+- Excelentes relaciones interpersonales.
+
 **Funciones:**
 
 - Suplir al jefe de Biblioteca en casos de ausencia temporal.
@@ -451,6 +684,16 @@
 #### Título del Cargo: Auxiliar de Biblioteca
 
 **Dependencia:** Jefe de Biblioteca
+
+**Objetivo General:**
+
+Apoyar en las labores operativas de la biblioteca, encargándose del préstamo, devolución, ordenamiento de textos y atención primaria al usuario, contribuyendo al mantenimiento del orden y la conservación del material.
+
+**Requisitos:**
+
+- Bachiller.
+- Deseable experiencia previa en atención al público o bibliotecas.
+- Organización y responsabilidad.
 
 **Funciones:**
 

@@ -199,7 +199,7 @@ export function PeriodManager() {
                                 <TableRow key={period.id}>
                                     <TableCell className="font-medium">{period.name}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        {period.start_date} — {period.end_date}
+                                        {period.start_date} - {period.end_date}
                                     </TableCell>
                                     <TableCell>
                                         {period.is_active

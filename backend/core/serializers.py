@@ -550,16 +550,16 @@ class PersonListSerializer(serializers.ModelSerializer):
     
     def get_primary_document(self, obj):
         doc = obj.national_ids.filter(is_primary=True).first()
-        return f"{doc.get_category_display()} {doc.document_type}-{doc.number}" if doc else "—"
+        return f"{doc.get_category_display()} {doc.document_type}-{doc.number}" if doc else "-"
     
     def get_primary_email(self, obj):
         e = obj.emails.filter(is_primary=True).first()
-        return e.email_address if e else "—"
+        return e.email_address if e else "-"
     
     def get_primary_phone(self, obj):
         p = obj.phones.filter(is_primary=True).first()
         if not p:
-            return "—"
+            return "-"
         if p.carrier_code:
             return f"({p.carrier_code.code}) {p.subscriber_number}"
         return p.subscriber_number

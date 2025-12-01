@@ -141,7 +141,6 @@ const adminMenuItems: MenuItem[] = [
         icon: Settings,
         children: [
             { label: "Catálogos generales", href: "/admin/config/general", icon: Circle },
-            { label: "Catálogos de empleo", href: "/admin/config/employment", icon: Circle },
             { label: "Catálogos de talento", href: "/admin/config/talent", icon: Circle },
             { label: "Catálogos de desempeño", href: "/admin/config/performance", icon: Circle },
         ],

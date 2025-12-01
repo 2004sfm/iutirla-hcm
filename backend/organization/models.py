@@ -30,6 +30,13 @@ class Position(models.Model):
     job_title = models.ForeignKey(JobTitle, on_delete=models.SET_NULL, null=True)
     vacancies = models.PositiveIntegerField(default=1, help_text="Número de vacantes disponibles")
     
+    # Objetivo del cargo (antes era un modelo separado)
+    objective = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Objetivo general del cargo",
+        verbose_name="Objetivo"
+    )
     
     # Reportes Matriciales: Una posición puede reportar a múltiples jefes
     manager_positions = models.ManyToManyField(
@@ -61,13 +68,6 @@ class Position(models.Model):
             return "Posición incompleta"
         return f"{self.job_title.name} - {self.department.name}"
 
-class PositionObjective(models.Model):
-    position = models.ForeignKey(Position, on_delete=models.CASCADE, related_name='objectives')
-    description = models.TextField(help_text="Un objetivo de la posición")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self): return self.description[:50]
 
 class PositionRequirement(models.Model):
     position = models.ForeignKey(Position, on_delete=models.CASCADE, related_name='requirements')

@@ -62,98 +62,98 @@ class SalutationViewSet(viewsets.ModelViewSet):
     serializer_class = SalutationSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class GenderViewSet(viewsets.ModelViewSet):
     queryset = Gender.objects.all()
     serializer_class = GenderSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class MaritalStatusViewSet(viewsets.ModelViewSet):
     queryset = MaritalStatus.objects.all()
     serializer_class = MaritalStatusSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent', 'iso_2']
+    search_fields = ['name', 'iso_2']
 
 class DisabilityGroupViewSet(viewsets.ModelViewSet):
     queryset = DisabilityGroup.objects.all()
     serializer_class = DisabilityGroupSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class DisabilityTypeViewSet(viewsets.ModelViewSet):
     queryset = DisabilityType.objects.all()
     serializer_class = DisabilityTypeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class DisabilityStatusViewSet(viewsets.ModelViewSet):
     queryset = DisabilityStatus.objects.all()
     serializer_class = DisabilityStatusSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class AddressTypeViewSet(viewsets.ModelViewSet):
     queryset = AddressType.objects.all()
     serializer_class = AddressTypeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class EmailTypeViewSet(viewsets.ModelViewSet):
     queryset = EmailType.objects.all()
     serializer_class = EmailTypeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class PhoneTypeViewSet(viewsets.ModelViewSet):
     queryset = PhoneType.objects.all()
     serializer_class = PhoneTypeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class PhoneCarrierViewSet(viewsets.ModelViewSet):
     queryset = PhoneCarrier.objects.all()
     serializer_class = PhoneCarrierSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class BankViewSet(viewsets.ModelViewSet):
     queryset = Bank.objects.all()
     serializer_class = BankSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent', 'code']
+    search_fields = ['name', 'code']
 class BankAccountTypeViewSet(viewsets.ModelViewSet):
     queryset = BankAccountType.objects.all()
     serializer_class = BankAccountTypeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class RelationshipTypeViewSet(viewsets.ModelViewSet):
     queryset = RelationshipType.objects.all()
     serializer_class = RelationshipTypeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
+    search_fields = ['name']
 class StateViewSet(viewsets.ModelViewSet):
     queryset = State.objects.all()
     serializer_class = StateSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent', 'country__name__unaccent']
+    search_fields = ['name', 'country__name']
 class PhoneCarrierCodeViewSet(viewsets.ModelViewSet):
     queryset = PhoneCarrierCode.objects.all()
     serializer_class = PhoneCarrierCodeSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [UnaccentSearchFilter]
-    search_fields = ['code', 'carrier__name__unaccent']
+    search_fields = ['code', 'carrier__name']
 
 # --- ViewSets de Datos de Person ---
 class PersonDisabilityVEViewSet(viewsets.ModelViewSet):

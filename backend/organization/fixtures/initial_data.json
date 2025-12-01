@@ -1,0 +1,732 @@
+[
+  {
+    "model": "organization.department",
+    "pk": 1,
+    "fields": {
+      "name": "Dirección",
+      "parent": null
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 2,
+    "fields": {
+      "name": "Subdirección Académica",
+      "parent": 1
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 3,
+    "fields": {
+      "name": "Coordinación de Control de Estudios y Evaluación",
+      "parent": 2
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 4,
+    "fields": {
+      "name": "Coordinación Administrativa",
+      "parent": 1
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 5,
+    "fields": {
+      "name": "Coordinación de Pasantías",
+      "parent": 2
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 6,
+    "fields": {
+      "name": "Coordinación de Informática",
+      "parent": 2
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 7,
+    "fields": {
+      "name": "Coordinación de Preescolar",
+      "parent": 2
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 8,
+    "fields": {
+      "name": "Coordinación de Investigación, Extensión y Postgrado",
+      "parent": 2
+    }
+  },
+  {
+    "model": "organization.department",
+    "pk": 9,
+    "fields": {
+      "name": "Biblioteca",
+      "parent": 2
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 1,
+    "fields": {
+      "name": "Director"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 2,
+    "fields": {
+      "name": "Subdirector"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 3,
+    "fields": {
+      "name": "Coordinador"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 4,
+    "fields": {
+      "name": "Jefe"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 5,
+    "fields": {
+      "name": "Asesor"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 6,
+    "fields": {
+      "name": "Secretaria"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 7,
+    "fields": {
+      "name": "Recepcionista"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 8,
+    "fields": {
+      "name": "Asistente"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 9,
+    "fields": {
+      "name": "Personal de Mantenimiento"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 10,
+    "fields": {
+      "name": "Personal de Limpieza"
+    }
+  },
+  {
+    "model": "organization.jobtitle",
+    "pk": 11,
+    "fields": {
+      "name": "Auxiliar"
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 1,
+    "fields": {
+      "department": 1,
+      "job_title": 1,
+      "vacancies": 1,
+      "objective": "Planificar, organizar, dirigir y controlar todas las actividades que se realizan en la Extensión desde el punto de vista administrativo y académico."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 2,
+    "fields": {
+      "department": 1,
+      "job_title": 5,
+      "vacancies": 1,
+      "objective": "Gestionar la imagen institucional y la comunicación externa del Instituto."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 3,
+    "fields": {
+      "department": 1,
+      "job_title": 6,
+      "vacancies": 1,
+      "objective": "Brindar apoyo administrativo y secretarial de alto nivel a la Dirección."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 4,
+    "fields": {
+      "department": 1,
+      "job_title": 7,
+      "vacancies": 1,
+      "objective": "Atender a los visitantes que acuden a la Extensión a solicitar información."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 5,
+    "fields": {
+      "department": 2,
+      "job_title": 2,
+      "vacancies": 1,
+      "objective": "Prestar ayuda, apoyo y respaldo a la Jefatura de la Extensión."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 6,
+    "fields": {
+      "department": 2,
+      "job_title": 8,
+      "vacancies": 1,
+      "objective": "Asistir a la Subdirección Académica en la gestión operativa."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 7,
+    "fields": {
+      "department": 3,
+      "job_title": 3,
+      "vacancies": 1,
+      "objective": "Planificar, organizar, coordinar y controlar las actividades de Control de Estudios."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 8,
+    "fields": {
+      "department": 3,
+      "job_title": 8,
+      "vacancies": 1,
+      "objective": "Ejecutar los procesos operativos de inscripción y registro."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 9,
+    "fields": {
+      "department": 3,
+      "job_title": 6,
+      "vacancies": 1,
+      "objective": "Atender solicitudes de estudiantes y docentes en taquilla."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 10,
+    "fields": {
+      "department": 4,
+      "job_title": 3,
+      "vacancies": 1,
+      "objective": "Planificar, coordinar y supervisar las actividades administrativas."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 11,
+    "fields": {
+      "department": 4,
+      "job_title": 8,
+      "vacancies": 1,
+      "objective": "Apoyar en la ejecución de procesos administrativos contables."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 12,
+    "fields": {
+      "department": 4,
+      "job_title": 9,
+      "vacancies": 2,
+      "objective": "Garantizar la operatividad de la infraestructura física."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 13,
+    "fields": {
+      "department": 4,
+      "job_title": 10,
+      "vacancies": 3,
+      "objective": "Mantener en óptimas condiciones de higiene todas las áreas."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 14,
+    "fields": {
+      "department": 5,
+      "job_title": 3,
+      "vacancies": 1,
+      "objective": "Planificar y coordinar la ejecución del programa de Pasantías."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 15,
+    "fields": {
+      "department": 5,
+      "job_title": 8,
+      "vacancies": 1,
+      "objective": "Apoyar en la gestión administrativa de la Coordinación de Pasantías."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 16,
+    "fields": {
+      "department": 6,
+      "job_title": 3,
+      "vacancies": 1,
+      "objective": "Administrar las funciones del área de Coordinación de Informática."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 17,
+    "fields": {
+      "department": 6,
+      "job_title": 8,
+      "vacancies": 1,
+      "objective": "Coordinar las actividades académicas en el Laboratorio de Informática."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 18,
+    "fields": {
+      "department": 7,
+      "job_title": 3,
+      "vacancies": 1,
+      "objective": "Coordinar las actividades del área de Educación Preescolar."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 19,
+    "fields": {
+      "department": 7,
+      "job_title": 8,
+      "vacancies": 1,
+      "objective": "Asistir administrativamente a la Coordinación de Preescolar."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 20,
+    "fields": {
+      "department": 8,
+      "job_title": 3,
+      "vacancies": 1,
+      "objective": "Promover el desarrollo de la investigación científica y extensión."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 21,
+    "fields": {
+      "department": 9,
+      "job_title": 4,
+      "vacancies": 1,
+      "objective": "Administrar y supervisar los servicios bibliotecarios."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 22,
+    "fields": {
+      "department": 9,
+      "job_title": 8,
+      "vacancies": 1,
+      "objective": "Atender a estudiantes y personal para suministrar bibliografía."
+    }
+  },
+  {
+    "model": "organization.position",
+    "pk": 23,
+    "fields": {
+      "department": 9,
+      "job_title": 11,
+      "vacancies": 2,
+      "objective": "Apoyar en las labores operativas de la biblioteca."
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 1,
+    "fields": {
+      "position": 1,
+      "description": "Profesional Universitario."
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 2,
+    "fields": {
+      "position": 1,
+      "description": "Cinco años de experiencia en cargos similares."
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 3,
+    "fields": {
+      "position": 1,
+      "description": "Ser miembro activo del personal ordinario de un Instituto venezolano."
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 1,
+    "fields": {
+      "position": 1,
+      "description": "Planificar, Dirigir, Coordinar y Supervisar las actividades académicas y administrativas.",
+      "order": 1
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 2,
+    "fields": {
+      "position": 1,
+      "description": "Formular recomendaciones ante la Directiva Nacional.",
+      "order": 2
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 3,
+    "fields": {
+      "position": 1,
+      "description": "Programar las necesidades de Recursos Humanos, Físicos y Materiales.",
+      "order": 3
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 4,
+    "fields": {
+      "position": 1,
+      "description": "Cumplir y hacer cumplir todo lo concerniente al funcionamiento óptimo de la sede.",
+      "order": 4
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 5,
+    "fields": {
+      "position": 1,
+      "description": "Convocar y Presidir al Consejo Directivo de la extensión.",
+      "order": 5
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 6,
+    "fields": {
+      "position": 1,
+      "description": "Presentar ante la Dirección Nacional un informe semestral.",
+      "order": 6
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 7,
+    "fields": {
+      "position": 1,
+      "description": "Imponer las sanciones correspondientes al personal.",
+      "order": 7
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 8,
+    "fields": {
+      "position": 1,
+      "description": "Velar por el cumplimiento de las disposiciones de la Dirección Nacional.",
+      "order": 8
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 9,
+    "fields": {
+      "position": 1,
+      "description": "Velar por el orden y la disciplina dentro del Instituto.",
+      "order": 9
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 10,
+    "fields": {
+      "position": 1,
+      "description": "Estudiar y Recomendar medidas para mejorar el funcionamiento integral.",
+      "order": 10
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 11,
+    "fields": {
+      "position": 1,
+      "description": "Controlar las actividades de docencia y administrativas.",
+      "order": 11
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 12,
+    "fields": {
+      "position": 1,
+      "description": "Dirigir la reunión de profesores al inicio de cada periodo académico.",
+      "order": 12
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 13,
+    "fields": {
+      "position": 1,
+      "description": "Cualquier otra actividad asignada por la Dirección.",
+      "order": 13
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 4,
+    "fields": {
+      "position": 2,
+      "description": "Licenciado en Comunicación Social, Periodismo o Relaciones Públicas."
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 5,
+    "fields": {
+      "position": 2,
+      "description": "Mínimo dos (2) años de experiencia en manejo de medios."
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 6,
+    "fields": {
+      "position": 2,
+      "description": "Excelente redacción y oratoria."
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 14,
+    "fields": {
+      "position": 2,
+      "description": "Asesorar sobre las relaciones Institucionales que debe mantener el Iutirla.",
+      "order": 1
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 15,
+    "fields": {
+      "position": 2,
+      "description": "Mantener relaciones con Gremios, Instituciones u Organismos.",
+      "order": 2
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 16,
+    "fields": {
+      "position": 2,
+      "description": "Efectuar campañas publicitarias tendientes a captar nuevos estudiantes.",
+      "order": 3
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 17,
+    "fields": {
+      "position": 2,
+      "description": "Planificar y Coordinar ruedas de Prensa, Radio y T.V.",
+      "order": 4
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 18,
+    "fields": {
+      "position": 2,
+      "description": "Apoyar, Promocionar y Participar activamente en los eventos organizados.",
+      "order": 5
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 19,
+    "fields": {
+      "position": 2,
+      "description": "Redactar las notas de prensa que requiere la Institución.",
+      "order": 6
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 20,
+    "fields": {
+      "position": 2,
+      "description": "Cualquier otra actividad asignada por el Director.",
+      "order": 7
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 7,
+    "fields": {
+      "position": 3,
+      "description": "T.S.U. en Secretariado, Administración o carrera afín."
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 8,
+    "fields": {
+      "position": 3,
+      "description": "Mínimo tres (3) años de experiencia en cargos de asistencia a la dirección."
+    }
+  },
+  {
+    "model": "organization.positionrequirement",
+    "pk": 9,
+    "fields": {
+      "position": 3,
+      "description": "Manejo avanzado de herramientas ofimáticas."
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 21,
+    "fields": {
+      "position": 3,
+      "description": "Asistir junto con el Director a todas las reuniones.",
+      "order": 1
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 22,
+    "fields": {
+      "position": 3,
+      "description": "Redactar y elaborar todas las correspondencias de la Dirección.",
+      "order": 2
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 23,
+    "fields": {
+      "position": 3,
+      "description": "Atender de manera rápida y eficiente a las personas en general.",
+      "order": 3
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 24,
+    "fields": {
+      "position": 3,
+      "description": "Revisar todas las correspondencias recibidas.",
+      "order": 4
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 25,
+    "fields": {
+      "position": 3,
+      "description": "Velar por el perfecto orden y mantenimiento de los bienes muebles.",
+      "order": 5
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 26,
+    "fields": {
+      "position": 3,
+      "description": "Distribuir a los Departamentos las comunicaciones.",
+      "order": 6
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 27,
+    "fields": {
+      "position": 3,
+      "description": "Tipear los informes semestrales.",
+      "order": 7
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 28,
+    "fields": {
+      "position": 3,
+      "description": "Atender las llamadas telefónicas.",
+      "order": 8
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 29,
+    "fields": {
+      "position": 3,
+      "description": "Llevar la agenda del Director.",
+      "order": 9
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 30,
+    "fields": {
+      "position": 3,
+      "description": "Auxiliar a cualquier Departamento que lo necesite.",
+      "order": 10
+    }
+  },
+  {
+    "model": "organization.positionfunction",
+    "pk": 31,
+    "fields": {
+      "position": 3,
+      "description": "Cualquier otra asignada por el director.",
+      "order": 11
+    }
+  }
+]

@@ -1,8 +1,7 @@
 from django.contrib import admin
-from . import models
+from .models import Employment, EmploymentStatusLog, EmploymentDepartmentRole
 
-admin.site.register(models.Role)
-admin.site.register(models.EmploymentType)
-admin.site.register(models.EmploymentStatus)
-admin.site.register(models.Employment)
-admin.site.register(models.EmploymentStatusLog)
+# Registrar los modelos en el admin de Django
+admin.site.register(Employment)
+admin.site.register(EmploymentStatusLog)
+admin.site.register(EmploymentDepartmentRole)

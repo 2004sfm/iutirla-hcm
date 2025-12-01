@@ -6,35 +6,14 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import (
-    Role, EmploymentType, EmploymentStatus, 
-    Employment, EmploymentStatusLog 
+    Employment, EmploymentStatusLog, EmploymentDepartmentRole, PersonDepartmentRole,
+    is_active_status, EmploymentStatusChoices
 )
 from .serializers import (
-    RoleSerializer, EmploymentTypeSerializer, EmploymentStatusSerializer, 
-    EmploymentSerializer, EmployeeListSerializer, EmploymentStatusLogSerializer # <--- NOMBRE CORREGIDO
+    EmploymentSerializer, EmployeeListSerializer, EmploymentStatusLogSerializer,
+    EmploymentDepartmentRoleSerializer, PersonDepartmentRoleSerializer
 )
 from core.filters import UnaccentSearchFilter
-
-class RoleViewSet(viewsets.ModelViewSet):
-    queryset = Role.objects.all()
-    serializer_class = RoleSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
-
-class EmploymentTypeViewSet(viewsets.ModelViewSet):
-    queryset = EmploymentType.objects.all()
-    serializer_class = EmploymentTypeSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
-
-class EmploymentStatusViewSet(viewsets.ModelViewSet):
-    queryset = EmploymentStatus.objects.all()
-    serializer_class = EmploymentStatusSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name__unaccent']
 
 class EmploymentViewSet(viewsets.ModelViewSet):
     queryset = Employment.objects.all()
@@ -51,7 +30,6 @@ class EmploymentViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve', 'update', 'partial_update']:
             queryset = queryset.select_related(
                 'person', 
-                'current_status', 
                 'position', 
                 'position__department',
                 'person__user_account' # Para saber si tiene usuario
@@ -88,17 +66,9 @@ class EmploymentViewSet(viewsets.ModelViewSet):
 
         try:
             with transaction.atomic():
-                # Buscar estatus de cierre
-                closed_status = EmploymentStatus.objects.filter(
-                    name__iexact='Finalizado', 
-                    is_active_relationship=False
-                ).first()
-
-                if not closed_status:
-                    closed_status = EmploymentStatus.objects.filter(is_active_relationship=False).first() 
-                
-                if not closed_status:
-                    return Response({"error": "Error config estatus."}, status=500)
+                # Buscar estatus de cierre - ahora es un valor de Choice
+                # Usamos 'FIN' que corresponde a 'Finalizado' en EmploymentStatusChoices
+                closed_status = EmploymentStatusChoices.TERMINATED
 
                 # Actualizar
                 employment.end_date = end_date
@@ -126,36 +96,40 @@ class EmploymentViewSet(viewsets.ModelViewSet):
 
         today = timezone.now().date()
         start_of_month = today.replace(day=1)
-        active_qs = Employment.objects.filter(current_status__is_active_relationship=True)
+        
+        # Filtrar empleados activos usando helper function
+        all_employments = Employment.objects.all()
+        active_qs = [e for e in all_employments if is_active_status(e.current_status)]
 
         # KPIs
-        total_active = active_qs.count()
-        new_hires = active_qs.filter(hire_date__gte=start_of_month).count()
-        exits = Employment.objects.filter(
-            current_status__is_active_relationship=False,
-            end_date__gte=start_of_month
-        ).count()
-        pending_users = active_qs.filter(person__user_account__isnull=True).count()
+        total_active = len(active_qs)
+        new_hires = len([e for e in active_qs if e.hire_date >= start_of_month])
+        
+        # Exits
+        inactive_qs = [e for e in all_employments if not is_active_status(e.current_status)]
+        exits = len([e for e in inactive_qs if e.end_date and e.end_date >= start_of_month])
+        
+        pending_users = len([e for e in active_qs if not hasattr(e.person, 'user_account') or not e.person.user_account])
 
-        # Deptos
-        dept_stats = active_qs.values('position__department__name') \
+        # Deptos (usando queryset normal porque necesitamos aggregation)
+        active_ids = [e.id for e in active_qs]
+        dept_stats = Employment.objects.filter(id__in=active_ids).values('position__department__name') \
             .annotate(count=Count('id')).order_by('-count')[:5]
 
         # Vencimientos (con cédula)
         next_month = today + timedelta(days=30)
-        expiring_qs = active_qs.filter(end_date__range=[today, next_month]).select_related('person')
-
         expiring_list = []
-        for emp in expiring_qs:
-            doc = emp.person.national_ids.filter(is_primary=True).first()
-            doc_str = f"{doc.document_type}-{doc.number}" if doc else "S/D"
-            
-            expiring_list.append({
-                "id": emp.id,
-                "person_name": f"{emp.person.first_name} {emp.person.paternal_surname}",
-                "person_document": doc_str,
-                "end_date": emp.end_date
-            })
+        for emp in active_qs:
+            if emp.end_date and today <= emp.end_date <= next_month:
+                doc = emp.person.national_ids.filter(is_primary=True).first()
+                doc_str = f"{doc.document_type}-{doc.number}" if doc else "S/D"
+                
+                expiring_list.append({
+                    "id": emp.id,
+                    "person_name": f"{emp.person.first_name} {emp.person.paternal_surname}",
+                    "person_document": doc_str,
+                    "end_date": emp.end_date
+                })
 
         return Response({
             "headcount": total_active,
@@ -177,10 +151,15 @@ class EmploymentViewSet(viewsets.ModelViewSet):
             return Response({"error": "Sin perfil de empleado"}, status=404)
 
         # Mi empleo activo
-        my_job = Employment.objects.filter(
-            person=user.person, 
-            current_status__is_active_relationship=True
-        ).select_related('position__department', 'position__manager_position').first()
+        my_jobs = Employment.objects.filter(
+            person=user.person
+        ).select_related('position__department', 'position__manager_position')
+        
+        my_job = None
+        for job in my_jobs:
+            if is_active_status(job.current_status):
+                my_job = job
+                break
 
         if not my_job:
             return Response({"error": "No tienes contrato activo."}, status=404)
@@ -200,10 +179,15 @@ class EmploymentViewSet(viewsets.ModelViewSet):
         # Jefe
         boss_pos = my_job.position.manager_position
         if boss_pos:
-            boss_employment = Employment.objects.filter(
-                position=boss_pos,
-                current_status__is_active_relationship=True
-            ).select_related('person').first()
+            boss_employments = Employment.objects.filter(
+                position=boss_pos
+            ).select_related('person')
+            
+            boss_employment = None
+            for emp in boss_employments:
+                if is_active_status(emp.current_status):
+                    boss_employment = emp
+                    break
             
             if boss_employment:
                 data["boss"] = {
@@ -216,10 +200,11 @@ class EmploymentViewSet(viewsets.ModelViewSet):
 
         # Compañeros (Mismo Depto)
         if my_job.position.department:
-            peers = Employment.objects.filter(
-                position__department=my_job.position.department,
-                current_status__is_active_relationship=True
-            ).exclude(id=my_job.id).select_related('person', 'position')[:10]
+            all_peers = Employment.objects.filter(
+                position__department=my_job.position.department
+            ).exclude(id=my_job.id).select_related('person', 'position')[:20]  # Traemos más para filtrar
+
+            peers = [p for p in all_peers if is_active_status(p.current_status)][:10]
 
             data["peers"] = [{
                 "name": str(p.person),
@@ -228,10 +213,11 @@ class EmploymentViewSet(viewsets.ModelViewSet):
             } for p in peers]
 
         # Subordinados (Si soy jefe)
-        subordinates = Employment.objects.filter(
-            position__manager_position=my_job.position,
-            current_status__is_active_relationship=True
+        all_subordinates = Employment.objects.filter(
+            position__manager_position=my_job.position
         ).select_related('person', 'position')
+
+        subordinates = [s for s in all_subordinates if is_active_status(s.current_status)]
 
         data["subordinates"] = [{
             "name": str(s.person),
@@ -248,19 +234,20 @@ class EmploymentViewSet(viewsets.ModelViewSet):
             return Response([])
 
         my_employments = Employment.objects.filter(
-            person=user.person,
-            current_status__is_active_relationship=True
-        ).select_related('position', 'position__department', 'position__job_title') # Agregamos job_title por si acaso
+            person=user.person
+        ).select_related('position', 'position__department', 'position__job_title')
+        
+        # Filtrar solo activos
+        active_employments = [e for e in my_employments if is_active_status(e.current_status)]
 
         departments_map = {}
 
-        for emp in my_employments:
+        for emp in active_employments:
             dept = emp.position.department
             dept_id = dept.id if dept else 0
             dept_name = dept.name if dept else "Sin Departamento Asignado"
             dept_desc = getattr(dept, 'description', 'Área general.') if dept else "Posición fuera de estructura."
 
-            # --- CORRECCIÓN AQUÍ ---
             # Determinamos el nombre del cargo de forma segura
             pos_name = emp.position.name
             
@@ -270,7 +257,6 @@ class EmploymentViewSet(viewsets.ModelViewSet):
                     pos_name = emp.position.job_title.name
                 else:
                     pos_name = "Cargo Sin Nombre"
-            # -----------------------
 
             if dept_id in departments_map:
                 if pos_name not in departments_map[dept_id]['positions_list']:
@@ -293,8 +279,124 @@ class EmploymentViewSet(viewsets.ModelViewSet):
 
         return Response(final_data)
 
-# CAMBIO DE NOMBRE: History -> Log para coincidir con el modelo
+# Viewset para logs
 class EmploymentStatusLogViewSet(viewsets.ModelViewSet):
     queryset = EmploymentStatusLog.objects.all()
-    serializer_class = EmploymentStatusLogSerializer # Usamos el nuevo serializer
+    serializer_class = EmploymentStatusLogSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+
+# --- VIEWSET PARA ROLES JERÁRQUICOS EN DEPARTAMENTO ---
+
+class EmploymentDepartmentRoleViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar los roles jerárquicos de empleados en departamentos.
+    
+    Permite:
+    - Crear/editar roles (Gerente/Empleado) para empleados en departamentos específicos
+    - Consultar histórico de roles
+    - Filtrar por empleado, departamento, rol, etc.
+    """
+    queryset = EmploymentDepartmentRole.objects.all()
+    serializer_class = EmploymentDepartmentRoleSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['employment__person__first_name', 'employment__person__last_name', 'department__name']
+    
+    def get_queryset(self):
+        """
+        Optimiza las consultas y permite filtrar por parámetros
+        """
+        queryset = self.queryset.select_related(
+            'employment',
+            'employment__person',
+            'department'
+        ).order_by('-start_date')
+        
+        # Filtros opcionales
+        employment_id = self.request.query_params.get('employment', None)
+        department_id = self.request.query_params.get('department', None)
+        is_current = self.request.query_params.get('is_current', None)
+        hierarchical_role = self.request.query_params.get('hierarchical_role', None)
+        
+        if employment_id:
+            queryset = queryset.filter(employment_id=employment_id)
+        
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        
+        if is_current == 'true':
+            queryset = queryset.filter(end_date__isnull=True)
+        elif is_current == 'false':
+            queryset = queryset.filter(end_date__isnull=False)
+        
+        if hierarchical_role:
+            queryset = queryset.filter(hierarchical_role=hierarchical_role)
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'])
+    def current_managers(self, request):
+        """
+        Retorna todos los gerentes actuales (roles activos con hierarchical_role='MGR')
+        """
+        current_managers = self.get_queryset().filter(
+            hierarchical_role='MGR',
+            end_date__isnull=True
+        )
+        serializer = self.get_serializer(current_managers, many=True)
+        return Response(serializer.data)
+
+
+# --- VIEWSET PARA ROLES JERÁRQUICOS POR PERSONA (MATRIZ) ---
+
+class PersonDepartmentRoleViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar los roles jerárquicos de personas en departamentos.
+    Soporta organizaciones matriciales.
+    """
+    queryset = PersonDepartmentRole.objects.all()
+    serializer_class = PersonDepartmentRoleSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [UnaccentSearchFilter]
+    search_fields = ['person__first_name', 'person__last_name', 'department__name']
+    
+    def get_queryset(self):
+        queryset = self.queryset.select_related(
+            'person',
+            'department'
+        ).order_by('-start_date')
+        
+        # Filtros opcionales
+        person_id = self.request.query_params.get('person', None)
+        department_id = self.request.query_params.get('department', None)
+        is_current = self.request.query_params.get('is_current', None)
+        hierarchical_role = self.request.query_params.get('hierarchical_role', None)
+        
+        if person_id:
+            queryset = queryset.filter(person_id=person_id)
+        
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        
+        if is_current == 'true':
+            queryset = queryset.filter(end_date__isnull=True)
+        elif is_current == 'false':
+            queryset = queryset.filter(end_date__isnull=False)
+        
+        if hierarchical_role:
+            queryset = queryset.filter(hierarchical_role=hierarchical_role)
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'])
+    def current_managers(self, request):
+        """
+        Retorna todos los gerentes actuales (roles activos con hierarchical_role='MGR')
+        """
+        current_managers = self.get_queryset().filter(
+            hierarchical_role='MGR',
+            end_date__isnull=True
+        )
+        serializer = self.get_serializer(current_managers, many=True)
+        return Response(serializer.data)

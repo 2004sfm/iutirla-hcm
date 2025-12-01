@@ -3,7 +3,12 @@ from django.db.models import F
 from django.core.exceptions import ValidationError
 from core.models import Person
 from talent.models import PersonEducation, EducationLevel, FieldOfStudy
-from employment.models import Employment, Role, EmploymentType, EmploymentStatus
+from employment.models import (
+    Employment, 
+    RoleChoices, 
+    EmploymentTypeChoices, 
+    EmploymentStatusChoices
+)
 from .models import Candidate, CandidateEducation
 
 
@@ -23,7 +28,8 @@ def hire_candidate(candidate, hire_data):
     
     Args:
         candidate: Instancia de Candidate
-        hire_data: Dict con {hire_date, role_id, employment_type_id, employment_status_id, salary, notes}
+        hire_data: Dict con {hire_date, role, employment_type, employment_status, salary, notes}
+                   Ahora los valores son códigos de Choice (ej: 'EMP', 'FIJ', 'ACT')
     
     Returns:
         Dict: {person, employment, other_finalists}
@@ -119,13 +125,18 @@ def hire_candidate(candidate, hire_data):
             end_date=edu.end_date
         )
     
-    # 5. Obtener instancias de FK para Employment
-    try:
-        role = Role.objects.get(pk=hire_data['role'])
-        employment_type = EmploymentType.objects.get(pk=hire_data['employment_type'])
-        employment_status = EmploymentStatus.objects.get(pk=hire_data['employment_status'])
-    except (Role.DoesNotExist, EmploymentType.DoesNotExist, EmploymentStatus.DoesNotExist) as e:
-        raise ValidationError(f"Error al obtener datos de empleo: {str(e)}")
+    # 5. Validar que los valores de Choice sean válidos
+    role = hire_data.get('role', RoleChoices.EMPLOYEE)
+    employment_type = hire_data.get('employment_type', EmploymentTypeChoices.PERMANENT)
+    employment_status = hire_data.get('employment_status', EmploymentStatusChoices.ACTIVE)
+    
+    # Validar que sean valores válidos de Choices
+    if role not in dict(RoleChoices.choices):
+        raise ValidationError(f"Rol inválido: {role}")
+    if employment_type not in dict(EmploymentTypeChoices.choices):
+        raise ValidationError(f"Tipo de empleo inválido: {employment_type}")
+    if employment_status not in dict(EmploymentStatusChoices.choices):
+        raise ValidationError(f"Estatus inválido: {employment_status}")
     
     # 6. Crear contrato (Employment)
     employment = Employment.objects.create(

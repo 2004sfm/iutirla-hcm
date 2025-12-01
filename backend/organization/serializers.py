@@ -1,11 +1,8 @@
 from rest_framework import serializers
 from core.serializers import check_uniqueness, title_case_cleaner, validate_alphanumeric_with_spaces
-from .models import Department, JobTitle, Position, PositionObjective, PositionRequirement, PositionFunction
+from .models import Department, JobTitle, Position, PositionRequirement, PositionFunction
 
 # Serializers simples para detalles
-class PositionObjectiveSerializer(serializers.ModelSerializer):
-    class Meta: model = PositionObjective; fields = '__all__'
-
 class PositionRequirementSerializer(serializers.ModelSerializer):
     class Meta: model = PositionRequirement; fields = '__all__'
 
@@ -58,13 +55,13 @@ class PositionSerializer(serializers.ModelSerializer):
     
     # Campos para múltiples jefes (M2M)
     manager_positions_names = serializers.SerializerMethodField()
+    reports_to_names_display = serializers.SerializerMethodField()
     manager_positions_data = serializers.SerializerMethodField()
     
     # Campo para el select (Combo box)
     full_name = serializers.SerializerMethodField()
 
     # Detalles anidados
-    objectives = PositionObjectiveSerializer(many=True, read_only=True)
     requirements = PositionRequirementSerializer(many=True, read_only=True)
     functions = PositionFunctionSerializer(many=True, read_only=True)
     
@@ -82,19 +79,22 @@ class PositionSerializer(serializers.ModelSerializer):
     
     def get_active_employees_count(self, obj):
         """Devuelve el número de empleados activos en esta posición."""
-        from employment.models import Employment
-        return Employment.objects.filter(
-            position=obj,
-            current_status__is_active_relationship=True
-        ).count()
+        from employment.models import Employment, is_active_status
+        # Actualizado para usar is_active_status
+        all_emps = Employment.objects.filter(position=obj)
+        return sum(1 for e in all_emps if is_active_status(e.current_status))
 
     def get_manager_positions_names(self, obj):
         """Devuelve una lista con los nombres de los cargos de los jefes."""
         return [
-            manager.job_title.name 
+            str(manager)
             for manager in obj.manager_positions.all() 
-            if manager.job_title
         ]
+
+    def get_reports_to_names_display(self, obj):
+        """Devuelve un string separado por comas con los nombres de los cargos de los jefes."""
+        names = self.get_manager_positions_names(obj)
+        return ", ".join(names) if names else "-"
 
     def get_manager_positions_data(self, obj):
         """Devuelve información completa de los jefes para detección de cross-department."""
@@ -107,6 +107,24 @@ class PositionSerializer(serializers.ModelSerializer):
             for manager in obj.manager_positions.all()
         ]
 
+
+    def to_internal_value(self, data):
+        if hasattr(data, 'copy'):
+            data = data.copy()
+        
+        # Manejar manager_positions: si viene como valor único, convertir a lista
+        if 'manager_positions' in data:
+            value = data['manager_positions']
+            if not isinstance(value, list):
+                # If value is an empty string, treat it as an empty list
+                if value == "":
+                    data['manager_positions'] = []
+                elif value:
+                    data['manager_positions'] = [value]
+                else:
+                    data['manager_positions'] = []
+        
+        return super().to_internal_value(data)
 
     def validate(self, data):
         # Importar aquí para evitar import circular

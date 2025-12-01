@@ -1,43 +1,23 @@
 from rest_framework import serializers
+from django.db.models import Q
+from django.utils import timezone
 from django.db import transaction
 from core.serializers import check_uniqueness, title_case_cleaner, validate_text_with_spaces, validate_min_length
 # Importamos utilidades y modelos necesarios de las apps correctas:
 from organization.models import Position 
 from .models import (
-    Role, EmploymentType, EmploymentStatus, 
-    Employment, EmploymentStatusLog # Renombramos History a Log
+    Employment, EmploymentStatusLog, EmploymentDepartmentRole, PersonDepartmentRole,
+    is_active_status, EmploymentStatusChoices, HierarchicalRoleChoices
 )
 
-# --- Serializers de Catálogos (Mantenidos) ---
-
-class RoleSerializer(serializers.ModelSerializer):
-    class Meta: model = Role; fields = '__all__'
-    def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
-        validate_min_length(cleaned, 2)
-        return check_uniqueness(Role, 'name', cleaned, self.instance, "Ya existe un rol con este nombre.")
-
-class EmploymentTypeSerializer(serializers.ModelSerializer):
-    class Meta: model = EmploymentType; fields = '__all__'
-    def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
-        validate_min_length(cleaned, 2)
-        return check_uniqueness(EmploymentType, 'name', cleaned, self.instance, "Ya existe un tipo de empleo con este nombre.")
-
-class EmploymentStatusSerializer(serializers.ModelSerializer):
-    class Meta: model = EmploymentStatus; fields = '__all__'
-    def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
-        validate_min_length(cleaned, 2)
-        return check_uniqueness(EmploymentStatus, 'name', cleaned, self.instance, "Ya existe un estatus de empleo con este nombre.")
-
+# --- Serializer de Status Log ---
 
 class EmploymentStatusLogSerializer(serializers.ModelSerializer):
-    # Muestra el nombre del estatus en lugar del ID
-    status_name = serializers.CharField(source='status.name', read_only=True)
+    # Muestra el nombre del estatus en lugar del código
+    status_name = serializers.CharField(source='get_status_display', read_only=True)
     
     class Meta:
-        model = EmploymentStatusLog # Apunta al modelo correcto
+        model = EmploymentStatusLog
         fields = '__all__'
 
     def validate(self, data):
@@ -57,12 +37,15 @@ class EmploymentSerializer(serializers.ModelSerializer):
     user_account_details = serializers.SerializerMethodField()
     status_logs = EmploymentStatusLogSerializer(many=True, read_only=True)
     supervisor_info = serializers.SerializerMethodField()
+    
+    # Para mostrar el nombre del estatus en lectura
+    current_status_display = serializers.CharField(source='get_current_status_display', read_only=True)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    employment_type_display = serializers.CharField(source='get_employment_type_display', read_only=True)
 
     class Meta:
         model = Employment
         fields = '__all__' 
-
-    # ... (Tus métodos get_person_full_name, etc. van aquí) ...
 
     def validate(self, data):
         # 1. RECUPERACIÓN DE DATOS (Para Create y Update)
@@ -89,28 +72,30 @@ class EmploymentSerializer(serializers.ModelSerializer):
         # 3. NUEVA VALIDACIÓN: INTEGRIDAD DE CONTRATO (NO DUPLICAR ACTIVOS)
         # ---------------------------------------------------------------------
         # Si tenemos estatus y este estatus "ocupa silla" (es activo/vigente)...
-        if person and position and current_status and current_status.is_active_relationship:
+        if person and position and current_status and is_active_status(current_status):
             
             # Buscamos si hay OTROS contratos vigentes para esta misma persona y cargo
-            duplicates = Employment.objects.filter(
+            all_employments = Employment.objects.filter(
                 person=person,
                 position=position,
-                current_status__is_active_relationship=True # <-- Usamos la bandera del modelo
             )
-
+            
             # Si estamos editando, nos excluimos a nosotros mismos de la búsqueda
             if self.instance:
-                duplicates = duplicates.exclude(pk=self.instance.pk)
+                all_employments = all_employments.exclude(pk=self.instance.pk)
 
-            if duplicates.exists():
+            # Filtrar solo los activos usando helper function
+            duplicates = [e for e in all_employments if is_active_status(e.current_status)]
+
+            if duplicates:
                 # Obtenemos el estatus del conflicto para ser específicos en el mensaje
-                conflict_status = duplicates.first().current_status.name
+                conflict_status = duplicates[0].get_current_status_display()
                 raise serializers.ValidationError({
                     "current_status": f"Esta persona ya tiene un contrato vigente ({conflict_status}) en este cargo. Debe finalizar el anterior antes de activar este."
                 })
 
         # ---------------------------------------------------------------------
-        # 4. CONTROL DE VACANTES (Optimizado con is_active_relationship)
+        # 4. CONTROL DE VACANTES (Optimizado con is_active_status)
         # ---------------------------------------------------------------------
         # Solo validamos si cambiamos de posición o es nuevo registro
         if position and (not self.instance or self.instance.position != position):
@@ -118,21 +103,96 @@ class EmploymentSerializer(serializers.ModelSerializer):
             position_obj = position # Ya es el objeto Position gracias a DRF
             
             # Contamos cuántos empleados están ocupando esa posición (usando la bandera booleana)
-            occupancy_query = Employment.objects.filter(
-                position=position_obj, 
-                current_status__is_active_relationship=True # <-- Mejor que filter(name='Activo')
-            )
+            all_position_employments = Employment.objects.filter(position=position_obj)
             
             # Nota: No necesitamos restar 1 manualmente si usamos exclude(pk) correctamente
             if self.instance:
-                occupancy_query = occupancy_query.exclude(pk=self.instance.pk)
-                
-            current_occupancy = occupancy_query.count()
+                all_position_employments = all_position_employments.exclude(pk=self.instance.pk)
+            
+            # Contamos solo los activos
+            current_occupancy = sum(1 for e in all_position_employments if is_active_status(e.current_status))
             max_vacancies = position_obj.vacancies
             
             if current_occupancy >= max_vacancies:
                 raise serializers.ValidationError({
                     'position': f'La posición "{str(position_obj)}" está completa ({current_occupancy}/{max_vacancies}). No hay vacantes disponibles.'
+                })
+        
+        return data
+
+
+# --- SERIALIZADOR DE ROLES JERÁRQUICOS EN DEPARTAMENTO ---
+
+class EmploymentDepartmentRoleSerializer(serializers.ModelSerializer):
+    # Campos de lectura para mostrar información detallada
+    employment_person_name = serializers.CharField(source='employment.person.full_name', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
+    hierarchical_role_display = serializers.CharField(source='get_hierarchical_role_display', read_only=True)
+    is_current = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = EmploymentDepartmentRole
+        fields = '__all__'
+    
+    def validate(self, data):
+        """Validaciones personalizadas"""
+        employment = data.get('employment')
+        department = data.get('department')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        hierarchical_role = data.get('hierarchical_role')
+        
+        # 1. Validar que el departamento coincide con el del employment
+        # 1. Validar que el departamento coincide con el del employment - REMOVED for Matrix Support
+        # if employment and department:
+        #     if employment.position and employment.position.department != department:
+        #         raise serializers.ValidationError({
+        #             'department': f'El departamento debe coincidir con el departamento de la posición del empleado ({employment.position.department.name})'
+        #         })
+        
+        # 2. Validar que end_date sea posterior a start_date
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({
+                'end_date': 'La fecha de fin debe ser posterior a la fecha de inicio'
+            })
+        
+        # 3. Validar que no exista otro rol activo para el mismo employment y department
+        if employment and department:
+            # Obtener el ID de la instancia actual (en caso de UPDATE)
+            instance_pk = self.instance.pk if self.instance else None
+            
+            # Buscar roles activos (sin end_date o con end_date futuro)
+            existing_active_roles = EmploymentDepartmentRole.objects.filter(
+                employment=employment,
+                department=department,
+                end_date__isnull=True
+            ).exclude(pk=instance_pk)
+            
+            if existing_active_roles.exists():
+                raise serializers.ValidationError({
+                    'employment': 'Ya existe un rol jerárquico activo para este empleado en este departamento'
+                })
+        
+        # 4. VALIDACIÓN DE UNICIDAD ACTIVA PARA GERENTES
+        # Solo se aplica si el rol es Gerente (MGR)
+        if hierarchical_role == HierarchicalRoleChoices.MANAGER and department:
+            instance_pk = self.instance.pk if self.instance else None
+            today = timezone.now().date()
+            
+            # Buscar otros gerentes activos en el mismo departamento
+            # Un rol está activo si: end_date es NULL O end_date >= hoy
+            existing_active_manager = EmploymentDepartmentRole.objects.filter(
+                department=department,
+                hierarchical_role=HierarchicalRoleChoices.MANAGER
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=today)
+            ).exclude(pk=instance_pk).select_related('employment__person').first()
+            
+            if existing_active_manager:
+                conflict_person_name = existing_active_manager.employment.person.full_name
+                department_name = department.name
+                raise serializers.ValidationError({
+                    'hierarchical_role': f'El Departamento {department_name} ya tiene un Gerente activo ({conflict_person_name}). Finalice el rol anterior antes de asignar uno nuevo.'
                 })
         
         return data
@@ -166,10 +226,10 @@ class EmploymentSerializer(serializers.ModelSerializer):
                 'is_staff': user.is_staff
             }
         return None
+    
     def get_person_full_name(self, obj):
         return str(obj.person) if obj.person else "Desconocido"
 
-    # NUEVO MÉTODO
     def get_person_document(self, obj):
         """
         Busca el documento principal (Cédula) de la persona asociada.
@@ -187,21 +247,26 @@ class EmploymentSerializer(serializers.ModelSerializer):
         Lógica: Mi Cargo -> Cargo Jefe -> Persona Activa en Cargo Jefe
         """
         # 1. Validar que tenga posición y esa posición tenga un jefe definido
+        
         if not obj.position or not obj.position.manager_position:
             return None
 
         boss_position = obj.position.manager_position
 
         # 2. Buscar quién ocupa la posición del jefe HOY (Activo y Vigente)
-        # Usamos la bandera 'is_active_relationship' que creamos
-        boss_employment = boss_position.employments.filter(
-            current_status__is_active_relationship=True
-        ).first() # Asumimos un solo jefe por silla, tomamos el primero que aparezca
+        boss_employments = boss_position.employments.all()
+        
+        # Filtrar manualmente usando helper function
+        active_boss = None
+        for emp in boss_employments:
+            if is_active_status(emp.current_status):
+                active_boss = emp
+                break
 
-        if boss_employment:
+        if active_boss:
             return {
-                "id": boss_employment.person.id,
-                "name": str(boss_employment.person),
+                "id": active_boss.person.id,
+                "name": str(active_boss.person),
                 "position": boss_position.name
             }
         
@@ -214,19 +279,16 @@ class EmploymentSerializer(serializers.ModelSerializer):
 
 # --- SERIALIZADOR DE LISTADO (Ajustado) ---
 
-# employment/serializers.py
-
-# ... (resto de imports y Serializers de catálogo) ...
-
-# ... (resto del código y imports) ...
-
 class EmployeeListSerializer(serializers.ModelSerializer):
     
     person_full_name = serializers.SerializerMethodField()
     position_full_name = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
     
-    current_status = serializers.CharField(source='current_status.name', read_only=True) 
+    # Mostrar el display name en lugar del código
+    current_status_display = serializers.CharField(source='get_current_status_display', read_only=True)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    employment_type_display = serializers.CharField(source='get_employment_type_display', read_only=True)
 
     class Meta:
         model = Employment
@@ -250,8 +312,106 @@ class EmployeeListSerializer(serializers.ModelSerializer):
         if obj.position and obj.position.department:
             return obj.position.department.name
         return "N/A"
+
+
+# --- SERIALIZADOR DE ROLES JERÁRQUICOS POR PERSONA (MATRIZ) ---
+
+class PersonDepartmentRoleSerializer(serializers.ModelSerializer):
+    """
+    Serializer para roles jerárquicos por persona en departamentos.
+    Soporta organizaciones matriciales.
+    """
+    # Campos de lectura para mostrar información detallada
+    person_name = serializers.CharField(source='person.full_name', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
+    hierarchical_role_display = serializers.CharField(source='get_hierarchical_role_display', read_only=True)
+    is_current = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = PersonDepartmentRole
+        fields = '__all__'
+    
+    def validate(self, data):
+        """
+        Validaciones personalizadas:
+        A) Unicidad de rol activo por persona+departamento
+        B) Unicidad de gerente activo por departamento
+        """
+        person = data.get('person')
+        department = data.get('department')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        hierarchical_role = data.get('hierarchical_role')
         
-    # get_current_status ya no es necesario si usamos CharField(source='current_status.name')
-    # y si el ViewSet está optimizado con select_related.
-
-
+        instance_pk = self.instance.pk if self.instance else None
+        today = timezone.now().date()
+        
+        # Validación básica: end_date posterior a start_date
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({
+                'end_date': 'La fecha de fin debe ser posterior a la fecha de inicio'
+            })
+        
+        # VALIDACIÓN A: Unicidad de rol activo por persona+departamento
+        # Una persona solo puede tener UN rol activo en un departamento a la vez
+        if person and department:
+            existing_active_role = PersonDepartmentRole.objects.filter(
+                person=person,
+                department=department
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=today)
+            ).exclude(pk=instance_pk).first()
+            
+            if existing_active_role:
+                # NOTA: Esta validación permite la creación porque el método create()
+                # auto-finalizará el rol anterior, pero advertimos al usuario
+                pass  # La validación está deshabilitada para permitir auto-finalization
+        
+        # VALIDACIÓN B: Unicidad de gerente activo por departamento
+        # Solo puede haber UN gerente activo por departamento
+        if hierarchical_role == HierarchicalRoleChoices.MANAGER and department:
+            existing_active_manager = PersonDepartmentRole.objects.filter(
+                department=department,
+                hierarchical_role=HierarchicalRoleChoices.MANAGER
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=today)
+            ).exclude(pk=instance_pk).select_related('person').first()
+            
+            if existing_active_manager:
+                conflict_person_name = existing_active_manager.person.full_name
+                department_name = department.name
+                raise serializers.ValidationError({
+                    'hierarchical_role': f'El Departamento {department_name} ya tiene un Gerente activo ({conflict_person_name}). Finalice el rol anterior antes de asignar uno nuevo.'
+                })
+        
+        return data
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        """
+        Lógica de auto-finalización de roles anteriores.
+        
+        Antes de crear un nuevo rol, busca cualquier rol activo para la
+        misma persona+departamento y lo finaliza automáticamente estableciendo
+        su end_date al día anterior del start_date del nuevo rol.
+        """
+        person = validated_data.get('person')
+        department = validated_data.get('department')
+        new_start_date = validated_data.get('start_date')
+        
+        # Buscar rol activo anterior para la misma persona+departamento
+        existing_active_role = PersonDepartmentRole.objects.filter(
+            person=person,
+            department=department,
+            end_date__isnull=True  # Solo los roles actualmente sin fin
+        ).first()
+        
+        if existing_active_role:
+            # Auto-finalizar el rol anterior estableciendo end_date al día anterior
+            from datetime import timedelta
+            existing_active_role.end_date = new_start_date - timedelta(days=1)
+            existing_active_role.save()
+        
+        # Crear el nuevo rol
+        new_role = PersonDepartmentRole.objects.create(**validated_data)
+        return new_role

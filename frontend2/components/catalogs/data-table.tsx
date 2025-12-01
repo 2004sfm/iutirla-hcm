@@ -36,6 +36,9 @@ import {
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
+    searchOptions?: { label: string; value: string }[]
+    onSearchOptionChange?: (value: string) => void
+    currentSearchOption?: string
     searchKey?: string
     rowCount?: number
     pagination?: PaginationState
@@ -47,6 +50,9 @@ export function DataTable<TData, TValue>({
     columns,
     data,
     searchKey,
+    searchOptions,
+    onSearchOptionChange,
+    currentSearchOption,
     rowCount,
     pagination,
     onPaginationChange,
@@ -85,16 +91,33 @@ export function DataTable<TData, TValue>({
 
     return (
         <div className="flex flex-col gap-6">
-            {searchKey && (
-                <div className="flex items-center">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                {searchKey && (
                     <Input
                         placeholder="Buscar..."
                         value={searchValue}
                         onChange={(event) => setSearchValue(event.target.value)}
-                        className="max-w-sm"
+                        className="sm:max-w-sm w-full text-sm"
                     />
-                </div>
-            )}
+                )}
+                {searchOptions && searchOptions.length > 0 && (
+                    <Select
+                        value={currentSearchOption}
+                        onValueChange={(value) => onSearchOptionChange && onSearchOptionChange(value)}
+                    >
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Buscar por..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {searchOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            </div>
             <div className="rounded-md border overflow-hidden">
                 <Table>
                     <TableHeader>

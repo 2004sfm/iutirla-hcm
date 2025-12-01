@@ -175,6 +175,13 @@ REST_FRAMEWORK = {
     
     # Tamaño por defecto sincronizado con el Frontend
     'PAGE_SIZE': 10,
+    
+    # Filtros Globales
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'core.filters.UnaccentSearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ),
 }
 
 REST_AUTH = {

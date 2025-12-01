@@ -1,6 +1,8 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { ProtectedRoute } from "@/components/protected-route";
 
+import { BreadcrumbProvider } from "@/context/breadcrumb-context";
+
 export default function MainLayout({
     children
 }: {
@@ -8,9 +10,11 @@ export default function MainLayout({
 }) {
     return (
         <ProtectedRoute>
-            <DashboardLayout>
-                {children}
-            </DashboardLayout>
+            <BreadcrumbProvider>
+                <DashboardLayout>
+                    {children}
+                </DashboardLayout>
+            </BreadcrumbProvider>
         </ProtectedRoute>
     );
 }
