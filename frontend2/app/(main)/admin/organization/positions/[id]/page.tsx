@@ -97,8 +97,7 @@ export default function PositionDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                 </div>
                 <Button variant="outline" onClick={() => router.back()}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver
+                    <ArrowLeft className="mr size-4" />
                 </Button>
             </div>
 
@@ -106,27 +105,27 @@ export default function PositionDetailPage({ params }: { params: Promise<{ id: s
                 <TabsList className="w-full flex flex-col md:grid md:grid-cols-3 h-auto p-1 bg-muted/50 gap-1">
                     <TabsTrigger
                         value="general"
-                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 text-base transition-all duration-300 w-full"
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                     >
-                        <Briefcase className="mr-1 size-5" />
+                        <Briefcase className="mr-1 size-4" />
                         <p className="truncate">
                             Información General
                         </p>
                     </TabsTrigger>
                     <TabsTrigger
                         value="functions"
-                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 text-base transition-all duration-300 w-full"
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                     >
-                        <ListChecks className="mr-1 size-5" />
+                        <ListChecks className="mr-1 size-4" />
                         <p className="truncate">
                             Funciones
                         </p>
                     </TabsTrigger>
                     <TabsTrigger
                         value="requirements"
-                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 text-base transition-all duration-300 w-full"
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                     >
-                        <ScrollText className="mr-1 size-5" />
+                        <ScrollText className="mr-1 size-4" />
                         <p className="truncate">
                             Requisitos
                         </p>

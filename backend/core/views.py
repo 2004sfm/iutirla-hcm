@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions, filters
 from .models import (
-    Person, Salutation, Gender, MaritalStatus, Country,
+    Person, Gender, MaritalStatus, Country,
     DisabilityGroup, DisabilityType, DisabilityStatus,
     PersonDisabilityVE, AddressType, State, Address, 
     NationalId, EmailType, PersonEmail, PhoneType, PhoneCarrier, 
@@ -9,7 +9,7 @@ from .models import (
     Dependent, EmergencyContact
 )
 from .serializers import (
-    PersonSerializer, PersonListSerializer, SalutationSerializer, GenderSerializer, MaritalStatusSerializer, 
+    PersonSerializer, PersonListSerializer, GenderSerializer, MaritalStatusSerializer, 
     CountrySerializer,
     DisabilityGroupSerializer, DisabilityTypeSerializer, DisabilityStatusSerializer,
     PersonDisabilityVESerializer, AddressTypeSerializer, StateSerializer, 
@@ -57,28 +57,22 @@ class NationalIdViewSet(viewsets.ModelViewSet):
         return queryset
 
 # ... (Resto de ViewSets de Catálogos igual) ...
-class SalutationViewSet(viewsets.ModelViewSet):
-    queryset = Salutation.objects.all()
-    serializer_class = SalutationSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    filter_backends = [UnaccentSearchFilter]
-    search_fields = ['name']
 class GenderViewSet(viewsets.ModelViewSet):
     queryset = Gender.objects.all()
     serializer_class = GenderSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [UnaccentSearchFilter]
     search_fields = ['name']
 class MaritalStatusViewSet(viewsets.ModelViewSet):
     queryset = MaritalStatus.objects.all()
     serializer_class = MaritalStatusSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [UnaccentSearchFilter]
     search_fields = ['name']
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [UnaccentSearchFilter]
     search_fields = ['name', 'iso_2']
 

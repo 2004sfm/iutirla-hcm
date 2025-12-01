@@ -8,10 +8,6 @@ CODE_UNIQUE_ERR_MSG = {'unique': "Ya existe un registro con este código."}
 EMAIL_UNIQUE_ERR_MSG = {'unique': "Este correo electrónico ya está registrado."}
 
 # --- CATÁLOGOS BÁSICOS ---
-class Salutation(models.Model):
-    name = models.CharField(max_length=50, unique=True, error_messages=UNIQUE_ERR_MSG)
-    def __str__(self): return self.name
-
 class Gender(models.Model):
     name = models.CharField(max_length=50, unique=True, error_messages=UNIQUE_ERR_MSG)
     def __str__(self): return self.name
@@ -85,10 +81,9 @@ class Person(models.Model):
     second_name = models.CharField(max_length=100, blank=True, null=True)
     paternal_surname = models.CharField(max_length=100)
     maternal_surname = models.CharField(max_length=100, blank=True, null=True)
-    salutation = models.ForeignKey(Salutation, on_delete=models.SET_NULL, null=True, blank=True)
-    gender = models.ForeignKey(Gender, on_delete=models.SET_NULL, null=True, blank=True)
+    gender = models.ForeignKey(Gender, on_delete=models.PROTECT, null=False, blank=False)
     marital_status = models.ForeignKey(MaritalStatus, on_delete=models.SET_NULL, null=True, blank=True)
-    birthdate = models.DateField(null=True, blank=True)
+    birthdate = models.DateField(null=False, blank=False)
     country_of_birth = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True)
     photo = models.ImageField(upload_to='photos/person/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -137,6 +132,12 @@ class NationalId(models.Model):
             ('person', 'category'),
         ]
 
+    def save(self, *args, **kwargs):
+        # La cédula siempre es el documento principal
+        if self.category == 'CEDULA':
+            self.is_primary = True
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.get_category_display()}: {self.document_type}-{self.number}"
 
@@ -182,7 +183,7 @@ class PersonPhone(models.Model):
     subscriber_number = models.CharField(max_length=10)
     is_primary = models.BooleanField(default=False)
     
-    def __str__(self): return f"({self.carrier_code.code}) {self.subscriber_number}"
+    def __str__(self): return f"{self.carrier_code.code}-{self.subscriber_number}"
     
     class Meta:
         constraints = [

@@ -46,6 +46,12 @@ class Position(models.Model):
         related_name='direct_reports',
         help_text="Posiciones a las que reporta directamente (Jefes Inmediatos)."
     )
+
+    is_manager = models.BooleanField(
+        default=False,
+        verbose_name="Es Gerencial",
+        help_text="Indica si esta posición tiene responsabilidades gerenciales."
+    )
     
     # name field removed
     

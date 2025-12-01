@@ -6,7 +6,6 @@ router = DefaultRouter()
 router.register(r'persons', views.PersonViewSet, basename='person')
 
 # Catálogos
-router.register(r'salutations', views.SalutationViewSet)
 router.register(r'genders', views.GenderViewSet)
 router.register(r'marital-statuses', views.MaritalStatusViewSet)
 router.register(r'countries', views.CountryViewSet)

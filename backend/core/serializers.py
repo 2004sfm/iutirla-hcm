@@ -4,7 +4,7 @@ from datetime import date
 import re 
 
 from .models import (
-    Person, Salutation, Gender, MaritalStatus, Country, 
+    Person, Gender, MaritalStatus, Country, 
     DisabilityGroup, DisabilityType, DisabilityStatus,
     PersonDisabilityVE, AddressType, State, Address, 
     NationalId, EmailType, PersonEmail, PhoneType, PhoneCarrier, 
@@ -193,7 +193,7 @@ def validate_unique_together(serializer_instance, validated_data, model, field_n
     return validated_data
 
 def check_uniqueness(model, field_name, value, instance=None, error_msg="Ya existe un registro con este valor."):
-    filter_kwargs = {field_name: value}
+    filter_kwargs = {f"{field_name}__iexact": value}
     qs = model.objects.filter(**filter_kwargs)
     if instance:
         qs = qs.exclude(pk=instance.pk)
@@ -213,6 +213,12 @@ class AddressSerializer(serializers.ModelSerializer):
         if data.get('state') and data.get('country') and data['state'].country != data['country']:
             raise serializers.ValidationError({"state": "El estado no pertenece al país."})
         return data
+
+    def validate_city(self, value):
+        return title_case_cleaner(validate_text_with_spaces(value, 'Ciudad'))
+
+    def validate_street_name_and_number(self, value):
+        return title_case_cleaner(value)
     
 class EmergencyContactSerializer(serializers.ModelSerializer):
     relationship_name = serializers.SerializerMethodField()
@@ -243,12 +249,6 @@ class EmergencyContactSerializer(serializers.ModelSerializer):
     def validate_maternal_surname(self, value): return title_case_cleaner(validate_only_letters(value, "Apellido Materno")) if value else value
 
 # --- Serializers de Catálogo ---
-class SalutationSerializer(serializers.ModelSerializer):
-    class Meta: model = Salutation; fields = '__all__'
-    def validate_name(self, value): 
-        cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
-        validate_min_length(cleaned, 2)
-        return check_uniqueness(Salutation, 'name', cleaned, self.instance)
 class GenderSerializer(serializers.ModelSerializer):
     class Meta: model = Gender; fields = '__all__'
     def validate_name(self, value): 
@@ -266,7 +266,16 @@ class CountrySerializer(serializers.ModelSerializer):
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         validate_min_length(cleaned, 2)
-        return check_uniqueness(Country, 'name', cleaned, self.instance)
+        
+        # Validación explícita de unicidad
+        qs = Country.objects.filter(name__iexact=cleaned)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        
+        if qs.exists():
+            raise serializers.ValidationError("Ya existe un país con este nombre.")
+            
+        return cleaned
     def validate_iso_2(self, value): 
         validated = validate_letters_only_no_spaces(value, 'Código ISO')
         validate_exact_length(validated, 2)
@@ -338,8 +347,6 @@ class RelationshipTypeSerializer(serializers.ModelSerializer):
         return check_uniqueness(RelationshipType, 'name', cleaned, self.instance)
 class StateSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
-    # Include nested country object for display
-    country = serializers.SerializerMethodField()
     
     class Meta:
         model = State
@@ -347,10 +354,11 @@ class StateSerializer(serializers.ModelSerializer):
         # Deshabilitar validación automática de unique_together para manejarla manualmente
         validators = []
     
-    def get_country(self, obj):
-        if obj.country:
-            return {'id': obj.country.id, 'name': obj.country.name}
-        return None
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if instance.country:
+            ret['country'] = {'id': instance.country.id, 'name': instance.country.name}
+        return ret
     
     def validate_name(self, value):
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
@@ -365,8 +373,6 @@ class StateSerializer(serializers.ModelSerializer):
         )
 class PhoneCarrierCodeSerializer(serializers.ModelSerializer):
     carrier_name = serializers.CharField(source='carrier.name', read_only=True)
-    # Include nested carrier object for display
-    carrier = serializers.SerializerMethodField()
     
     class Meta:
         model = PhoneCarrierCode
@@ -374,10 +380,11 @@ class PhoneCarrierCodeSerializer(serializers.ModelSerializer):
         # Deshabilitar validación automática de unique_together
         validators = []
     
-    def get_carrier(self, obj):
-        if obj.carrier:
-            return {'id': obj.carrier.id, 'name': obj.carrier.name}
-        return None
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if instance.carrier:
+            ret['carrier'] = {'id': instance.carrier.id, 'name': instance.carrier.name}
+        return ret
     
     def validate_code(self, value):
         value = value.strip()
@@ -418,10 +425,7 @@ class NationalIdSerializer(serializers.ModelSerializer):
     class Meta: 
         model = NationalId
         fields = '__all__'
-        validators = [
-            UniqueTogetherValidator(queryset=NationalId.objects.all(), fields=['document_type', 'number'], message="Este documento ya está registrado en el sistema."),
-            UniqueTogetherValidator(queryset=NationalId.objects.all(), fields=['person', 'category'], message="Esta persona ya tiene un documento de esta categoría registrado.")
-        ]
+        validators = []
     
     def get_full_document(self, obj): return f"{obj.document_type}-{obj.number}"
     
@@ -429,7 +433,36 @@ class NationalIdSerializer(serializers.ModelSerializer):
         if not value.strip().isdigit(): raise serializers.ValidationError("Este campo solo puede contener números.")
         return value.strip()
         
-    def validate(self, data): return validate_single_primary(self, data, NationalId, "ID Nacional")
+    def validate(self, data):
+        # Validar UniqueTogether manualmente para asociar errores a campos específicos
+        document_type = data.get('document_type', getattr(self.instance, 'document_type', None))
+        number = data.get('number', getattr(self.instance, 'number', None))
+        person = data.get('person', getattr(self.instance, 'person', None))
+        category = data.get('category', getattr(self.instance, 'category', None))
+        
+        # 1. Validar documento único (tipo + número)
+        if document_type and number:
+            queryset = NationalId.objects.filter(document_type=document_type, number=number)
+            if self.instance: queryset = queryset.exclude(pk=self.instance.pk)
+            if queryset.exists():
+                raise serializers.ValidationError({'number': "Este documento ya está registrado en el sistema."})
+
+        # 2. Validar categoría única por persona (persona + categoría)
+        if person and category:
+            queryset = NationalId.objects.filter(person=person, category=category)
+            if self.instance: queryset = queryset.exclude(pk=self.instance.pk)
+            if queryset.exists():
+                raise serializers.ValidationError({'category': "Esta persona ya tiene un documento de esta categoría registrado."})
+
+        # La cédula siempre es primaria (se establece en el modelo)
+        # Solo validamos is_primary para otros documentos (RIF, Pasaporte)
+        
+        # Si es una cédula, no validamos is_primary porque se establece automáticamente
+        if category == 'CEDULA':
+            return data
+            
+        # Para otros documentos, validamos que no exista otro documento primario
+        return validate_single_primary(self, data, NationalId, "ID Nacional")
 
 
 class PersonEmailSerializer(serializers.ModelSerializer):
@@ -477,9 +510,9 @@ class PersonPhoneSerializer(serializers.ModelSerializer):
         ]
     
     def get_full_number(self, obj):
-        # Venezuela solamente, prefijo fijo +58
+        # Formato solicitado: 0424-8167536
         if obj.carrier_code:
-            return f"+58 {obj.carrier_code.code} {obj.subscriber_number}"
+            return f"{obj.carrier_code.code}-{obj.subscriber_number}"
         return obj.subscriber_number
 
     def validate_subscriber_number(self, value):
@@ -550,7 +583,7 @@ class PersonListSerializer(serializers.ModelSerializer):
     
     def get_primary_document(self, obj):
         doc = obj.national_ids.filter(is_primary=True).first()
-        return f"{doc.get_category_display()} {doc.document_type}-{doc.number}" if doc else "-"
+        return f"{doc.document_type}-{doc.number}" if doc else "-"
     
     def get_primary_email(self, obj):
         e = obj.emails.filter(is_primary=True).first()
@@ -561,7 +594,7 @@ class PersonListSerializer(serializers.ModelSerializer):
         if not p:
             return "-"
         if p.carrier_code:
-            return f"({p.carrier_code.code}) {p.subscriber_number}"
+            return f"{p.carrier_code.code}-{p.subscriber_number}"
         return p.subscriber_number
         
     def get_hiring_search(self, obj):
@@ -578,6 +611,10 @@ class PersonSerializer(serializers.ModelSerializer):
     gender_name = serializers.CharField(source='gender.name', read_only=True)
     country_of_birth_name = serializers.CharField(source='country_of_birth.name', read_only=True)
     
+    # Campos para crear cédula durante la creación de persona
+    cedula_prefix = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    cedula_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    
     addresses = AddressSerializer(many=True, read_only=True)
     phones = PersonPhoneSerializer(many=True, read_only=True)
     emails = PersonEmailSerializer(many=True, read_only=True)
@@ -592,6 +629,61 @@ class PersonSerializer(serializers.ModelSerializer):
         if hasattr(data, 'copy'): data = data.copy()
         if 'photo' in data and data['photo'] == 'DELETE': data['photo'] = None
         return super().to_internal_value(data)
+
+    def validate_cedula_number(self, value):
+        """Sanitize and validate cedula number"""
+        if not value:
+            return value
+            
+        # Eliminar puntos y comas (separadores de miles)
+        sanitized = value.replace('.', '').replace(',', '')
+        
+        # Verificar que solo contenga dígitos
+        if not sanitized.isdigit():
+            raise serializers.ValidationError("El número de cédula solo puede contener dígitos.")
+        
+        # Remover ceros a la izquierda
+        sanitized = sanitized.lstrip('0') or '0'
+        
+        # Verificar longitud (1-8 dígitos)
+        if len(sanitized) > 8:
+            raise serializers.ValidationError("El número de cédula no puede tener más de 8 dígitos.")
+        
+        return sanitized
+
+    def validate_cedula_prefix(self, value):
+        """Validate that cedula prefix is only V or E"""
+        if value and value not in ['V', 'E']:
+            raise serializers.ValidationError("El prefijo de cédula debe ser V (Venezolano) o E (Extranjero).")
+        return value
+
+    def validate(self, data):
+        # Validar prefijo de cédula
+        if 'cedula_prefix' in data and data['cedula_prefix']:
+            data['cedula_prefix'] = self.validate_cedula_prefix(data['cedula_prefix'])
+        
+        # Sanitizar cédula si está presente
+        if 'cedula_number' in data and data['cedula_number']:
+            data['cedula_number'] = self.validate_cedula_number(data['cedula_number'])
+        
+        # Validar unicidad de cédula si se proporciona
+        cedula_prefix = data.get('cedula_prefix')
+        cedula_number = data.get('cedula_number')
+        
+        if cedula_prefix and cedula_number:
+            # Verificar si ya existe un NationalId con ese prefijo y número
+            qs = NationalId.objects.filter(document_type=cedula_prefix, number=cedula_number)
+            
+            # Si estamos editando, excluir los documentos de la persona actual
+            if self.instance:
+                qs = qs.exclude(person=self.instance)
+                
+            if qs.exists():
+                raise serializers.ValidationError({
+                    "cedula_number": f"Ya existe una persona con la cédula {cedula_prefix}-{cedula_number}."
+                })
+        
+        return data
 
     def validate_birthdate(self, value):
         if value and value > date.today(): raise serializers.ValidationError("No se permiten fechas futuras.")
@@ -609,7 +701,7 @@ class PersonSerializer(serializers.ModelSerializer):
         """Busca el documento marcado como principal"""
         # Usamos el related_name='national_ids' definido en el modelo
         doc = obj.national_ids.filter(is_primary=True).first()
-        return str(doc) if doc else None
+        return f"{doc.document_type}-{doc.number}" if doc else None
 
     def get_primary_email(self, obj):
         """Busca el correo marcado como principal"""
@@ -627,6 +719,62 @@ class PersonSerializer(serializers.ModelSerializer):
         if phone.carrier_code:
             return str(phone)
         return phone.subscriber_number
+
+    def create(self, validated_data):
+        """Override create to handle cedula creation"""
+        # Extract cedula data
+        cedula_prefix = validated_data.pop('cedula_prefix', None)
+        cedula_number = validated_data.pop('cedula_number', None)
+        
+        # Create person
+        person = Person.objects.create(**validated_data)
+        
+        # Create NationalId if cedula data provided
+        if cedula_prefix and cedula_number:
+            from .models import NationalId
+            NationalId.objects.create(
+                person=person,
+                category='CEDULA',
+                document_type=cedula_prefix,
+                number=cedula_number,
+                is_primary=True
+            )
+        
+        return person
+
+    def update(self, instance, validated_data):
+        """Override update to handle cedula updates"""
+        # Extract cedula data
+        cedula_prefix = validated_data.pop('cedula_prefix', None)
+        cedula_number = validated_data.pop('cedula_number', None)
+        
+        # Update person fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update NationalId if cedula data provided
+        if cedula_prefix and cedula_number:
+            from .models import NationalId
+            # Buscar si ya tiene una cédula (categoría CEDULA)
+            cedula = NationalId.objects.filter(person=instance, category='CEDULA').first()
+            
+            if cedula:
+                # Actualizar existente
+                cedula.document_type = cedula_prefix
+                cedula.number = cedula_number
+                cedula.save()
+            else:
+                # Crear nueva si no tenía
+                NationalId.objects.create(
+                    person=instance,
+                    category='CEDULA',
+                    document_type=cedula_prefix,
+                    number=cedula_number,
+                    is_primary=True
+                )
+        
+        return instance
 
 class PersonDisabilityVESerializer(serializers.ModelSerializer):
     class Meta: model = PersonDisabilityVE; fields = '__all__'

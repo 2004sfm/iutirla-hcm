@@ -282,6 +282,7 @@ class EmploymentDepartmentRoleSerializer(serializers.ModelSerializer):
 class EmployeeListSerializer(serializers.ModelSerializer):
     
     person_full_name = serializers.SerializerMethodField()
+    person_document = serializers.SerializerMethodField()
     position_full_name = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
     
@@ -300,6 +301,17 @@ class EmployeeListSerializer(serializers.ModelSerializer):
         """Resuelve el nombre completo de core.Person."""
         # Se asegura de que si la persona existe, usa su __str__ (nombre y apellido)
         return str(obj.person) if obj.person else "Persona Desconocida"
+
+    def get_person_document(self, obj):
+        """
+        Busca el documento principal (Cédula) de la persona asociada.
+        """
+        if obj.person:
+            # Usamos la relación inversa 'national_ids' definida en core.models
+            doc = obj.person.national_ids.filter(is_primary=True).first()
+            if doc:
+                return f"{doc.document_type}-{doc.number}"
+        return "Sin Documento"
 
     def get_position_full_name(self, obj):
         """Resuelve el nombre del cargo (Position)."""

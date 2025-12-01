@@ -148,4 +148,13 @@ class PersonLanguageSerializer(serializers.ModelSerializer):
     speaking_proficiency_name = serializers.CharField(source='speaking_proficiency.name', read_only=True)
     reading_proficiency_name = serializers.CharField(source='reading_proficiency.name', read_only=True)
     writing_proficiency_name = serializers.CharField(source='writing_proficiency.name', read_only=True)
-    class Meta: model = PersonLanguage; fields = '__all__'
+    class Meta:
+        model = PersonLanguage
+        fields = '__all__'
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=PersonLanguage.objects.all(),
+                fields=['person', 'language'],
+                message='Esta persona ya tiene registrado este idioma.'
+            )
+        ]

@@ -136,3 +136,14 @@ class PersonLanguage(models.Model):
     speaking_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="speaking")
     reading_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="reading")
     writing_proficiency = models.ForeignKey(LanguageProficiency, on_delete=models.SET_NULL, null=True, blank=True, related_name="writing")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['person', 'language'],
+                name='unique_person_language',
+                violation_error_message="Esta persona ya tiene registrado este idioma."
+            )
+        ]
+
+    def __str__(self): return f"{self.person} - {self.language}"

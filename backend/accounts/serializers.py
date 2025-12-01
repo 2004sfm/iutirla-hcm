@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.db import transaction
 from django.contrib.auth.password_validation import validate_password as django_validate_password
 from core.models import (
-    Person, Salutation, Gender, MaritalStatus, Country
+    Person, Gender, MaritalStatus, Country
 )
 # FIX: Importamos check_uniqueness para blindar el username contra Errores 500
 from core.serializers import PersonSerializer, check_uniqueness
@@ -43,9 +43,6 @@ class EmployeeCreationSerializer(serializers.ModelSerializer):
     birthdate = serializers.DateField(write_only=True, required=False)
     
     # FKs para nueva persona
-    salutation_id = serializers.PrimaryKeyRelatedField(
-        queryset=Salutation.objects.all(), write_only=True, required=False, source='salutation'
-    )
     gender_id = serializers.PrimaryKeyRelatedField(
         queryset=Gender.objects.all(), write_only=True, required=False, source='gender'
     )

@@ -77,7 +77,7 @@ const configs: Record<string, CatalogConfig> = {
         fields: [
             { name: "job_title", label: "Cargo", type: "select", required: true, optionsUrl: "/api/organization/job-titles/", optionLabelKey: "name", optionValueKey: "id" },
             { name: "department", label: "Departamento", type: "select", required: true, optionsUrl: "/api/organization/departments/", optionLabelKey: "name", optionValueKey: "id" },
-            { name: "manager_positions", label: "Jefes Inmediatos", type: "select", required: false, optionsUrl: "/api/organization/positions/", optionLabelKey: "full_name", optionValueKey: "id" },
+            { name: "manager_positions", label: "Jefes Inmediatos", type: "select", required: false, optionsUrl: "/api/organization/positions/?is_manager=true", optionLabelKey: "full_name", optionValueKey: "id" },
             { name: "vacancies", label: "Vacantes", type: "number", required: true },
             { name: "is_manager", label: "Es Gerencial", type: "checkbox", required: false },
         ],

@@ -187,13 +187,17 @@ class Command(BaseCommand):
             # Extract functions
             functions = self._extract_list(cargo_text, "**Funciones:**")
             
+            # Determine if managerial
+            is_manager = any(role in title for role in ["Director", "Subdirector", "Coordinador", "Jefe", "Gerente", "Presidente"])
+
             # Create position
             position = Position.objects.create(
                 id=position_counter,
                 department_id=dept_id,
                 job_title_id=jt_id,
                 vacancies=vac,
-                objective=objective or f"Objetivo del cargo {title}"
+                objective=objective or f"Objetivo del cargo {title}",
+                is_manager=is_manager
             )
             
             # Store manager assignment

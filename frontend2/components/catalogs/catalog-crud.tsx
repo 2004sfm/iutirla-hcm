@@ -45,29 +45,36 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format, parseISO } from "date-fns";
 
 export interface CatalogField {
     name: string;
     label: string;
-    type: "text" | "number" | "email" | "select" | "checkbox" | "textarea" | "date";
+    type: "text" | "number" | "email" | "select" | "checkbox" | "textarea" | "date" | "hidden";
     required?: boolean;
     optionsUrl?: string; // API endpoint to fetch options
     options?: { label: string; value: string }[]; // Static options
     optionLabelKey?: string; // Key to display (default: name)
     optionValueKey?: string; // Key for value (default: id)
+    defaultValue?: any; // Default value for the field
 }
 
 interface CatalogCRUDProps {
-    title: string;
+    title: React.ReactNode | string;
     apiUrl: string;
     fields: CatalogField[];
     columns: ColumnDef<any>[];
     searchKey?: string;
     searchOptions?: { label: string; value: string }[];
     extraActions?: (item: any) => React.ReactNode;
+    disableCreate?: boolean;
+    disableEdit?: boolean;
+    customToolbarActions?: React.ReactNode;
+    disablePagination?: boolean;
 }
 
-export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions }: CatalogCRUDProps) {
+export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, customToolbarActions, disablePagination }: CatalogCRUDProps) {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -99,7 +106,11 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                     fieldSchema = fieldSchema.min(1, { message: `${field.label} es requerido` });
                 }
             } else if (field.type === "checkbox") {
-                fieldSchema = z.boolean().default(false);
+                // Handle boolean or empty string (which can happen if default is "")
+                fieldSchema = z.union([z.boolean(), z.literal("")]).transform((val) => val === "" ? false : val).default(false);
+            } else if (field.type === "hidden") {
+                // Hidden fields can be anything, usually string or number
+                fieldSchema = z.any();
             } else {
                 fieldSchema = z.string();
                 if (field.required) {
@@ -107,7 +118,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                 }
             }
 
-            if (!field.required && field.type !== "checkbox") {
+            if (!field.required && field.type !== "checkbox" && field.type !== "hidden") {
                 fieldSchema = fieldSchema.optional();
             }
             shape[field.name] = fieldSchema;
@@ -160,7 +171,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
         for (const field of fields) {
             if (field.type === "select" && field.optionsUrl) {
                 try {
-                    const response = await apiClient.get(field.optionsUrl);
+                    const response = await apiClient.get(field.optionsUrl, { params: { page_size: 1000 } });
                     options[field.name] = response.data.results || response.data;
                 } catch (error) {
                     // console.error(`Error fetching options for ${field.name}:`, error);
@@ -187,7 +198,15 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
         form.reset({});
         // Reset default values based on fields
         const defaults: any = {};
-        fields.forEach(f => defaults[f.name] = "");
+        fields.forEach(f => {
+            if (f.defaultValue !== undefined) {
+                defaults[f.name] = f.defaultValue;
+            } else if (f.type === "checkbox") {
+                defaults[f.name] = false;
+            } else {
+                defaults[f.name] = "";
+            }
+        });
         form.reset(defaults);
         setIsDialogOpen(true);
     };
@@ -218,6 +237,8 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                     // Objeto único con ID
                     formattedItem[field.name] = value.id.toString();
                 }
+            } else if (field.type === "checkbox") {
+                formattedItem[field.name] = value;
             } else if (value !== undefined && value !== null) {
                 formattedItem[field.name] = value.toString();
             }
@@ -241,8 +262,16 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
             return;
         }
 
+        // Sanitize values: ensure checkboxes are booleans
+        const sanitizedValues = { ...values };
+        fields.forEach(f => {
+            if (f.type === "checkbox") {
+                sanitizedValues[f.name] = !!values[f.name];
+            }
+        });
+
         // If creating, submit directly
-        await submitForm(values);
+        await submitForm(sanitizedValues);
     };
 
     // Actual submission function
@@ -284,17 +313,34 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
 
                             // Check if key exists in fields
                             if (fields.some(f => f.name === key)) {
-                                // Set error on field to show message below input
-                                form.setError(key, {
-                                    type: "manual",
-                                    message: msg,
-                                });
+                                const lowerMsg = String(msg).toLowerCase();
+                                const isUniquenessError = lowerMsg.includes("existe") || lowerMsg.includes("registrado");
+
+                                if (isUniquenessError) {
+                                    // Uniqueness error: Global alert + Red border (empty message)
+                                    form.setError(key, {
+                                        type: "manual",
+                                        message: "",
+                                    });
+                                    generalErrors.push(`${msg}`);
+                                } else {
+                                    // Standard validation error: Text below field
+                                    form.setError(key, {
+                                        type: "manual",
+                                        message: msg,
+                                    });
+                                }
                             } else {
                                 // If error is for a field not in the form, show as general error
+                                // Also check if it's a non_field_error disguised as a field error (e.g. unique_together on hidden fields)
                                 generalErrors.push(`${key}: ${msg}`);
                             }
                         }
                     });
+
+                    // If we have field errors, we don't need to show a general error unless there are non_field_errors
+                    // But if the user wants consistency, maybe we should always show field errors below the field.
+                    // The issue is likely that some backend errors are not keyed to the field name.
 
                     if (generalErrors.length > 0) {
                         setServerError(generalErrors);
@@ -348,12 +394,16 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-                <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-                <Button onClick={handleCreate}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nuevo
-                </Button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {title ? <h2 className="text-2xl font-bold tracking-tight">{title}</h2> : <div></div>}
+                <div className="flex gap-2">
+                    {disableCreate ? customToolbarActions : (
+                        <Button onClick={handleCreate}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nuevo
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {isLoading ? (
@@ -369,7 +419,8 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                     rowCount={rowCount}
                     pagination={pagination}
                     onPaginationChange={setPagination}
-                    onSearch={handleSearch}
+                    onSearch={searchKey ? setSearchTerm : undefined}
+                    disablePagination={disablePagination}
                 />
             )}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -412,8 +463,8 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                                         control={form.control}
                                         name={field.name}
                                         render={({ field: formField }) => (
-                                            <FormItem>
-                                                <FormLabel>{field.label}</FormLabel>
+                                            <FormItem className={field.type === "hidden" ? "hidden" : ""}>
+                                                {field.type !== "hidden" && <FormLabel>{field.label}</FormLabel>}
                                                 <FormControl>
                                                     {field.type === "select" ? (
                                                         <Combobox
@@ -444,6 +495,20 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                                                             {...formField}
                                                             value={(formField.value as string) ?? ""}
                                                         />
+                                                    ) : field.type === "date" ? (
+                                                        <DatePicker
+                                                            value={
+                                                                formField.value && typeof formField.value === 'string'
+                                                                    ? parseISO(formField.value)
+                                                                    : (formField.value instanceof Date ? formField.value : undefined)
+                                                            }
+                                                            onChange={(date) => {
+                                                                formField.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                                                            }}
+                                                            placeholder={field.label}
+                                                        />
+                                                    ) : field.type === "hidden" ? (
+                                                        <input type="hidden" {...formField} value={(formField.value as string | number) ?? ""} />
                                                     ) : (
                                                         <Input
                                                             type={field.type}

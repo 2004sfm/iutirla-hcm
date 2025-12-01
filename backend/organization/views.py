@@ -25,7 +25,7 @@ class PositionViewSet(viewsets.ModelViewSet):
     serializer_class = PositionSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     filter_backends = [DjangoFilterBackend, UnaccentSearchFilter]
-    filterset_fields = ['department']
+    filterset_fields = ['department', 'is_manager']
     search_fields = ['job_title__name', 'department__name']
 
 class PositionRequirementViewSet(viewsets.ModelViewSet):
