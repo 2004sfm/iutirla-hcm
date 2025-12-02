@@ -22,7 +22,8 @@ import {
     Gauge,
     TrendingUpDown,
     BookOpenText,
-    ClipboardList
+    ClipboardList,
+    BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IutirlaLogo } from "../iutirla-logo";
@@ -118,7 +119,7 @@ const adminMenuItems: MenuItem[] = [
         label: "Capacitación",
         icon: GraduationCap,
         children: [
-            { label: "Catálogo de Cursos", href: "/admin/training/courses", icon: Circle },
+            { label: "Cursos", href: "/admin/courses", icon: BookOpen },
         ],
     },
     {

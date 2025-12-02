@@ -41,6 +41,22 @@ class Course(models.Model):
     duration_hours = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=3, choices=Status.choices, default=Status.DRAFT)
     
+    # Privacy/Visibility settings
+    is_public = models.BooleanField(
+        default=True,
+        verbose_name="Curso Público",
+        help_text="Si es público, todos pueden ver el curso. Si es privado, solo el departamento asignado."
+    )
+    department = models.ForeignKey(
+        'organization.Department',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='courses',
+        verbose_name="Departamento",
+        help_text="Departamento al que pertenece este curso (solo si es privado)"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -100,13 +116,11 @@ class CourseParticipant(models.Model):
 
     class EnrollmentStatus(models.TextChoices):
         REQUESTED = 'REQ', 'Solicitud Enviada'
-        ENROLLED = 'ENR', 'Inscrito / Matriculado'
+        ENROLLED = 'ENR', 'Inscrito'
         REJECTED = 'REJ', 'Solicitud Rechazada'
-        DROPPED = 'DRP', 'Retirado'
 
     class AcademicStatus(models.TextChoices):
-        NOT_EVALUATED = 'NEV', 'No Evaluado / N/A'
-        PENDING = 'PEN', 'En Curso / Pendiente'
+        PENDING = 'PEN', 'En Curso'
         PASSED = 'APR', 'Aprobado'
         FAILED = 'REP', 'Reprobado'
 
@@ -124,7 +138,7 @@ class CourseParticipant(models.Model):
     academic_status = models.CharField(
         max_length=3, 
         choices=AcademicStatus.choices, 
-        default=AcademicStatus.NOT_EVALUATED,
+        default=AcademicStatus.PENDING,
         verbose_name="Estado Académico"
     )
     

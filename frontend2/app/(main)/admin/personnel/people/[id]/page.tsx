@@ -394,7 +394,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 <CatalogCRUD
                                     title="Cuentas Bancarias"
                                     icon={CreditCard}
-                                    apiUrl="/api/core/person-bank-accounts/"
+                                    apiUrl={`/api/core/person-bank-accounts/?person=${id}`}
                                     fields={bankFields}
                                     columns={bankColumns}
                                     searchKey="account_number"
@@ -410,7 +410,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     <CatalogCRUD
                                         title="Correos Electrónicos"
                                         icon={Mail}
-                                        apiUrl="/api/core/person-emails/"
+                                        apiUrl={`/api/core/person-emails/?person=${id}`}
                                         fields={emailFields}
                                         columns={emailColumns}
                                         searchKey="email_address"
@@ -421,7 +421,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     <CatalogCRUD
                                         title="Teléfonos"
                                         icon={Phone}
-                                        apiUrl="/api/core/person-phones/"
+                                        apiUrl={`/api/core/person-phones/?person=${id}`}
                                         fields={phoneFields}
                                         columns={phoneColumns}
                                         searchKey="subscriber_number"
@@ -437,7 +437,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 <CatalogCRUD
                                     title="Direcciones"
                                     icon={MapPin}
-                                    apiUrl="/api/core/addresses/"
+                                    apiUrl={`/api/core/addresses/?person=${id}`}
                                     fields={addressFields}
                                     columns={addressColumns}
                                     searchKey="city"
@@ -452,7 +452,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 <CatalogCRUD
                                     title="Dependientes"
                                     icon={Users}
-                                    apiUrl="/api/core/dependents/"
+                                    apiUrl={`/api/core/dependents/?person=${id}`}
                                     fields={dependentFields}
                                     columns={dependentColumns}
                                     searchKey="first_name"
@@ -463,7 +463,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 <CatalogCRUD
                                     title="Contactos de Emergencia"
                                     icon={Users}
-                                    apiUrl="/api/core/emergency-contacts/"
+                                    apiUrl={`/api/core/emergency-contacts/?person=${id}`}
                                     fields={emergencyFields}
                                     columns={emergencyColumns}
                                     searchKey="first_name"
@@ -478,7 +478,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 <CatalogCRUD
                                     title="Formación Académica"
                                     icon={GraduationCap}
-                                    apiUrl="/api/talent/education/"
+                                    apiUrl={`/api/talent/education/?person=${id}`}
                                     fields={educationFields}
                                     columns={educationColumns}
                                     searchKey="school_name"
@@ -489,7 +489,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 <CatalogCRUD
                                     title="Certificaciones y Cursos"
                                     icon={FileText}
-                                    apiUrl="/api/talent/certifications/"
+                                    apiUrl={`/api/talent/certifications/?person=${id}`}
                                     fields={certificationFields}
                                     columns={certificationColumns}
                                     searchKey="name"
@@ -500,7 +500,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 <CatalogCRUD
                                     title="Idiomas"
                                     icon={Globe}
-                                    apiUrl="/api/talent/person-languages/"
+                                    apiUrl={`/api/talent/person-languages/?person=${id}`}
                                     fields={languageFields}
                                     columns={languageColumns}
                                     searchKey="language_name"

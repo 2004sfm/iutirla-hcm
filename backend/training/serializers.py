@@ -102,6 +102,7 @@ class CourseSessionSerializer(serializers.ModelSerializer):
 
 class CourseParticipantSerializer(serializers.ModelSerializer):
     person_name = serializers.CharField(source='person.__str__', read_only=True)
+    person_id = serializers.IntegerField(source='person.id', read_only=True)
     role_name = serializers.CharField(source='get_role_display', read_only=True)
     enrollment_status_name = serializers.CharField(source='get_enrollment_status_display', read_only=True)
     academic_status_name = serializers.CharField(source='get_academic_status_display', read_only=True)

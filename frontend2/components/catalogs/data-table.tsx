@@ -63,22 +63,26 @@ export function DataTable<TData, TValue>({
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [searchValue, setSearchValue] = useState("")
+    const [internalPagination, setInternalPagination] = useState<PaginationState>({
+        pageIndex: 0,
+        pageSize: 10,
+    })
 
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
-        manualPagination: true, // Enable server-side pagination
+        manualPagination: !!pagination, // Only manual if pagination prop is provided
         pageCount: rowCount && pagination ? Math.ceil(rowCount / pagination.pageSize) : -1,
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
-        onPaginationChange: onPaginationChange,
+        onPaginationChange: onPaginationChange || setInternalPagination,
         state: {
             sorting,
             columnFilters,
-            pagination: pagination,
+            pagination: pagination || internalPagination,
         },
     })
 

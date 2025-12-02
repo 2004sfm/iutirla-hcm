@@ -217,7 +217,7 @@ export function PersonForm({ initialData, isEditing = false, personId, onSuccess
                             <Combobox
                                 options={genders?.map((g: any) => ({ value: g.id.toString(), label: g.name })) || []}
                                 value={watch("gender")}
-                                onSelect={(value) => setValue("gender", value)}
+                                onSelect={(value) => setValue("gender", value.toString())}
                                 placeholder="Seleccionar género"
                                 className={errors.gender ? "border-destructive" : ""}
                             />
@@ -231,7 +231,7 @@ export function PersonForm({ initialData, isEditing = false, personId, onSuccess
                             <Combobox
                                 options={maritalStatuses?.map((ms: any) => ({ value: ms.id.toString(), label: ms.name })) || []}
                                 value={watch("marital_status")}
-                                onSelect={(value) => setValue("marital_status", value)}
+                                onSelect={(value) => setValue("marital_status", value.toString())}
                                 placeholder="Seleccionar estado civil"
                             />
                         </div>
@@ -254,7 +254,7 @@ export function PersonForm({ initialData, isEditing = false, personId, onSuccess
                             <Combobox
                                 options={(countries?.results || (Array.isArray(countries) ? countries : []))?.map((c: any) => ({ value: c.id.toString(), label: c.name })) || []}
                                 value={watch("country_of_birth")}
-                                onSelect={(value) => setValue("country_of_birth", value)}
+                                onSelect={(value) => setValue("country_of_birth", value.toString())}
                                 placeholder="Seleccionar país"
                                 className={errors.country_of_birth ? "border-destructive" : ""}
                             />

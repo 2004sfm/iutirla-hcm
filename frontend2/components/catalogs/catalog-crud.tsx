@@ -73,10 +73,11 @@ interface CatalogCRUDProps {
     disableEdit?: boolean;
     customToolbarActions?: React.ReactNode;
     disablePagination?: boolean;
+    disableDelete?: boolean;
     icon?: React.ElementType;
 }
 
-export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, customToolbarActions, disablePagination, icon: Icon }: CatalogCRUDProps) {
+export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, disableDelete, customToolbarActions, disablePagination, icon: Icon }: CatalogCRUDProps) {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -384,7 +385,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                     <div className="text-right">
                         <ActionMenu
                             onEdit={disableEdit ? undefined : () => handleEdit(item)}
-                            onDelete={() => handleDeleteClick(item)}
+                            onDelete={disableDelete ? undefined : () => handleDeleteClick(item)}
                         >
                             {extraActions && extraActions(item)}
                         </ActionMenu>
@@ -415,6 +416,24 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
 
             {isLoading ? (
                 <TableSkeleton columnCount={tableColumns.length} />
+            ) : data.length === 0 && !searchTerm ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center border rounded-lg">
+                    {Icon ? (
+                        <Icon className="h-16 w-16 text-muted-foreground mb-4" />
+                    ) : (
+                        <Plus className="h-16 w-16 text-muted-foreground mb-4" />
+                    )}
+                    <h3 className="text-lg font-semibold mb-2">No hay registros creados</h3>
+                    <p className="text-muted-foreground mb-4">
+                        Crea tu primer registro para comenzar
+                    </p>
+                    {!disableCreate && (
+                        <Button onClick={handleCreate}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Crear Primer Registro
+                        </Button>
+                    )}
+                </div>
             ) : (
                 <DataTable
                     columns={tableColumns}

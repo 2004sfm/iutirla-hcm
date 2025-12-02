@@ -20,14 +20,14 @@ import {
 } from "@/components/ui/popover"
 
 export interface ComboboxOption {
-    value: string
+    value: string | number
     label: string
 }
 
 interface ComboboxProps {
     options: ComboboxOption[]
-    value?: string
-    onSelect: (value: string) => void
+    value?: string | number
+    onSelect: (value: string | number) => void
     placeholder?: string
     emptyText?: string
     className?: string

@@ -304,6 +304,13 @@ class PersonDisabilityVEViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['person__first_name', 'person__paternal_surname', 'disability_type__name', 'disability_status__name']
+
+    def get_queryset(self):
+        queryset = PersonDisabilityVE.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
 class AddressViewSet(viewsets.ModelViewSet):
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
@@ -340,14 +347,35 @@ class PersonBankAccountViewSet(viewsets.ModelViewSet):
     queryset = PersonBankAccount.objects.all()
     serializer_class = PersonBankAccountSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = PersonBankAccount.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
 class PersonDocumentViewSet(viewsets.ModelViewSet):
     queryset = PersonDocument.objects.all()
     serializer_class = PersonDocumentSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = PersonDocument.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
 class PersonNationalityViewSet(viewsets.ModelViewSet):
     queryset = PersonNationality.objects.all()
     serializer_class = PersonNationalitySerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = PersonNationality.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
 
 # --- VIEWSETS SATÉLITES ---
 class DependentViewSet(viewsets.ModelViewSet):

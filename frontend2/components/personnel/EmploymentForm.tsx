@@ -142,7 +142,7 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                             <Combobox
                                 options={persons?.map((p: any) => ({ value: p.id.toString(), label: p.hiring_search || p.full_name })) || []}
                                 value={watch("person")}
-                                onSelect={(value) => setValue("person", value)}
+                                onSelect={(value) => setValue("person", value.toString())}
                                 placeholder="Buscar por nombre o cédula..."
                                 className={errors.person ? "border-destructive" : ""}
                                 disabled={isEditing} // Usually person shouldn't change on edit
@@ -178,7 +178,7 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                                 options={departments?.map((d: any) => ({ value: d.id.toString(), label: d.name })) || []}
                                 value={selectedDepartment}
                                 onSelect={(value) => {
-                                    setSelectedDepartment(value);
+                                    setSelectedDepartment(value.toString());
                                     setValue("position", ""); // Reset position when department changes
                                 }}
                                 placeholder="Filtrar por departamento..."
@@ -190,7 +190,7 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                             <Combobox
                                 options={positions?.map((p: any) => ({ value: p.id.toString(), label: p.job_title_name || `Posición ${p.id}` })) || []}
                                 value={watch("position")}
-                                onSelect={(value) => setValue("position", value)}
+                                onSelect={(value) => setValue("position", value.toString())}
                                 placeholder="Seleccionar posición"
                                 className={errors.position ? "border-destructive" : ""}
                             />
@@ -207,7 +207,7 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                                     { value: "MGR", label: "Manager" }
                                 ]}
                                 value={watch("role")}
-                                onSelect={(value) => setValue("role", value)}
+                                onSelect={(value) => setValue("role", value.toString())}
                                 placeholder="Seleccionar rol"
                                 className={errors.role ? "border-destructive" : ""}
                             />
@@ -230,7 +230,7 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                                     { value: "ANU", label: "Anulado" }
                                 ]}
                                 value={watch("current_status")}
-                                onSelect={(value) => setValue("current_status", value)}
+                                onSelect={(value) => setValue("current_status", value.toString())}
                                 placeholder="Seleccionar estatus"
                                 className={errors.current_status ? "border-destructive" : ""}
                             />
@@ -248,7 +248,7 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                                     { value: "PAS", label: "Pasantía" }
                                 ]}
                                 value={watch("employment_type")}
-                                onSelect={(value) => setValue("employment_type", value)}
+                                onSelect={(value) => setValue("employment_type", value.toString())}
                                 placeholder="Seleccionar tipo"
                                 className={errors.employment_type ? "border-destructive" : ""}
                             />

@@ -18,6 +18,13 @@ class PersonSpecialAssignmentViewSet(viewsets.ModelViewSet):
     serializer_class = PersonSpecialAssignmentSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
+    def get_queryset(self):
+        queryset = PersonSpecialAssignment.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
+
 class BusinessFunctionViewSet(viewsets.ModelViewSet):
     queryset = BusinessFunction.objects.all()
     serializer_class = BusinessFunctionSerializer
@@ -29,6 +36,13 @@ class PersonFunctionalExperienceViewSet(viewsets.ModelViewSet):
     queryset = PersonFunctionalExperience.objects.all()
     serializer_class = PersonFunctionalExperienceSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def get_queryset(self):
+        queryset = PersonFunctionalExperience.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
 
 class PersonCertificationViewSet(viewsets.ModelViewSet):
     serializer_class = PersonCertificationSerializer
@@ -84,15 +98,36 @@ class PersonVolunteerExperienceViewSet(viewsets.ModelViewSet):
     serializer_class = PersonVolunteerExperienceSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
+    def get_queryset(self):
+        queryset = PersonVolunteerExperience.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
+
 class PersonAwardViewSet(viewsets.ModelViewSet):
     queryset = PersonAward.objects.all()
     serializer_class = PersonAwardSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
+    def get_queryset(self):
+        queryset = PersonAward.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
+
 class PersonMembershipViewSet(viewsets.ModelViewSet):
     queryset = PersonMembership.objects.all()
     serializer_class = PersonMembershipSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def get_queryset(self):
+        queryset = PersonMembership.objects.all()
+        person_id = self.request.query_params.get('person')
+        if person_id:
+            queryset = queryset.filter(person=person_id)
+        return queryset
 
 class LanguageViewSet(viewsets.ModelViewSet):
     queryset = Language.objects.all()
