@@ -324,7 +324,15 @@ class PhoneCarrierSerializer(serializers.ModelSerializer):
         validate_min_length(cleaned, 2)
         return check_uniqueness(PhoneCarrier, 'name', cleaned, self.instance)
 class BankSerializer(serializers.ModelSerializer):
-    class Meta: model = Bank; fields = '__all__'
+    display_name = serializers.SerializerMethodField()
+
+    class Meta: 
+        model = Bank
+        fields = ['id', 'name', 'code', 'display_name']
+
+    def get_display_name(self, obj):
+        return f"{obj.code} - {obj.name}"
+
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))
         validate_min_length(cleaned, 2)
@@ -542,7 +550,27 @@ class PersonBankAccountSerializer(serializers.ModelSerializer):
     def validate_account_number(self, value):
         if not value.isdigit() or len(value) != 20: raise serializers.ValidationError("Este campo debe tener 20 dígitos.")
         return value
-    def validate(self, data): return validate_single_primary(self, data, PersonBankAccount, "Cuenta Bancaria")
+    def validate(self, data): 
+        # 1. Validar unicidad de cuenta principal
+        data = validate_single_primary(self, data, PersonBankAccount, "Cuenta Bancaria")
+        
+        # 2. Validar que el número de cuenta corresponda al banco seleccionado
+        bank = data.get('bank')
+        account_number = data.get('account_number')
+        
+        # Si estamos actualizando y no se enviaron estos campos, obtenerlos de la instancia
+        if not bank and self.instance:
+            bank = self.instance.bank
+        if not account_number and self.instance:
+            account_number = self.instance.account_number
+            
+        if bank and account_number:
+            if not account_number.startswith(bank.code):
+                raise serializers.ValidationError({
+                    "account_number": f"El número de cuenta debe comenzar con el código del banco ({bank.code})."
+                })
+                
+        return data
 
 
 
@@ -600,7 +628,7 @@ class PersonListSerializer(serializers.ModelSerializer):
     def get_hiring_search(self, obj):
         doc = obj.national_ids.filter(is_primary=True).first()
         doc_str = f"{doc.document_type}-{doc.number}" if doc else "Sin Cédula"
-        return f"{obj.first_name} {obj.paternal_surname} ({doc_str})"
+        return doc_str
 
 class PersonSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -610,6 +638,7 @@ class PersonSerializer(serializers.ModelSerializer):
     photo = serializers.FileField(required=False, allow_null=True)
     gender_name = serializers.CharField(source='gender.name', read_only=True)
     country_of_birth_name = serializers.CharField(source='country_of_birth.name', read_only=True)
+    hiring_search = serializers.SerializerMethodField()
     
     # Campos para crear cédula durante la creación de persona
     cedula_prefix = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -719,6 +748,11 @@ class PersonSerializer(serializers.ModelSerializer):
         if phone.carrier_code:
             return str(phone)
         return phone.subscriber_number
+
+    def get_hiring_search(self, obj):
+        doc = obj.national_ids.filter(is_primary=True).first()
+        doc_str = f"{doc.document_type}-{doc.number}" if doc else "Sin Cédula"
+        return doc_str
 
     def create(self, validated_data):
         """Override create to handle cedula creation"""

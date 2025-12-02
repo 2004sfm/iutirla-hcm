@@ -1,3 +1,6 @@
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import viewsets, permissions, filters
 from .models import (
     Person, Gender, MaritalStatus, Country,
@@ -42,6 +45,151 @@ class PersonViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(national_ids__isnull=False).distinct()
             
         return queryset
+
+    @action(detail=True, methods=['post'], url_path='create-user-account')
+    def create_user_account(self, request, pk=None):
+        person = self.get_object()
+        
+        # 1. Validar si ya tiene usuario
+        if hasattr(person, 'user_account') and person.user_account:
+            return Response(
+                {"error": "Esta persona ya tiene un usuario asignado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        password = request.data.get('password')
+        if not password:
+            return Response(
+                {"error": "La contraseña es obligatoria."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Generar Username: Primera Letra Nombre + Primer Apellido + Últimos 4 dígitos Cédula
+        # Normalizamos para quitar acentos y caracteres especiales
+        import unicodedata
+        def normalize_text(text):
+            return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').lower()
+
+        first_initial = normalize_text(person.first_name[0])
+        surname = normalize_text(person.paternal_surname)
+        
+        # Obtener cédula (documento principal)
+        primary_doc = person.national_ids.filter(is_primary=True).first()
+        if not primary_doc:
+             return Response(
+                {"error": "La persona debe tener un documento de identidad principal (Cédula) para generar el usuario."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Extraer últimos 4 dígitos, rellenar con 0 si es muy corta (raro en cédulas pero por seguridad)
+        doc_number = primary_doc.number.replace('.', '').replace('-', '').strip()
+        last_4_digits = doc_number[-4:].zfill(4)
+        
+        base_username = f"{first_initial}{surname}{last_4_digits}"
+        username = base_username
+        
+        # 3. Manejo de colisiones (aunque la fórmula es bastante única)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+            
+        # 4. Crear Usuario
+        try:
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                person=person,
+                is_active=True
+            )
+            return Response({
+                "message": "Usuario creado exitosamente.",
+                "username": username,
+                "user_id": user.id
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {"error": f"Error al crear usuario: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'], url_path='reset-password')
+    def reset_password(self, request, pk=None):
+        person = self.get_object()
+        
+        if not hasattr(person, 'user_account') or not person.user_account:
+            return Response(
+                {"error": "Esta persona no tiene un usuario asignado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        password = request.data.get('password')
+        if not password:
+            return Response(
+                {"error": "La contraseña es obligatoria."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = person.user_account
+            user.set_password(password)
+            user.save()
+            return Response({
+                "message": "Contraseña actualizada exitosamente."
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Error al actualizar contraseña: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'], url_path='deactivate-user')
+    def deactivate_user(self, request, pk=None):
+        person = self.get_object()
+        
+        if not hasattr(person, 'user_account') or not person.user_account:
+            return Response(
+                {"error": "Esta persona no tiene un usuario asignado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            user = person.user_account
+            user.is_active = False
+            user.save()
+            return Response({
+                "message": "Usuario desactivado exitosamente."
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Error al desactivar usuario: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'], url_path='activate-user')
+    def activate_user(self, request, pk=None):
+        person = self.get_object()
+        
+        if not hasattr(person, 'user_account') or not person.user_account:
+            return Response(
+                {"error": "Esta persona no tiene un usuario asignado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            user = person.user_account
+            user.is_active = True
+            user.save()
+            return Response({
+                "message": "Usuario activado exitosamente."
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Error al activar usuario: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class NationalIdViewSet(viewsets.ModelViewSet):
     serializer_class = NationalIdSerializer

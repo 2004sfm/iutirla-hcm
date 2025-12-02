@@ -1,0 +1,39 @@
+{
+    "include": [
+        "backend/**/*",
+        "frontend2/**/*"
+    ],
+    "ignore": {
+        "useGitignore": true,
+        "useDefaultPatterns": true,
+        "customPatterns": [
+            "frontend/**",
+            "**/*.md",
+            "**/*.png",
+            "**/*.jpg",
+            "**/*.jpeg",
+            "**/*.gif",
+            "**/*.svg",
+            "**/*.ico",
+            "**/*.lock",
+            "**/package-lock.json",
+            "**/pnpm-lock.yaml",
+            "**/yarn.lock",
+            "**/__pycache__/**",
+            "**/*.pyc",
+            "**/.env",
+            "**/.venv",
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/.idea/**",
+            "**/.vscode/**",
+            "**/fixtures/*.json",
+            "**/fixtures/*.json",
+            "**/*.sqlite3",
+            "backend/debug_*.py",
+            "backend/expand_*.py",
+            "backend/reproduce_*.py",
+            "backend/verify_*.py"
+        ]
+    }
+}

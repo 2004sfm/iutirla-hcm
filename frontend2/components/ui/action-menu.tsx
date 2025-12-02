@@ -11,8 +11,8 @@ import {
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 interface ActionMenuProps {
-    onEdit: () => void;
-    onDelete: () => void;
+    onEdit?: () => void;
+    onDelete?: () => void;
     editLabel?: string;
     deleteLabel?: string;
 }
@@ -35,14 +35,18 @@ export function ActionMenu({
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                 {children}
-                <DropdownMenuItem onClick={onEdit}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    {editLabel}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {deleteLabel}
-                </DropdownMenuItem>
+                {onEdit && (
+                    <DropdownMenuItem onClick={onEdit}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        {editLabel}
+                    </DropdownMenuItem>
+                )}
+                {onDelete && (
+                    <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {deleteLabel}
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

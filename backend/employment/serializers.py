@@ -42,6 +42,13 @@ class EmploymentSerializer(serializers.ModelSerializer):
     current_status_display = serializers.CharField(source='get_current_status_display', read_only=True)
     role_display = serializers.CharField(source='get_role_display', read_only=True)
     employment_type_display = serializers.CharField(source='get_employment_type_display', read_only=True)
+    
+    position_full_name = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    position_full_name = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    department_id = serializers.SerializerMethodField()
+    person_photo = serializers.SerializerMethodField()
 
     class Meta:
         model = Employment
@@ -119,6 +126,84 @@ class EmploymentSerializer(serializers.ModelSerializer):
                 })
         
         return data
+
+    def get_person_full_name(self, obj):
+        return str(obj.person) if obj.person else "Desconocido"
+
+    def get_person_document(self, obj):
+        if obj.person:
+            doc = obj.person.national_ids.filter(is_primary=True).first()
+            if doc:
+                return f"{doc.document_type}-{doc.number}"
+        return "Sin Documento"
+
+    def get_user_account_details(self, obj):
+        if obj.person and hasattr(obj.person, 'user_account'):
+            user = obj.person.user_account
+            return {
+                'id': user.id,
+                'username': user.username,
+                'is_active': user.is_active,
+                'is_staff': user.is_staff
+            }
+        return None
+
+    def get_supervisor_info(self, obj):
+        if not obj.position:
+            return None
+
+        # Support for ManyToMany manager_positions
+        boss_positions = obj.position.manager_positions.all()
+        
+        if not boss_positions.exists():
+            return None
+
+        # Iterate through all boss positions to find an active boss
+        for boss_position in boss_positions:
+            boss_employments = boss_position.employments.all()
+            
+            for emp in boss_employments:
+                if is_active_status(emp.current_status):
+                    return {
+                        "id": emp.person.id,
+                        "name": str(emp.person),
+                        "position": boss_position.title
+                    }
+        
+        # If boss positions exist but no one is active
+        first_boss_pos = boss_positions.first()
+        return {
+            "id": None,
+            "name": "VACANTE",
+            "position": first_boss_pos.title if first_boss_pos else "Sin Jefe"
+        }
+
+    def get_position_full_name(self, obj):
+        """Resuelve el nombre del cargo (Position)."""
+        if obj.position and obj.position.job_title:
+            return obj.position.job_title.name
+        return str(obj.position) if obj.position else "Sin Cargo Asignado"
+
+    def get_department_name(self, obj):
+        """Resuelve el nombre del Departamento a través de la Posición."""
+        if obj.position and obj.position.department:
+            return obj.position.department.name
+        return "N/A"
+
+    def get_department_id(self, obj):
+        """Resuelve el ID del Departamento a través de la Posición."""
+        if obj.position and obj.position.department:
+            return obj.position.department.id
+        return None
+
+    def get_person_photo(self, obj):
+        """Retorna la URL de la foto de la persona si existe."""
+        if obj.person and obj.person.photo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.person.photo.url)
+            return obj.person.photo.url
+        return None
 
 
 # --- SERIALIZADOR DE ROLES JERÁRQUICOS EN DEPARTAMENTO ---
@@ -315,7 +400,9 @@ class EmployeeListSerializer(serializers.ModelSerializer):
 
     def get_position_full_name(self, obj):
         """Resuelve el nombre del cargo (Position)."""
-        # Usa el __str__ del objeto Position
+        # Usa solo el nombre del JobTitle como se solicitó
+        if obj.position and obj.position.job_title:
+            return obj.position.job_title.name
         return str(obj.position) if obj.position else "Sin Cargo Asignado"
 
     def get_department_name(self, obj):

@@ -154,6 +154,45 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
         },
     ];
 
+    // 4b. Cuentas Bancarias
+    const bankFields: CatalogField[] = [
+        { name: "person", label: "Persona", type: "hidden", defaultValue: id },
+        {
+            name: "bank",
+            label: "Banco",
+            type: "select",
+            required: true,
+            optionsUrl: "/api/core/banks/",
+            optionLabelKey: "display_name",
+            optionValueKey: "id",
+            onChange: (value, form, options) => {
+                const selectedBank = options?.find((opt: any) => opt.id.toString() === value);
+                if (selectedBank) {
+                    form.setValue("account_number", selectedBank.code);
+                }
+            }
+        },
+        { name: "bank_account_type", label: "Tipo de Cuenta", type: "select", required: true, optionsUrl: "/api/core/bank-account-types/", optionLabelKey: "name", optionValueKey: "id" },
+        { name: "account_number", label: "Número de Cuenta", type: "text", required: true },
+        { name: "is_primary", label: "Principal", type: "checkbox" },
+    ];
+    const bankColumns: ColumnDef<any>[] = [
+        { accessorKey: "bank_name", header: "Banco", cell: ({ row }) => row.getValue("bank_name") },
+        { accessorKey: "bank_account_type_name", header: "Tipo", cell: ({ row }) => row.getValue("bank_account_type_name") },
+        { accessorKey: "account_number", header: "Número", cell: ({ row }) => row.getValue("account_number") },
+        {
+            accessorKey: "is_primary",
+            header: "Principal",
+            cell: ({ row }) => row.original.is_primary ? (
+                <Badge className="bg-[var(--brand-tertiary)] hover:bg-[var(--brand-tertiary)]/90 text-white gap-1">
+                    <Star className="size-3 fill-current" /> Principal
+                </Badge>
+            ) : (
+                <Badge variant="secondary">Secundario</Badge>
+            )
+        },
+    ];
+
     // 5. Dependientes
     const dependentFields: CatalogField[] = [
         { name: "person", label: "Persona", type: "hidden", defaultValue: id },
@@ -285,11 +324,11 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             <p className="truncate">General</p>
                         </TabsTrigger>
                         <TabsTrigger
-                            value="identity"
+                            value="credentials"
                             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                         >
-                            <FileText className="mr-1 size-4" />
-                            <p className="truncate">Identidad</p>
+                            <CreditCard className="mr-1 size-4" />
+                            <p className="truncate">Credenciales</p>
                         </TabsTrigger>
                         <TabsTrigger
                             value="contact"
@@ -319,7 +358,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             <GraduationCap className="mr-1 size-4" />
                             <p className="truncate">Talento</p>
                         </TabsTrigger>
-                    </TabsList>
+                    </TabsList >
 
                     <div className="flex-1 mt-6">
                         {/* --- 1. GENERAL INFO --- */}
@@ -339,14 +378,27 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             </Card>
                         </TabsContent>
 
-                        {/* --- 2. IDENTIDAD --- */}
-                        <TabsContent value="identity" className="m-0 space-y-8">
+                        {/* --- 2. CREDENCIALES (Identidad + Bancos) --- */}
+                        <TabsContent value="credentials" className="m-0 space-y-8">
                             <div className="space-y-4">
                                 <CatalogCRUD
                                     title="Documentos de Identidad"
+                                    icon={FileText}
                                     apiUrl={`/api/core/national-ids/?person=${id}`}
                                     fields={docFields}
                                     columns={nationalIdColumns}
+                                    disablePagination={true}
+                                />
+                            </div>
+                            <div className="space-y-4">
+                                <CatalogCRUD
+                                    title="Cuentas Bancarias"
+                                    icon={CreditCard}
+                                    apiUrl="/api/core/person-bank-accounts/"
+                                    fields={bankFields}
+                                    columns={bankColumns}
+                                    searchKey="account_number"
+                                    disablePagination={true}
                                 />
                             </div>
                         </TabsContent>
@@ -356,7 +408,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             <div className="grid gap-8 grid-cols-1">
                                 <div className="space-y-4">
                                     <CatalogCRUD
-                                        title={<span className="text-lg font-semibold flex items-center"><Mail className="mr-2 size-5" /> Correos Electrónicos</span>}
+                                        title="Correos Electrónicos"
+                                        icon={Mail}
                                         apiUrl="/api/core/person-emails/"
                                         fields={emailFields}
                                         columns={emailColumns}
@@ -366,7 +419,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                 </div>
                                 <div className="space-y-4">
                                     <CatalogCRUD
-                                        title={<span className="text-lg font-semibold flex items-center"><Phone className="mr-2 size-5" /> Teléfonos</span>}
+                                        title="Teléfonos"
+                                        icon={Phone}
                                         apiUrl="/api/core/person-phones/"
                                         fields={phoneFields}
                                         columns={phoneColumns}
@@ -381,7 +435,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                         <TabsContent value="location" className="m-0 space-y-8">
                             <div className="space-y-4">
                                 <CatalogCRUD
-                                    title={<span className="text-lg font-semibold flex items-center"><MapPin className="mr-2 size-5" /> Direcciones</span>}
+                                    title="Direcciones"
+                                    icon={MapPin}
                                     apiUrl="/api/core/addresses/"
                                     fields={addressFields}
                                     columns={addressColumns}
@@ -395,7 +450,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                         <TabsContent value="links" className="m-0 space-y-8">
                             <div className="space-y-4">
                                 <CatalogCRUD
-                                    title={<span className="text-lg font-semibold flex items-center"><Users className="mr-2 size-5" /> Dependientes</span>}
+                                    title="Dependientes"
+                                    icon={Users}
                                     apiUrl="/api/core/dependents/"
                                     fields={dependentFields}
                                     columns={dependentColumns}
@@ -405,7 +461,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             </div>
                             <div className="space-y-4">
                                 <CatalogCRUD
-                                    title={<span className="text-lg font-semibold flex items-center"><Users className="mr-2 size-5" /> Contactos de Emergencia</span>}
+                                    title="Contactos de Emergencia"
+                                    icon={Users}
                                     apiUrl="/api/core/emergency-contacts/"
                                     fields={emergencyFields}
                                     columns={emergencyColumns}
@@ -419,7 +476,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                         <TabsContent value="talent" className="m-0 space-y-8">
                             <div className="space-y-4">
                                 <CatalogCRUD
-                                    title={<span className="text-lg font-semibold flex items-center"><GraduationCap className="mr-2 size-5" /> Formación Académica</span>}
+                                    title="Formación Académica"
+                                    icon={GraduationCap}
                                     apiUrl="/api/talent/education/"
                                     fields={educationFields}
                                     columns={educationColumns}
@@ -429,7 +487,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             </div>
                             <div className="space-y-4">
                                 <CatalogCRUD
-                                    title={<span className="text-lg font-semibold flex items-center"><FileText className="mr-2 size-5" /> Certificaciones y Cursos</span>}
+                                    title="Certificaciones y Cursos"
+                                    icon={FileText}
                                     apiUrl="/api/talent/certifications/"
                                     fields={certificationFields}
                                     columns={certificationColumns}
@@ -439,7 +498,8 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             </div>
                             <div className="space-y-4">
                                 <CatalogCRUD
-                                    title={<span className="text-lg font-semibold flex items-center"><Globe className="mr-2 size-5" /> Idiomas</span>}
+                                    title="Idiomas"
+                                    icon={Globe}
                                     apiUrl="/api/talent/person-languages/"
                                     fields={languageFields}
                                     columns={languageColumns}

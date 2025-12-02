@@ -3,8 +3,9 @@
 import { CatalogCRUD, CatalogField } from "@/components/catalogs/catalog-crud";
 import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Eye } from "lucide-react";
+import { Eye, Users, Plus } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -95,7 +96,7 @@ export default function EmployeesPage() {
                 const label = row.getValue("current_status_display") as string;
 
                 let variant = "secondary";
-                if (status === "ACT") variant = "default"; // Primary color for Active
+                if (status === "ACT") variant = "default"; // Reverted to default (primary) as requested
                 if (status === "TER") variant = "destructive";
                 if (status === "LEA" || status === "SUS") variant = "outline";
 
@@ -113,6 +114,7 @@ export default function EmployeesPage() {
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <CatalogCRUD
                 title="Empleados"
+                icon={Users}
                 apiUrl="/api/employment/employments/"
                 fields={fields}
                 columns={columns}
@@ -121,6 +123,16 @@ export default function EmployeesPage() {
                     { label: "Nombre", value: "person__first_name" }, // Adjust based on backend filter
                     { label: "Cargo", value: "position__job_title__name" }
                 ]}
+                disableCreate={true}
+                disableEdit={true}
+                customToolbarActions={
+                    <Button asChild>
+                        <Link href="/admin/personnel/employees/new">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nuevo Empleado
+                        </Link>
+                    </Button>
+                }
                 extraActions={(item) => (
                     <DropdownMenuItem asChild>
                         <Link href={`/admin/personnel/employees/${item.id}`} className="cursor-pointer w-full flex items-center">

@@ -4,6 +4,7 @@ import { CatalogCRUD, CatalogField } from "@/components/catalogs/catalog-crud";
 import { ColumnDef } from "@tanstack/react-table";
 import { notFound } from "next/navigation";
 import { use } from "react";
+import { Globe, Users, Heart, MapPin, Phone, Smartphone, Mail, Building2, CreditCard, Link, Map } from "lucide-react";
 
 interface CatalogConfig {
     title: string;
@@ -12,10 +13,10 @@ interface CatalogConfig {
     columns: ColumnDef<any>[];
     searchKey?: string;
     searchOptions?: { label: string; value: string }[];
+    icon?: React.ElementType;
 }
 
 const simpleNameColumns: ColumnDef<any>[] = [
-
     {
         accessorKey: "name",
         header: "Nombre",
@@ -35,13 +36,13 @@ const simpleNameFields: CatalogField[] = [
 const catalogs: Record<string, CatalogConfig> = {
     countries: {
         title: "Países",
+        icon: Globe,
         apiUrl: "/api/core/countries/",
         fields: [
             { name: "name", label: "Nombre", type: "text", required: true },
             { name: "iso_2", label: "Código ISO", type: "text", required: true },
         ],
         columns: [
-
             { accessorKey: "name", header: "Nombre", cell: ({ row }) => <div className="truncate">{row.getValue("name")}</div> },
             { accessorKey: "iso_2", header: "ISO", cell: ({ row }) => <div className="max-w-[50px] truncate">{row.getValue("iso_2")}</div> },
         ],
@@ -53,6 +54,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     genders: {
         title: "Géneros",
+        icon: Users,
         apiUrl: "/api/core/genders/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -60,6 +62,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "marital-statuses": {
         title: "Estados Civiles",
+        icon: Heart,
         apiUrl: "/api/core/marital-statuses/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -67,6 +70,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "address-types": {
         title: "Tipos de Dirección",
+        icon: MapPin,
         apiUrl: "/api/core/address-types/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -74,6 +78,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "phone-types": {
         title: "Tipos de Teléfono",
+        icon: Phone,
         apiUrl: "/api/core/phone-types/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -81,6 +86,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "phone-carriers": {
         title: "Operadoras Telefónicas",
+        icon: Smartphone,
         apiUrl: "/api/core/phone-carriers/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -88,6 +94,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "email-types": {
         title: "Tipos de Email",
+        icon: Mail,
         apiUrl: "/api/core/email-types/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -95,13 +102,13 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     banks: {
         title: "Bancos",
+        icon: Building2,
         apiUrl: "/api/core/banks/",
         fields: [
             { name: "name", label: "Nombre", type: "text", required: true },
             { name: "code", label: "Código", type: "text", required: true },
         ],
         columns: [
-
             { accessorKey: "name", header: "Nombre", cell: ({ row }) => <div className="truncate">{row.getValue("name")}</div> },
             { accessorKey: "code", header: "Código", cell: ({ row }) => <div className="max-w-[100px] truncate">{row.getValue("code")}</div> },
         ],
@@ -113,6 +120,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "bank-account-types": {
         title: "Tipos de Cuenta Bancaria",
+        icon: CreditCard,
         apiUrl: "/api/core/bank-account-types/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -120,6 +128,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "relationship-types": {
         title: "Tipos de Relación",
+        icon: Link,
         apiUrl: "/api/core/relationship-types/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -127,6 +136,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     states: {
         title: "Estados",
+        icon: Map,
         apiUrl: "/api/core/states/",
         fields: [
             { name: "name", label: "Nombre", type: "text", required: true },
@@ -141,7 +151,6 @@ const catalogs: Record<string, CatalogConfig> = {
             },
         ],
         columns: [
-
             { accessorKey: "name", header: "Nombre", cell: ({ row }) => <div className="truncate">{row.getValue("name")}</div> },
             { accessorKey: "country.name", header: "País", cell: ({ row }) => <div className="truncate">{row.original.country?.name}</div> },
         ],
@@ -153,6 +162,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "phone-carrier-codes": {
         title: "Códigos de Operadora",
+        icon: Smartphone,
         apiUrl: "/api/core/phone-carrier-codes/",
         fields: [
             { name: "code", label: "Código", type: "text", required: true },
@@ -167,7 +177,6 @@ const catalogs: Record<string, CatalogConfig> = {
             },
         ],
         columns: [
-
             { accessorKey: "code", header: "Código", cell: ({ row }) => <div className="truncate">{row.getValue("code")}</div> },
             { accessorKey: "carrier.name", header: "Operadora", cell: ({ row }) => <div className="truncate">{row.original.carrier?.name}</div> },
         ],
@@ -190,6 +199,7 @@ export default function DynamicCatalogPage({ params }: { params: Promise<{ slug:
     return (
         <CatalogCRUD
             title={config.title}
+            icon={config.icon}
             apiUrl={config.apiUrl}
             fields={config.fields}
             columns={config.columns}

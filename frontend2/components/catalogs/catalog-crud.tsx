@@ -58,6 +58,7 @@ export interface CatalogField {
     optionLabelKey?: string; // Key to display (default: name)
     optionValueKey?: string; // Key for value (default: id)
     defaultValue?: any; // Default value for the field
+    onChange?: (value: any, form: any, options?: any[]) => void; // Callback for value change
 }
 
 interface CatalogCRUDProps {
@@ -72,9 +73,10 @@ interface CatalogCRUDProps {
     disableEdit?: boolean;
     customToolbarActions?: React.ReactNode;
     disablePagination?: boolean;
+    icon?: React.ElementType;
 }
 
-export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, customToolbarActions, disablePagination }: CatalogCRUDProps) {
+export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, customToolbarActions, disablePagination, icon: Icon }: CatalogCRUDProps) {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -381,7 +383,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                 return (
                     <div className="text-right">
                         <ActionMenu
-                            onEdit={() => handleEdit(item)}
+                            onEdit={disableEdit ? undefined : () => handleEdit(item)}
                             onDelete={() => handleDeleteClick(item)}
                         >
                             {extraActions && extraActions(item)}
@@ -395,7 +397,12 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
     return (
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {title ? <h2 className="text-2xl font-bold tracking-tight">{title}</h2> : <div></div>}
+                {title ? (
+                    <h2 className="text-xl font-bold tracking-tight flex items-center">
+                        {Icon && <Icon className="mr-2 size-6 text-primary" />}
+                        {title}
+                    </h2>
+                ) : <div></div>}
                 <div className="flex gap-2">
                     {disableCreate ? customToolbarActions : (
                         <Button onClick={handleCreate}>
@@ -477,7 +484,13 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                                                                     })) || [])
                                                             }
                                                             value={formField.value?.toString() || ""}
-                                                            onSelect={(value) => formField.onChange(value)}
+                                                            onSelect={(value) => {
+                                                                formField.onChange(value);
+                                                                if (field.onChange) {
+                                                                    const options = field.options || fieldOptions[field.name];
+                                                                    field.onChange(value, form, options);
+                                                                }
+                                                            }}
                                                             placeholder="Seleccione una opción"
                                                             emptyText="No se encontraron resultados."
                                                         />

@@ -213,6 +213,15 @@ class Employment(models.Model):
             # Actualizamos el estado original en memoria para futuras ediciones en esta misma instancia
             self.__original_status = self.current_status
 
+    def delete(self, *args, **kwargs):
+        # 1. RESTITUCIÓN DE VACANTES
+        # Si el contrato que se borra estaba ocupando plaza (activo), devolvemos la vacante.
+        if is_active_status(self.current_status):
+            self.position.vacancies += 1
+            self.position.save()
+            
+        super().delete(*args, **kwargs)
+
     def _create_status_log(self, is_created):
         # 1. CASO: NUEVO INGRESO
         if is_created:

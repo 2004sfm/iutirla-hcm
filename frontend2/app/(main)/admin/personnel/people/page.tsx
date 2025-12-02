@@ -4,7 +4,7 @@ import { CatalogCRUD, CatalogField } from "@/components/catalogs/catalog-crud";
 import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Eye, User, Plus } from "lucide-react";
+import { Eye, User, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -94,6 +94,7 @@ export default function PeoplePage() {
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <CatalogCRUD
                 title="Personas"
+                icon={Users}
                 apiUrl="/api/core/persons/"
                 fields={fields}
                 columns={columns}
