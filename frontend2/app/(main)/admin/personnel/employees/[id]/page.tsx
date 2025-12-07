@@ -3,6 +3,7 @@
 import { useState, use, useEffect } from "react";
 import useSWR, { mutate } from "swr";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { ArrowLeft, User, Contact, FileText, Users, Mail, Phone, MapPin, CreditCard, Globe, Pencil, GraduationCap, Link as LinkIcon, Briefcase, Calendar, History, Lock, UserPlus, UserCheck, Ban, UserMinus, AlertTriangle } from "lucide-react";
 import { EmploymentForm } from "@/components/personnel/EmploymentForm";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Switch } from "@/components/ui/switch";
+import { Combobox } from "@/components/ui/combobox";
 
 const fetcher = (url: string) => apiClient.get(url).then((res) => res.data);
+
+// Exit reason choices from backend
+const EXIT_REASONS = [
+    { value: 'REN', label: 'Renuncia Voluntaria' },
+    { value: 'DES', label: 'Despido / Cese' },
+    { value: 'FIN', label: 'Fin de Contrato (Tiempo Cumplido)' },
+    { value: 'JUB', label: 'Jubilación' },
+    { value: 'FAL', label: 'Fallecimiento' },
+    { value: 'OTR', label: 'Otro Motivo' },
+];
 
 export default function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -65,7 +79,9 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-center sm:items-start">
-                        <h1 className="text-2xl font-bold tracking-tight">{employment.person_full_name}</h1>
+                        <Link href={`/admin/personnel/people/${employment.person}`} className="hover:underline">
+                            <h1 className="text-2xl font-bold tracking-tight">{employment.person_full_name}</h1>
+                        </Link>
                         <div className="flex items-center text-muted-foreground mt-1 gap-2">
                             <Badge variant={getStatusVariant(employment.current_status) as any}>
                                 {employment.current_status_display.charAt(0).toUpperCase() + employment.current_status_display.slice(1).toLowerCase()}
@@ -322,14 +338,13 @@ function EmployeeError({ router }: { router: any }) {
 
 function CreateUserDialog({ personId, onSuccess, trigger }: { personId: number, onSuccess: (username: string) => void, trigger: React.ReactNode }) {
     const [open, setOpen] = useState(false);
-    const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const res = await apiClient.post(`/api/core/persons/${personId}/create-user-account/`, { password });
+            const res = await apiClient.post(`/api/core/persons/${personId}/create-user-account/`, {});
             toast.success(`Usuario creado: ${res.data.username}`);
             onSuccess(res.data.username);
             setOpen(false);
@@ -347,25 +362,29 @@ function CreateUserDialog({ personId, onSuccess, trigger }: { personId: number, 
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Crear Usuario</DialogTitle>
-                    <DialogDescription>
-                        Ingrese una contraseña para el nuevo usuario. El nombre de usuario se generará automáticamente.
+                    <DialogTitle>Crear Cuenta de Usuario</DialogTitle>
+                    <DialogDescription asChild>
+                        <div className="space-y-3 pt-2">
+                            <div>Se creará una cuenta de usuario para 1 empleado activo que actualmente no tiene cuenta.</div>
+
+                            <div className="bg-muted/50 p-3 rounded-md space-y-2 text-sm">
+                                <div><strong>Usuario:</strong> Se generará automáticamente basado en el nombre y cédula</div>
+                                <div><strong>Contraseña inicial:</strong> Número de cédula (el empleado podrá cambiarla después)</div>
+                            </div>
+
+                            <div className="text-xs text-muted-foreground">
+                                Esta acción no se puede deshacer, pero la cuenta puede ser desactivada posteriormente.
+                            </div>
+                        </div>
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Contraseña</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                <form onSubmit={handleSubmit}>
                     <DialogFooter>
+                        <Button variant="outline" type="button" onClick={() => setOpen(false)}>
+                            Cancelar
+                        </Button>
                         <Button type="submit" disabled={isLoading}>
-                            {isLoading ? "Creando..." : "Crear"}
+                            {isLoading ? "Creando..." : "Crear Cuenta"}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -539,17 +558,23 @@ function ActivateUserDialog({ personId, username, onSuccess, trigger }: { person
 function TerminateContractDialog({ employmentId, onSuccess, trigger }: { employmentId: string, onSuccess: () => void, trigger: React.ReactNode }) {
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [endDate, setEndDate] = useState("");
-    const [reason, setReason] = useState("");
+    const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+    const [reason, setReason] = useState<string>("");
     const [notes, setNotes] = useState("");
     const [deactivateUser, setDeactivateUser] = useState(true);
 
     const handleTerminate = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!endDate || !reason) {
+            toast.error("Por favor complete todos los campos requeridos");
+            return;
+        }
+
         setIsLoading(true);
         try {
             await apiClient.post(`/api/employment/employments/${employmentId}/terminate/`, {
-                end_date: endDate,
+                end_date: endDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
                 exit_reason: reason,
                 exit_notes: notes,
                 deactivate_user: deactivateUser
@@ -575,29 +600,24 @@ function TerminateContractDialog({ employmentId, onSuccess, trigger }: { employm
                         <UserMinus className="h-5 w-5" />
                         Finalizar Contrato
                     </DialogTitle>
-                    <DialogDescription>
-                        Esta acción finalizará el contrato actual y registrará la salida del empleado.
-                    </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleTerminate} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="end-date">Fecha de Finalización</Label>
-                        <Input
-                            id="end-date"
-                            type="date"
+                        <DatePicker
                             value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            required
+                            onChange={setEndDate}
+                            placeholder="dd/mm/aaaa"
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="reason">Motivo de Salida</Label>
-                        <Input
-                            id="reason"
+                        <Combobox
+                            options={EXIT_REASONS}
                             value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            placeholder="Ej. Renuncia voluntaria, Despido..."
-                            required
+                            onSelect={(val) => setReason(val as string)}
+                            placeholder="Seleccione motivo..."
+                            emptyText="No se encontraron motivos."
                         />
                     </div>
                     <div className="space-y-2">
@@ -609,17 +629,15 @@ function TerminateContractDialog({ employmentId, onSuccess, trigger }: { employm
                             placeholder="Detalles adicionales..."
                         />
                     </div>
-                    <div className="flex items-center space-x-2 pt-2">
-                        <input
-                            type="checkbox"
-                            id="deactivate"
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                            checked={deactivateUser}
-                            onChange={(e) => setDeactivateUser(e.target.checked)}
-                        />
-                        <Label htmlFor="deactivate" className="font-normal">
+                    <div className="flex items-center justify-between space-x-2 pt-2 border-t">
+                        <Label htmlFor="deactivate" className="font-normal flex-1">
                             Desactivar usuario del sistema automáticamente
                         </Label>
+                        <Switch
+                            id="deactivate"
+                            checked={deactivateUser}
+                            onCheckedChange={setDeactivateUser}
+                        />
                     </div>
                     <DialogFooter>
                         <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancelar</Button>

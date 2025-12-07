@@ -31,10 +31,8 @@ class IsInstructorOrAdmin(permissions.BasePermission):
 
         # --- REGLA 3: PERMISOS DEL INSTRUCTOR ---
         # Acceso total (menos borrar) sobre SU curso
-        is_instructor = course.participants.filter(
-            person=request.user.person,
-            role='INS'
-        ).exists()
+        # 🔧 REFACTOR: Verificar instructor con course.instructor
+        is_instructor = course.instructor == request.user.person
 
         if is_instructor:
             return True
@@ -42,8 +40,7 @@ class IsInstructorOrAdmin(permissions.BasePermission):
         # --- REGLA 4: PERMISOS DEL ESTUDIANTE INSCRITO ---
         # Solo lectura sobre SU curso
         is_student = course.participants.filter(
-            person=request.user.person,
-            role='EST'
+            person=request.user.person
         ).exists()
 
         if is_student:

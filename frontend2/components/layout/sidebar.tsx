@@ -23,7 +23,8 @@ import {
     TrendingUpDown,
     BookOpenText,
     ClipboardList,
-    BookOpen
+    BookOpen,
+    Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IutirlaLogo } from "../iutirla-logo";
@@ -33,134 +34,96 @@ interface SidebarProps {
     role?: "admin" | "employee";
 }
 
+// Interfaz recursiva para soportar múltiples niveles de anidamiento
 interface MenuItem {
     label: string;
     icon: React.ElementType;
+    href?: string;
+    adminOnly?: boolean;
     badge?: {
         text: string;
         variant: "primary" | "secondary" | "tertiary";
     };
-    children?: {
-        label: string;
-        href: string;
-        icon: React.ElementType;
-    }[];
-    href?: string;
+    children?: MenuItem[];
 }
 
-const employeeMenuItems: MenuItem[] = [
+// Menú unificado - Administrador primero si es admin
+const menuItems: MenuItem[] = [
+    // Opciones de administrador (solo visibles para admins) - PRIMERO
     {
-        label: "Datos Personales",
-        href: "/employee/personal-data",
-        icon: ContactRound,
+        label: "Administrador",
+        icon: Crown,
+        adminOnly: true,
+        children: [
+            { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+            {
+                label: "Personal",
+                icon: Users,
+                children: [
+                    { label: "Empleados", href: "/admin/personnel/employees", icon: Circle },
+                    { label: "Todas las personas", href: "/admin/personnel/people", icon: Circle },
+                ],
+            },
+            { label: "Organización", href: "/admin/organization", icon: Network },
+            {
+                label: "Capacitación",
+                icon: GraduationCap,
+                children: [
+                    { label: "Cursos", href: "/admin/courses", icon: Circle },
+                ],
+            },
+            {
+                label: "Reclutamiento",
+                icon: Briefcase,
+                children: [
+                    { label: "Vacantes", href: "/admin/ats/jobs", icon: Circle },
+                    { label: "Candidatos", href: "/admin/ats/candidates", icon: Circle },
+                ],
+            },
+            {
+                label: "Evaluación",
+                icon: Gauge,
+                children: [
+                    { label: "Períodos", href: "/admin/performance/periods", icon: Circle },
+                    { label: "Competencias", href: "/admin/performance/competencies", icon: Circle },
+                ],
+            },
+            { label: "Equipos", href: "/admin/performance/teams", icon: Users },
+            {
+                label: "Configuración",
+                icon: Settings,
+                children: [
+                    { label: "Generales", href: "/admin/config/general", icon: Circle },
+                    { label: "Talento", href: "/admin/config/talent", icon: Circle },
+                ],
+            },
+        ],
     },
+    // Opciones de empleado (visibles para todos)
     {
-        label: "Datos del Puesto",
-        href: "/employee/job-data",
-        icon: Building2,
-    },
-    {
-        label: "Compensación",
-        href: "/employee/compensation",
-        icon: Calculator,
-    },
-    {
-        label: "Gestión del Tiempo",
-        href: "/employee/time-management",
-        icon: Clock,
-    },
-    {
-        label: "Beneficios",
-        href: "/employee/benefits",
-        icon: PiggyBank,
-    },
-    {
-        label: "Rendimiento y Metas",
-        href: "/employee/performance-goals",
+        label: "Mi Desempeño",
+        href: "/performance",
         icon: Gauge,
     },
     {
-        label: "Sucesión",
-        href: "/employee/succession",
-        icon: TrendingUpDown,
-    },
-    {
-        label: "Aprendizaje y Desarrollo",
-        href: "/employee/learning-development",
-        icon: BookOpenText,
-    },
-    {
-        label: "Perfil de Talento",
-        href: "/employee/talent-profile",
-        icon: ClipboardList,
-    },
-];
-
-const adminMenuItems: MenuItem[] = [
-    {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        href: "/admin/dashboard"
-    },
-    {
-        label: "Gestión de Personal",
+        label: "Departamentos",
+        href: "/departments",
         icon: Users,
-        children: [
-            { label: "Empleados", href: "/admin/personnel/employees", icon: Circle },
-            { label: "Todas las personas", href: "/admin/personnel/people", icon: Circle },
-        ],
     },
     {
-        label: "Organización",
-        icon: Network,
-        href: "/admin/organization"
+        label: "Formación",
+        href: "/courses",
+        icon: BookOpen,
     },
-    {
-        label: "Capacitación",
-        icon: GraduationCap,
-        children: [
-            { label: "Cursos", href: "/admin/courses", icon: BookOpen },
-        ],
-    },
-    {
-        label: "Reclutamiento",
-        icon: Briefcase,
-        children: [
-            { label: "Vacantes", href: "/admin/ats/jobs", icon: Circle },
-            { label: "Candidatos", href: "/admin/ats/candidates", icon: Circle },
-        ],
-    },
-    {
-        label: "Evaluación",
-        icon: ClipboardCheck,
-        children: [
-            { label: "Periodos y Procesos", href: "/admin/performance/periods", icon: Circle },
-        ],
-    },
-    {
-        label: "Configuración",
-        icon: Settings,
-        children: [
-            { label: "Catálogos generales", href: "/admin/config/general", icon: Circle },
-            { label: "Catálogos de talento", href: "/admin/config/talent", icon: Circle },
-            { label: "Catálogos de desempeño", href: "/admin/config/performance", icon: Circle },
-        ],
-    },
-    {
-        label: "Mi Información",
-        icon: ContactRound,
-        children: employeeMenuItems.map(item => ({
-            label: item.label,
-            href: item.href || "#",
-            icon: item.icon
-        }))
-    }
 ];
 
 export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boolean; role?: "admin" | "employee" }) {
     const [expandedItems, setExpandedItems] = useState<string[]>(["Personal"]);
     const pathname = usePathname();
-    const menuItems = role === "admin" ? adminMenuItems : employeeMenuItems;
+    const isAdmin = role === "admin";
+
+    // Filtrar items según rol: si es admin muestra todo, si no solo los que no son adminOnly
+    const filteredMenuItems = menuItems.filter(item => isAdmin || !item.adminOnly);
 
     const toggleItem = (label: string) => {
         setExpandedItems(prev =>
@@ -182,7 +145,15 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
     };
 
     const isActive = (href: string) => pathname === href || pathname?.startsWith(href + "/");
-    const isChildActive = (children: { href: string }[]) => children.some(child => isActive(child.href));
+
+    // Función recursiva para verificar si algún hijo está activo
+    const isChildActive = (children: MenuItem[]): boolean => {
+        return children.some(child => {
+            if (child.href && isActive(child.href)) return true;
+            if (child.children) return isChildActive(child.children);
+            return false;
+        });
+    };
 
     return (
         <div className="flex flex-col h-full">
@@ -196,7 +167,7 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
             {/* Navigation */}
             <nav className={cn("overflow-y-auto overflow-x-hidden flex-1 my-2")}>
                 <ul className="space-y-1">
-                    {menuItems.map((item, index) => {
+                    {filteredMenuItems.map((item, index) => {
                         const isExpanded = expandedItems.includes(item.label);
                         const hasChildren = item.children && item.children.length > 0;
                         const isLink = !hasChildren && item.href;
@@ -238,9 +209,9 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
                                                 isParentActive ? "text-brand-primary" : "text-muted-foreground"
                                             )}>
                                                 {isExpanded ? (
-                                                    <ChevronDown className="w-4 h-4" />
+                                                    <ChevronDown className="size-4" />
                                                 ) : (
-                                                    <ChevronRight className="w-4 h-4" />
+                                                    <ChevronRight className="size-4" />
                                                 )}
                                             </div>
                                         )}
@@ -297,44 +268,114 @@ export function SidebarContent({ collapsed, role = "admin" }: { collapsed: boole
                                 {hasChildren && isExpanded && (
                                     <ul className="mt-1 space-y-1">
                                         {item.children?.map((child, childIndex) => {
-                                            const isChildItemActive = isActive(child.href);
+                                            const childHasChildren = child.children && child.children.length > 0;
+                                            const isChildLink = !childHasChildren && child.href;
+                                            const isChildItemActive = isChildLink && child.href ? isActive(child.href) : false;
+                                            const isChildExpanded = expandedItems.includes(child.label);
+                                            const isChildParentActive = childHasChildren && child.children ? isChildActive(child.children) : false;
+
+                                            const childClasses = cn(
+                                                "flex items-center transition-colors relative group min-h-[44px] mx-2 rounded-lg w-[calc(100%-16px)] cursor-pointer",
+                                                isChildItemActive
+                                                    ? "bg-brand-primary hover:bg-brand-primary/90"
+                                                    : isChildParentActive
+                                                        ? "bg-brand-primary/10 hover:bg-brand-primary/20"
+                                                        : "hover:bg-accent",
+                                                isChildExpanded && childHasChildren && !isChildParentActive && "bg-muted"
+                                            );
 
                                             return (
                                                 <li key={childIndex}>
-                                                    <Link
-                                                        href={child.href}
-                                                        className={cn(
-                                                            "flex items-center transition-colors relative group min-h-[44px] mx-2 rounded-lg w-[calc(100%-16px)]",
-                                                            isChildItemActive
-                                                                ? "bg-brand-primary hover:bg-brand-primary/90"
-                                                                : "hover:bg-accent"
-                                                        )}
-                                                    >
-                                                        <div className={cn(
-                                                            "w-12 flex items-center justify-center shrink-0 transition-colors self-stretch",
-                                                            isChildItemActive ? "text-white" : "text-muted-foreground"
-                                                        )}>
-                                                            <child.icon className="size-5" />
-                                                        </div>
-                                                        {!collapsed && (
-                                                            <div className="flex-1 flex items-center min-w-0 pr-3 py-2.5">
+                                                    {isChildLink ? (
+                                                        <Link href={child.href!} className={childClasses}>
+                                                            <div className={cn(
+                                                                "w-12 flex items-center justify-center shrink-0 transition-colors self-stretch",
+                                                                isChildItemActive ? "text-white" : "text-muted-foreground"
+                                                            )}>
+                                                                <child.icon className="size-5" />
+                                                            </div>
+                                                            {!collapsed && (
                                                                 <span className={cn(
                                                                     "flex-1 text-sm text-left font-medium truncate",
                                                                     isChildItemActive ? "text-white" : "text-foreground"
                                                                 )}>
                                                                     {child.label}
                                                                 </span>
-                                                            </div>
-                                                        )}
-                                                        {/* Tooltip for collapsed state (Child) */}
-                                                        {collapsed && (
-                                                            <div className="absolute left-full ml-2 px-3 py-2 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 top-0">
-                                                                <span className="text-sm text-foreground font-medium">
-                                                                    {child.label}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </Link>
+                                                            )}
+                                                        </Link>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                onClick={() => toggleItem(child.label)}
+                                                                className={childClasses}
+                                                            >
+                                                                <div className={cn(
+                                                                    "w-12 flex items-center justify-center shrink-0 transition-colors self-stretch",
+                                                                    isChildParentActive ? "text-brand-primary" : "text-muted-foreground"
+                                                                )}>
+                                                                    <child.icon className="size-5" />
+                                                                </div>
+                                                                {!collapsed && (
+                                                                    <div className="flex-1 flex items-center min-w-0 pr-3 py-2">
+                                                                        <span className={cn(
+                                                                            "flex-1 text-sm text-left font-medium truncate",
+                                                                            isChildParentActive ? "text-brand-primary" : "text-foreground"
+                                                                        )}>
+                                                                            {child.label}
+                                                                        </span>
+                                                                        <div className={cn(
+                                                                            "ml-2",
+                                                                            isChildParentActive ? "text-brand-primary" : "text-muted-foreground"
+                                                                        )}>
+                                                                            {isChildExpanded ? (
+                                                                                <ChevronDown className="size-4" />
+                                                                            ) : (
+                                                                                <ChevronRight className="size-4" />
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </button>
+
+                                                            {/* Tercer nivel de hijos */}
+                                                            {childHasChildren && isChildExpanded && (
+                                                                <ul className="mt-1 space-y-1">
+                                                                    {child.children?.map((grandChild, grandChildIndex) => {
+                                                                        const isGrandChildActive = grandChild.href ? isActive(grandChild.href) : false;
+
+                                                                        return (
+                                                                            <li key={grandChildIndex}>
+                                                                                <Link
+                                                                                    href={grandChild.href || "#"}
+                                                                                    className={cn(
+                                                                                        "flex items-center transition-colors relative group min-h-[44px] mx-2 rounded-lg w-[calc(100%-16px)]",
+                                                                                        isGrandChildActive
+                                                                                            ? "bg-brand-primary hover:bg-brand-primary/90"
+                                                                                            : "hover:bg-accent"
+                                                                                    )}
+                                                                                >
+                                                                                    <div className={cn(
+                                                                                        "w-12 flex items-center justify-center shrink-0 transition-colors self-stretch",
+                                                                                        isGrandChildActive ? "text-white" : "text-muted-foreground"
+                                                                                    )}>
+                                                                                        <grandChild.icon className="size-5" />
+                                                                                    </div>
+                                                                                    {!collapsed && (
+                                                                                        <span className={cn(
+                                                                                            "flex-1 text-sm text-left font-medium truncate",
+                                                                                            isGrandChildActive ? "text-white" : "text-foreground"
+                                                                                        )}>
+                                                                                            {grandChild.label}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </Link>
+                                                                            </li>
+                                                                        );
+                                                                    })}
+                                                                </ul>
+                                                            )}
+                                                        </>
+                                                    )}
                                                 </li>
                                             );
                                         })}

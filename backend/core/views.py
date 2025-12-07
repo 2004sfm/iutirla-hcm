@@ -56,24 +56,8 @@ class PersonViewSet(viewsets.ModelViewSet):
                 {"error": "Esta persona ya tiene un usuario asignado."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-            
-        password = request.data.get('password')
-        if not password:
-            return Response(
-                {"error": "La contraseña es obligatoria."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
-        # 2. Generar Username: Primera Letra Nombre + Primer Apellido + Últimos 4 dígitos Cédula
-        # Normalizamos para quitar acentos y caracteres especiales
-        import unicodedata
-        def normalize_text(text):
-            return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').lower()
-
-        first_initial = normalize_text(person.first_name[0])
-        surname = normalize_text(person.paternal_surname)
-        
-        # Obtener cédula (documento principal)
+        # 2. Obtener cédula (documento principal)
         primary_doc = person.national_ids.filter(is_primary=True).first()
         if not primary_doc:
              return Response(
@@ -81,14 +65,23 @@ class PersonViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-        # Extraer últimos 4 dígitos, rellenar con 0 si es muy corta (raro en cédulas pero por seguridad)
+        # Extraer número de cédula limpio (sin puntos ni guiones)
         doc_number = primary_doc.number.replace('.', '').replace('-', '').strip()
+        
+        # 3. Generar Username: Primera Letra Nombre + Primer Apellido + Últimos 4 dígitos Cédula
+        # Normalizamos para quitar acentos y caracteres especiales
+        import unicodedata
+        def normalize_text(text):
+            return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').lower()
+
+        first_initial = normalize_text(person.first_name[0])
+        surname = normalize_text(person.paternal_surname)
         last_4_digits = doc_number[-4:].zfill(4)
         
         base_username = f"{first_initial}{surname}{last_4_digits}"
         username = base_username
         
-        # 3. Manejo de colisiones (aunque la fórmula es bastante única)
+        # 4. Manejo de colisiones (aunque la fórmula es bastante única)
         from django.contrib.auth import get_user_model
         User = get_user_model()
         counter = 1
@@ -96,11 +89,11 @@ class PersonViewSet(viewsets.ModelViewSet):
             username = f"{base_username}{counter}"
             counter += 1
             
-        # 4. Crear Usuario
+        # 5. Crear Usuario usando la cédula como contraseña inicial
         try:
             user = User.objects.create_user(
                 username=username,
-                password=password,
+                password=doc_number,  # Contraseña inicial = número de cédula
                 person=person,
                 is_active=True
             )
@@ -218,7 +211,7 @@ class MaritalStatusViewSet(viewsets.ModelViewSet):
     filter_backends = [UnaccentSearchFilter]
     search_fields = ['name']
 class CountryViewSet(viewsets.ModelViewSet):
-    queryset = Country.objects.all()
+    queryset = Country.objects.all().order_by('name')
     serializer_class = CountrySerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [UnaccentSearchFilter]

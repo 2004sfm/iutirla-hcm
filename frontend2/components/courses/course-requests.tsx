@@ -27,8 +27,8 @@ export default function CourseRequests({ courseId }: CourseRequestsProps) {
             });
             toast.success("Solicitud aprobada exitosamente");
             mutate(`/api/training/participants/?course=${courseId}&enrollment_status=REQ`);
-            // Also refresh students list in other tab if needed, though SWR might not share cache across components if keys differ slightly
-            mutate(`/api/training/participants/?course=${courseId}&role=EST&enrollment_status=ENR`);
+            // Also refresh students list
+            mutate(`/api/training/participants/?course=${courseId}&enrollment_status=ENR`);
         } catch (error: any) {
             console.error("Error approving enrollment:", error);
             toast.error(error.response?.data?.error || "Error al aprobar la solicitud");
@@ -58,7 +58,15 @@ export default function CourseRequests({ courseId }: CourseRequestsProps) {
     const pendingFields: CatalogField[] = [];
     const pendingColumns: ColumnDef<any>[] = [
         { accessorKey: "person_name", header: "Nombre", cell: ({ row }) => row.getValue("person_name") },
-        { accessorKey: "created_at", header: "Fecha Solicitud", cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString() },
+        { accessorKey: "person_id_document", header: "Cédula", cell: ({ row }) => row.original.person_id_document || "S/C" },
+        {
+            accessorKey: "created_at",
+            header: "Fecha Solicitud",
+            cell: ({ row }) => {
+                const date = row.original.created_at ? new Date(row.original.created_at) : null;
+                return date ? date.toLocaleDateString('es-ES') : "-";
+            }
+        },
     ];
 
     return (
@@ -105,6 +113,7 @@ export default function CourseRequests({ courseId }: CourseRequestsProps) {
                     </div>
                 )}
             />
+
         </div>
     );
 }

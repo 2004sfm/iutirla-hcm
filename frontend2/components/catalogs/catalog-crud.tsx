@@ -48,6 +48,93 @@ import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO } from "date-fns";
 
+// Helper component for dependent selects
+function DependentSelect({
+    field,
+    formField,
+    form,
+    fieldOptions,
+    setFieldOptions,
+    allFields
+}: {
+    field: CatalogField;
+    formField: any;
+    form: any;
+    fieldOptions: Record<string, any[]>;
+    setFieldOptions: React.Dispatch<React.SetStateAction<Record<string, any[]>>>;
+    allFields: CatalogField[];
+}) {
+    const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+
+    // Get the value of the field this field depends on
+    const dependsOnValue = field.dependsOn ? form.watch(field.dependsOn) : null;
+
+    // Fetch options when dependsOn value changes
+    useEffect(() => {
+        if (field.dependsOn && dependsOnValue && field.optionsUrl) {
+            const fetchDependentOptions = async () => {
+                setIsLoadingOptions(true);
+                try {
+                    const filterParam = field.dependsOnFilterParam || field.dependsOn;
+                    const params: Record<string, any> = {
+                        page_size: 1000
+                    };
+                    if (filterParam) {
+                        params[filterParam] = dependsOnValue;
+                    }
+                    const response = await apiClient.get(field.optionsUrl!, { params });
+                    setFieldOptions(prev => ({
+                        ...prev,
+                        [field.name]: response.data.results || response.data
+                    }));
+                } catch (error) {
+                    console.error(`Error fetching dependent options for ${field.name}:`, error);
+                } finally {
+                    setIsLoadingOptions(false);
+                }
+            };
+            fetchDependentOptions();
+        } else if (field.dependsOn && !dependsOnValue) {
+            // Clear options if parent field is not selected
+            setFieldOptions(prev => ({
+                ...prev,
+                [field.name]: []
+            }));
+        }
+    }, [dependsOnValue, field.dependsOn, field.dependsOnFilterParam, field.name, field.optionsUrl]);
+
+    const options = field.options
+        ? field.options
+        : (fieldOptions[field.name]?.map((option) => ({
+            value: option[field.optionValueKey || "id"].toString(),
+            label: option[field.optionLabelKey || "name"],
+        })) || []);
+
+    return (
+        <Combobox
+            options={options}
+            value={formField.value?.toString() || ""}
+            onSelect={(value) => {
+                formField.onChange(value);
+                if (field.onChange) {
+                    const opts = field.options || fieldOptions[field.name];
+                    field.onChange(value, form, opts);
+                }
+            }}
+            placeholder={
+                field.dependsOn && !dependsOnValue
+                    ? `Primero seleccione ${allFields.find((f: CatalogField) => f.name === field.dependsOn)?.label || 'el campo anterior'}`
+                    : isLoadingOptions
+                        ? "Cargando opciones..."
+                        : "Seleccione una opción"
+            }
+            emptyText="No se encontraron resultados."
+            disabled={field.dependsOn ? !dependsOnValue : false}
+        />
+    );
+}
+
+
 export interface CatalogField {
     name: string;
     label: string;
@@ -59,6 +146,10 @@ export interface CatalogField {
     optionValueKey?: string; // Key for value (default: id)
     defaultValue?: any; // Default value for the field
     onChange?: (value: any, form: any, options?: any[]) => void; // Callback for value change
+    showCharCount?: boolean; // Show character counter for text fields
+    lockPrefixLength?: number; // Lock the first N characters from being deleted/modified
+    dependsOn?: string; // Name of the field this field depends on for filtering options
+    dependsOnFilterParam?: string; // Query parameter name to use when filtering (defaults to dependsOn value)
 }
 
 interface CatalogCRUDProps {
@@ -75,9 +166,10 @@ interface CatalogCRUDProps {
     disablePagination?: boolean;
     disableDelete?: boolean;
     icon?: React.ElementType;
+    refreshKey?: number; // Prop to trigger refresh from parent
 }
 
-export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, disableDelete, customToolbarActions, disablePagination, icon: Icon }: CatalogCRUDProps) {
+export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, disableDelete, customToolbarActions, disablePagination, icon: Icon, refreshKey }: CatalogCRUDProps) {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -172,7 +264,9 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
     const fetchOptions = async () => {
         const options: Record<string, any[]> = {};
         for (const field of fields) {
-            if (field.type === "select" && field.optionsUrl) {
+            if (field.type === "select" && field.optionsUrl && !field.dependsOn) {
+                // Only fetch options for fields that don't depend on other fields
+                // Dependent fields will fetch their options dynamically when the parent field changes
                 try {
                     const response = await apiClient.get(field.optionsUrl, { params: { page_size: 1000 } });
                     options[field.name] = response.data.results || response.data;
@@ -187,7 +281,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
     useEffect(() => {
         fetchData();
         fetchOptions();
-    }, [apiUrl, pagination.pageIndex, pagination.pageSize, searchTerm, currentSearchOption]);
+    }, [apiUrl, pagination.pageIndex, pagination.pageSize, searchTerm, currentSearchOption, refreshKey]); // Added refreshKey dependency
 
     const handleSearch = useCallback((term: string) => {
         setSearchTerm(term);
@@ -284,8 +378,9 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
         setIsEditConfirmDialogOpen(false);
         try {
             if (currentItem) {
-                // Update
-                await apiClient.patch(`${apiUrl}${currentItem.id}/`, values);
+                // Update - strip query params from apiUrl before adding ID
+                const baseUrl = apiUrl.split('?')[0];
+                await apiClient.patch(`${baseUrl}${currentItem.id}/`, values);
                 toast.success("Registro actualizado correctamente.");
             } else {
                 // Create
@@ -364,7 +459,9 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
     const handleConfirmDelete = async () => {
         if (!currentItem) return;
         try {
-            await apiClient.delete(`${apiUrl}${currentItem.id}/`);
+            // Strip query params from apiUrl before adding ID
+            const baseUrl = apiUrl.split('?')[0];
+            await apiClient.delete(`${baseUrl}${currentItem.id}/`);
             toast.success("Registro eliminado correctamente.");
             setIsDeleteDialogOpen(false);
             fetchData();
@@ -493,25 +590,13 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                                                 {field.type !== "hidden" && <FormLabel>{field.label}</FormLabel>}
                                                 <FormControl>
                                                     {field.type === "select" ? (
-                                                        <Combobox
-                                                            options={
-                                                                field.options
-                                                                    ? field.options
-                                                                    : (fieldOptions[field.name]?.map((option) => ({
-                                                                        value: option[field.optionValueKey || "id"].toString(),
-                                                                        label: option[field.optionLabelKey || "name"],
-                                                                    })) || [])
-                                                            }
-                                                            value={formField.value?.toString() || ""}
-                                                            onSelect={(value) => {
-                                                                formField.onChange(value);
-                                                                if (field.onChange) {
-                                                                    const options = field.options || fieldOptions[field.name];
-                                                                    field.onChange(value, form, options);
-                                                                }
-                                                            }}
-                                                            placeholder="Seleccione una opción"
-                                                            emptyText="No se encontraron resultados."
+                                                        <DependentSelect
+                                                            field={field}
+                                                            formField={formField}
+                                                            form={form}
+                                                            fieldOptions={fieldOptions}
+                                                            setFieldOptions={setFieldOptions}
+                                                            allFields={fields}
                                                         />
                                                     ) : field.type === "checkbox" ? (
                                                         <div className="flex items-center space-x-2">
@@ -542,12 +627,38 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                                                     ) : field.type === "hidden" ? (
                                                         <input type="hidden" {...formField} value={(formField.value as string | number) ?? ""} />
                                                     ) : (
-                                                        <Input
-                                                            type={field.type}
-                                                            placeholder={field.label}
-                                                            {...formField}
-                                                            value={(formField.value as string | number) ?? ""}
-                                                        />
+                                                        <div>
+                                                            <Input
+                                                                type={field.type}
+                                                                placeholder={field.label}
+                                                                {...formField}
+                                                                value={(formField.value as string | number) ?? ""}
+                                                                onChange={(e) => {
+                                                                    const newValue = e.target.value;
+                                                                    const currentValue = String(formField.value ?? "");
+
+                                                                    // If lockPrefixLength is set, ensure the prefix is preserved
+                                                                    if (field.lockPrefixLength && currentValue.length >= field.lockPrefixLength) {
+                                                                        const lockedPrefix = currentValue.substring(0, field.lockPrefixLength);
+
+                                                                        // If the new value is shorter than the locked prefix or doesn't start with it, restore the prefix
+                                                                        if (newValue.length < field.lockPrefixLength || !newValue.startsWith(lockedPrefix)) {
+                                                                            // Keep the locked prefix and append the rest of the new value
+                                                                            const userInput = newValue.substring(field.lockPrefixLength);
+                                                                            formField.onChange(lockedPrefix + userInput);
+                                                                            return;
+                                                                        }
+                                                                    }
+
+                                                                    formField.onChange(newValue);
+                                                                }}
+                                                            />
+                                                            {field.showCharCount && (field.type === "text" || field.type === "email") && (
+                                                                <div className="text-xs text-muted-foreground mt-1 text-right">
+                                                                    {String(formField.value ?? "").length} caracteres
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </FormControl>
                                                 <FormMessage />

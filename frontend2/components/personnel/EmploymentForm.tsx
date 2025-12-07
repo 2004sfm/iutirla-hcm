@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import apiClient from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +18,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { parseBackendDate } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import { User, FileText, Mail } from "lucide-react";
 
 const fetcher = (url: string) => apiClient.get(url).then(res => res.data.results || res.data);
@@ -29,12 +31,22 @@ const employmentSchema = z.object({
     current_status: z.string().min(1, "El estatus es requerido"),
     hire_date: z.string().min(1, "La fecha de contratación es requerida"),
     end_date: z.string().optional().nullable(),
+    phone_carrier_code: z.string().optional(),
+    phone_subscriber_number: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.employment_type !== "FIJ" && !data.end_date) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "La fecha de finalización es requerida para este tipo de empleo",
             path: ["end_date"],
+        });
+    }
+    // Validate phone: if subscriber number is provided, carrier code is required
+    if (data.phone_subscriber_number && !data.phone_carrier_code) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Debe seleccionar una operadora",
+            path: ["phone_carrier_code"],
         });
     }
 });
@@ -51,9 +63,11 @@ interface EmploymentFormProps {
 export function EmploymentForm({ initialData, isEditing = false, employmentId, onSuccess }: EmploymentFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [includePhone, setIncludePhone] = useState(false);
 
     const { data: persons } = useSWR("/api/core/persons/?page_size=1000", fetcher);
     const { data: departments } = useSWR("/api/organization/departments/?page_size=1000", fetcher);
+    const { data: phoneCarrierCodes } = useSWR("/api/core/phone-carrier-codes/?page_size=1000", fetcher);
 
     const [selectedDepartment, setSelectedDepartment] = useState<string>(initialData?.department?.toString() || "");
 
@@ -73,6 +87,8 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
         current_status: initialData?.current_status || "ACT",
         hire_date: initialData?.hire_date || "",
         end_date: initialData?.end_date || null,
+        phone_carrier_code: "",
+        phone_subscriber_number: "",
     };
 
     const { handleSubmit, formState: { errors }, setValue, watch, setError } = useForm<EmploymentFormData>({
@@ -98,6 +114,23 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                 await apiClient.patch(`/api/employment/employments/${employmentId}/`, data);
                 toast.success("Empleado actualizado exitosamente");
             } else {
+                // Validate phone BEFORE creating employment if phone toggle is enabled
+                if (includePhone && data.phone_carrier_code && data.phone_subscriber_number) {
+                    // Check if person already has a primary phone
+                    const existingPhones = await apiClient.get(`/api/core/person-phones/?person=${data.person}&is_primary=true`);
+                    const hasPrimaryPhone = existingPhones.data.results?.length > 0 || existingPhones.data.length > 0;
+
+                    // Validate phone creation first (will throw error if invalid)
+                    await apiClient.post("/api/core/person-phones/", {
+                        person: data.person,
+                        phone_type: 1,
+                        carrier_code: data.phone_carrier_code,
+                        subscriber_number: data.phone_subscriber_number,
+                        is_primary: !hasPrimaryPhone,
+                    });
+                }
+
+                // Only create employment if phone validation passed (or no phone)
                 await apiClient.post("/api/employment/employments/", data);
                 toast.success("Empleado creado exitosamente");
                 router.push("/admin/personnel/employees");
@@ -109,13 +142,34 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
             console.error("Error submitting form:", error);
             if (error.response?.data) {
                 const serverErrors = error.response.data;
+
+                // Handle phone-specific errors
+                if (serverErrors.carrier_code) {
+                    setError("phone_carrier_code", {
+                        type: "server",
+                        message: Array.isArray(serverErrors.carrier_code)
+                            ? serverErrors.carrier_code[0]
+                            : serverErrors.carrier_code
+                    });
+                }
+                if (serverErrors.subscriber_number) {
+                    setError("phone_subscriber_number", {
+                        type: "server",
+                        message: Array.isArray(serverErrors.subscriber_number)
+                            ? serverErrors.subscriber_number[0]
+                            : serverErrors.subscriber_number
+                    });
+                }
+
+                // Handle other field errors
                 Object.keys(serverErrors).forEach((key) => {
                     if (key in defaultValues) {
                         setError(key as keyof EmploymentFormData, {
                             type: "server",
                             message: serverErrors[key][0] || serverErrors[key]
                         });
-                    } else {
+                    } else if (key !== 'carrier_code' && key !== 'subscriber_number') {
+                        // Only show toast for non-field errors (not already handled above)
                         toast.error(`Error: ${serverErrors[key]}`);
                     }
                 });
@@ -283,6 +337,71 @@ export function EmploymentForm({ initialData, isEditing = false, employmentId, o
                                     <p className="text-sm text-destructive">{errors.end_date.message}</p>
                                 )}
                             </div>
+                        )}
+
+                        {/* Optional Phone Section - Only for new employees */}
+                        {!isEditing && selectedPerson && (
+                            <>
+                                <div className="md:col-span-2 mt-4 border-t pt-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-sm font-semibold text-muted-foreground">Información de Contacto (Opcional)</h3>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                checked={includePhone}
+                                                onCheckedChange={setIncludePhone}
+                                                id="include-phone"
+                                            />
+                                            <Label htmlFor="include-phone" className="text-sm font-normal cursor-pointer">
+                                                Agregar teléfono
+                                            </Label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {includePhone && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone_carrier_code" className={errors.phone_carrier_code ? "text-destructive" : ""}>
+                                                Operadora
+                                            </Label>
+                                            <Combobox
+                                                options={phoneCarrierCodes?.map((cc: any) => ({
+                                                    value: cc.id.toString(),
+                                                    label: `${cc.code} - ${cc.carrier_name}`
+                                                })) || []}
+                                                value={watch("phone_carrier_code")}
+                                                onSelect={(value) => setValue("phone_carrier_code", value.toString())}
+                                                placeholder="Seleccionar operadora"
+                                                className={errors.phone_carrier_code ? "border-destructive" : ""}
+                                            />
+                                            {errors.phone_carrier_code && (
+                                                <p className="text-sm text-destructive">{errors.phone_carrier_code.message}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone_subscriber_number" className={errors.phone_subscriber_number ? "text-destructive" : ""}>
+                                                Número de Teléfono
+                                            </Label>
+                                            <Input
+                                                type="text"
+                                                placeholder="7 dígitos"
+                                                value={watch("phone_subscriber_number")}
+                                                onChange={(e) => {
+                                                    // Only allow numbers and max 7 digits
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 7);
+                                                    setValue("phone_subscriber_number", value);
+                                                }}
+                                                className={errors.phone_subscriber_number ? "border-destructive" : ""}
+                                                maxLength={7}
+                                            />
+                                            {errors.phone_subscriber_number && (
+                                                <p className="text-sm text-destructive">{errors.phone_subscriber_number.message}</p>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </>
                         )}
 
                     </div>

@@ -31,7 +31,7 @@ export function CommandMenu() {
             <Button
                 variant="outline"
                 onClick={() => (setOpen(true))}
-                className="hidden w-90 justify-start text-muted-foreground md:flex border-none hover:bg-muted"
+                className="hidden w-90 justify-start text-slate-600 md:flex border-slate-200 bg-slate-50/50 hover:bg-slate-100 hover:text-slate-800"
             >
                 <Search className="mr-2 h-4 w-4" />
                 <span className="flex-1 text-left">Buscar</span>

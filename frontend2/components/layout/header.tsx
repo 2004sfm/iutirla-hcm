@@ -16,7 +16,7 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
     return (
         <header
             className={cn(
-                "fixed top-0 right-0 h-14 bg-primary text-primary-foreground border-b border-primary-foreground/10 transition-all duration-300 z-30 flex items-center justify-between px-4 shadow-md",
+                "fixed top-0 right-0 h-14 bg-white border-b border-border transition-all duration-300 z-30 flex items-center justify-between px-4 shadow-sm",
                 "left-0", // Mobile default
                 collapsed ? "md:left-16" : "md:left-64" // Desktop overrides
             )}
@@ -27,7 +27,7 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
                 <Sheet>
                     <SheetTrigger asChild>
                         <button
-                            className="md:hidden p-2 hover:bg-primary-foreground/10 rounded-lg transition-colors text-primary-foreground"
+                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
                             aria-label="Open sidebar"
                         >
                             <Menu className="w-5 h-5" />
@@ -43,7 +43,7 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
                 {/* Desktop Sidebar Toggle */}
                 <button
                     onClick={onToggleSidebar}
-                    className="hidden md:block p-2 hover:bg-primary-foreground/10 rounded-lg transition-colors text-primary-foreground"
+                    className="hidden md:block p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
                     aria-label="Toggle sidebar"
                 >
                     <Menu className="w-5 h-5" />
@@ -54,7 +54,7 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
             <div className="ml-auto flex items-center gap-2">
                 <div className="flex md:flex-1 gap-2 items-center justify-end">
                     <CommandMenu />
-                    <TaskSheet />
+                    {/* <TaskSheet /> */}
                     <NotificationsSheet />
                     <UserMenu />
                 </div>

@@ -55,8 +55,8 @@ class PerformanceReviewAdmin(admin.ModelAdmin):
 @admin.register(models.Competency)
 class CompetencyAdmin(admin.ModelAdmin):
     """Configuración de las preguntas/criterios a evaluar."""
-    list_display = ('name', 'is_global', 'description')
-    list_filter = ('is_global',)
+    list_display = ('name', 'category', 'is_global', 'description')
+    list_filter = ('category', 'is_global',)
     search_fields = ('name',)
     
     # CLAVE: Permite seleccionar múltiples JobTitles para competencias específicas
@@ -64,7 +64,7 @@ class CompetencyAdmin(admin.ModelAdmin):
     
     # Los campos de Global y JobTitles solo se muestran si aplican
     fieldsets = (
-        (None, {'fields': ('name', 'description')}),
+        (None, {'fields': ('name', 'description', 'category')}),
         ('SEGMENTACIÓN', {
             'fields': ('is_global', 'job_titles'),
             'description': 'Si es global, aplica a todos. Si es específico, seleccione los cargos.',

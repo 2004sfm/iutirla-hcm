@@ -5,19 +5,13 @@ from django.db.models import Count
 # --- 1. INLINES (Tablas anidadas dentro del formulario del Curso) ---
 
 class ParticipantInline(admin.TabularInline):
-    """Permite gestionar instructores y estudiantes desde la página del Curso."""
+    """🔧 REFACTOR: Ahora solo gestiona estudiantes, no instructores."""
     model = models.CourseParticipant
     extra = 1
-    # raw_id_fields es ideal para FKs a modelos grandes (como Person)
     raw_id_fields = ('person',) 
-    
-    # Campos que el usuario puede ver, pero no editar en el inline
     readonly_fields = ('get_person_name',) 
+    fields = ('person', 'get_person_name', 'enrollment_status', 'academic_status', 'grade')
     
-    # Campos a mostrar en la tabla (usamos un método para mostrar el nombre completo)
-    fields = ('person', 'get_person_name', 'role', 'enrollment_status', 'academic_status', 'grade')
-    
-    # Método auxiliar para mostrar el nombre completo de la persona
     def get_person_name(self, obj):
         return str(obj.person)
     get_person_name.short_description = 'Nombre de la Persona'
@@ -47,13 +41,14 @@ class CourseAdmin(admin.ModelAdmin):
     # Campos a mostrar en la lista de cursos
     list_display = (
         'name', 
+        'instructor',  # 🔧 REFACTOR: Nuevo campo directo
         'get_modality_display', 
         'status', 
         'start_date', 
         'end_date', 
         'max_participants', 
-        'enrolled_count', # Propiedad calculada
-        'is_full'         # Propiedad calculada
+        'enrolled_count',
+        'is_full'
     )
     
     # Campos para filtrar la lista
@@ -62,10 +57,14 @@ class CourseAdmin(admin.ModelAdmin):
     # Campos para búsqueda rápida
     search_fields = ('name', 'description')
     
+    # 🔧 REFACTOR: Ahora el instructor es editable directamente
+    raw_id_fields = ('instructor',)
+    
     # Campos de solo lectura
     readonly_fields = ('enrolled_count', 'is_full') 
 
     # Agregamos las secciones inlines al formulario de edición
+    inlines = [ParticipantInline, SessionInline, ResourceInline]
 class AttendanceRecordAdmin(admin.ModelAdmin):
     """Admin para auditar registros de asistencia."""
     list_display = ('session', 'participant_person', 'status', 'notes')
@@ -79,6 +78,34 @@ class AttendanceRecordAdmin(admin.ModelAdmin):
     
 # --- 3. REGISTRO DE MODELOS RESTANTES ---
 # (Modelos que no necesitan Inlines ni personalización compleja)
+
+# 🆕 NEW: Register hierarchical content models
+@admin.register(models.CourseModule)
+class CourseModuleAdmin(admin.ModelAdmin):
+    """Admin para módulos del curso."""
+    list_display = ('course', 'name', 'order')
+    list_filter = ('course',)
+    search_fields = ('name', 'description')
+    ordering = ('course', 'order')
+
+
+@admin.register(models.CourseLesson)
+class CourseLessonAdmin(admin.ModelAdmin):
+    """Admin para lecciones individuales."""
+    list_display = ('module', 'title', 'order', 'duration_minutes')
+    list_filter = ('module__course',)
+    search_fields = ('title', 'content')
+    ordering = ('module', 'order')
+
+
+@admin.register(models.LessonProgress)
+class LessonProgressAdmin(admin.ModelAdmin):
+    """Admin para el progreso de lecciones por estudiante."""
+    list_display = ('enrollment', 'lesson', 'completed', 'completed_at')
+    list_filter = ('completed', 'lesson__module__course')
+    search_fields = ('enrollment__person__first_name', 'lesson__title')
+    readonly_fields = ('completed_at',)
+
 
 admin.site.register(models.CourseSession)
 admin.site.register(models.CourseResource)

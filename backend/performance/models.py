@@ -21,8 +21,27 @@ class Competency(models.Model):
     """
     Diccionario de criterios a evaluar.
     """
+    class Category(models.TextChoices):
+        QUALITY = 'CAL', 'Calidad'
+        COMMITMENT = 'COM', 'Compromiso'
+        COMMUNICATION = 'CMU', 'Comunicación'
+        ORGANIZATION = 'ORG', 'Organización'
+        DISCIPLINE = 'DIS', 'Disciplina'
+        PROACTIVITY = 'PRO', 'Proactividad'
+    
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
+    
+    # NUEVA CATEGORÍA: Para agrupar competencias según performance.md
+    category = models.CharField(
+        max_length=3,
+        choices=Category.choices,
+        blank=True,
+        null=True,
+        verbose_name="Categoría",
+        help_text="Categoría de evaluación según la matriz de desempeño global",
+        db_index=True  # Índice para mejorar rendimiento en queries por categoría
+    )
     
     # LÓGICA DE SEGMENTACIÓN
     is_global = models.BooleanField(

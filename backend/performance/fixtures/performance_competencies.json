@@ -1,0 +1,302 @@
+[
+  {
+    "model": "performance.competency",
+    "pk": 1,
+    "fields": {
+      "name": "Precisión",
+      "description": "Realiza sus tareas minimizando errores, omisiones o retrabajos, asegurando que el resultado cumpla con los estándares esperados a la primera.",
+      "category": "CAL",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 2,
+    "fields": {
+      "name": "Cumplimiento",
+      "description": "Completa la totalidad de las actividades asignadas dentro de los plazos o turnos establecidos.",
+      "category": "CAL",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 3,
+    "fields": {
+      "name": "Recursos",
+      "description": "Utiliza de manera óptima los materiales y herramientas a su cargo (papelería, equipos, utensilios), evitando el desperdicio o mal uso.",
+      "category": "CAL",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 4,
+    "fields": {
+      "name": "Presentación",
+      "description": "Entrega su trabajo (ya sea un documento, un espacio limpio o una clase) con orden, pulcritud y esmero.",
+      "category": "CAL",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 5,
+    "fields": {
+      "name": "Constancia",
+      "description": "Mantiene un ritmo de productividad estable y sostenido durante toda la jornada laboral.",
+      "category": "CAL",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 6,
+    "fields": {
+      "name": "Puntualidad",
+      "description": "Respeta rigurosamente los horarios de entrada, salida y recesos establecidos para su cargo.",
+      "category": "COM",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 7,
+    "fields": {
+      "name": "Pertenencia",
+      "description": "Cuida la imagen de la institución y actúa en beneficio de la comunidad, demostrando lealtad a la organización.",
+      "category": "COM",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 8,
+    "fields": {
+      "name": "Discreción",
+      "description": "Maneja con prudencia y reserva la información, situaciones o accesos que tiene por razón de su cargo.",
+      "category": "COM",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 9,
+    "fields": {
+      "name": "Colaboración",
+      "description": "Muestra disposición para apoyar en actividades adicionales o extraordinarias cuando la dinámica institucional lo requiere.",
+      "category": "COM",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 10,
+    "fields": {
+      "name": "Cuidado",
+      "description": "Vela por el mantenimiento y buen estado del patrimonio institucional (mobiliario, equipos, infraestructura) asignado a su uso o vigilancia.",
+      "category": "COM",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 11,
+    "fields": {
+      "name": "Trato",
+      "description": "Se dirige a estudiantes, compañeros y superiores con respeto, cortesía y amabilidad en todo momento.",
+      "category": "CMU",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 12,
+    "fields": {
+      "name": "Claridad",
+      "description": "Transmite información, dudas o reportes de manera precisa y comprensible, evitando ambigüedades.",
+      "category": "CMU",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 13,
+    "fields": {
+      "name": "Receptividad",
+      "description": "Escucha con atención las solicitudes, quejas o instrucciones y responde de manera oportuna y adecuada.",
+      "category": "CMU",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 14,
+    "fields": {
+      "name": "Jerarquía",
+      "description": "Utiliza los canales regulares y respeta las líneas de mando al comunicarse o tramitar requerimientos.",
+      "category": "CMU",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 15,
+    "fields": {
+      "name": "Serenidad",
+      "description": "Mantiene la calma y el comportamiento profesional ante situaciones de presión, reclamos o estrés.",
+      "category": "CMU",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 16,
+    "fields": {
+      "name": "Priorización",
+      "description": "Identifica y atiende primero las tareas más críticas o urgentes del día.",
+      "category": "ORG",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 17,
+    "fields": {
+      "name": "Orden",
+      "description": "Mantiene su espacio físico de trabajo (oficina, cubículo, depósito o área asignada) limpio y despejado.",
+      "category": "ORG",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 18,
+    "fields": {
+      "name": "Seguimiento",
+      "description": "Interpreta correctamente las instrucciones recibidas y sigue los pasos lógicos para completarlas sin saltarse procedimientos.",
+      "category": "ORG",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 19,
+    "fields": {
+      "name": "Control",
+      "description": "Lleva un registro o control adecuado de sus pendientes, insumos, documentos o herramientas, evitando pérdidas o desorden.",
+      "category": "ORG",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 20,
+    "fields": {
+      "name": "Previsión",
+      "description": "Anticipa lo necesario para realizar su trabajo (solicita materiales o reporta necesidades a tiempo) para evitar interrupciones.",
+      "category": "ORG",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 21,
+    "fields": {
+      "name": "Normativa",
+      "description": "Conoce y acata los reglamentos internos y manuales operativos aplicables a su función.",
+      "category": "DIS",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 22,
+    "fields": {
+      "name": "Reporte",
+      "description": "Informa inmediatamente a su supervisor sobre cualquier irregularidad, falla o novedad detectada en su turno o área.",
+      "category": "DIS",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 23,
+    "fields": {
+      "name": "Presencia",
+      "description": "Cumple con el uso correcto del uniforme, carnet y normas de higiene personal e imagen exigidas por la institución.",
+      "category": "DIS",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 24,
+    "fields": {
+      "name": "Enfoque",
+      "description": "Permanece en su área de trabajo y dedica su tiempo a las funciones laborales, evitando distracciones ajenas.",
+      "category": "DIS",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 25,
+    "fields": {
+      "name": "Seguridad",
+      "description": "Respeta las normas de seguridad y prevención de riesgos para protegerse a sí mismo y a los demás.",
+      "category": "DIS",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 26,
+    "fields": {
+      "name": "Autonomía",
+      "description": "Es capaz de realizar sus tareas rutinarias y resolver incidencias menores sin necesidad de supervisión constante.",
+      "category": "PRO",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 27,
+    "fields": {
+      "name": "Mejora",
+      "description": "Propone cambios sencillos o ideas para hacer su trabajo más fácil, rápido o mejor.",
+      "category": "PRO",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 28,
+    "fields": {
+      "name": "Adaptación",
+      "description": "Acepta positivamente cambios en instrucciones, horarios, métodos de trabajo o nuevas tecnologías.",
+      "category": "PRO",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 29,
+    "fields": {
+      "name": "Interés",
+      "description": "Muestra disposición por aprender nuevas funciones o mejorar sus habilidades actuales.",
+      "category": "PRO",
+      "is_global": true
+    }
+  },
+  {
+    "model": "performance.competency",
+    "pk": 30,
+    "fields": {
+      "name": "Actitud",
+      "description": "Enfrenta las labores diarias con energía positiva y disposición, contribuyendo a un buen clima laboral.",
+      "category": "PRO",
+      "is_global": true
+    }
+  }
+]

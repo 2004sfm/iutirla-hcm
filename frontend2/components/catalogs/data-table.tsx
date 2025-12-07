@@ -168,7 +168,7 @@ export function DataTable<TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            {!disablePagination && (
+            {!disablePagination && table.getPageCount() > 1 && (
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 text-sm font-medium">
                         Página {table.getState().pagination.pageIndex + 1} de{" "}

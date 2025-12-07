@@ -11,6 +11,7 @@ class EvaluationPeriodViewSet(viewsets.ModelViewSet):
     queryset = EvaluationPeriod.objects.all()
     serializer_class = EvaluationPeriodSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = None  # Devolver todos sin paginar
 
     @action(detail=True, methods=['post'])
     def generate_reviews(self, request, pk=None):
@@ -20,27 +21,31 @@ class EvaluationPeriodViewSet(viewsets.ModelViewSet):
         period = self.get_object()
         count_created = 0
         
+        # Estatus que representan vinculación activa
+        ACTIVE_STATUSES = ['ACT', 'SUS', 'PER', 'REP']
+        
         # 1. Buscar contratos activos (ocupan silla)
-        # Usamos el campo booleano de tu modelo EmploymentStatus
         active_employments = Employment.objects.filter(
-            current_status__is_active_relationship=True
-        ).select_related('position__manager_position', 'position__job_title', 'person')
+            current_status__in=ACTIVE_STATUSES
+        ).select_related('position__department', 'position__job_title', 'person')
 
         try:
             with transaction.atomic():
                 for emp in active_employments:
                     # A. Determinar Jefe (Evaluador)
-                    boss_pos = emp.position.manager_position
+                    # manager_positions es ManyToMany, tomamos el primero
+                    manager_positions = emp.position.manager_positions.all()
                     evaluator = None
                     
-                    if boss_pos:
-                        # Buscamos quién es el jefe activo hoy en esa posición superior
+                    for boss_pos in manager_positions:
+                        # Buscamos quién ocupa esa posición gerencial actualmente
                         boss = Employment.objects.filter(
                             position=boss_pos, 
-                            current_status__is_active_relationship=True
+                            current_status__in=ACTIVE_STATUSES
                         ).first()
                         if boss:
                             evaluator = boss.person
+                            break  # Usamos el primer jefe encontrado
                     
                     # Si no tiene jefe asignado, no generamos.
                     if not evaluator:
@@ -75,9 +80,53 @@ class EvaluationPeriodViewSet(viewsets.ModelViewSet):
 
 
 class CompetencyViewSet(viewsets.ModelViewSet):
-    queryset = Competency.objects.all()
+    queryset = Competency.objects.all().order_by('category', 'name')
     serializer_class = CompetencySerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    search_fields = ['name', 'description']
+    filterset_fields = ['category', 'is_global']
+    
+    def filter_queryset(self, queryset):
+        """Salta los filtros por defecto cuando se busca por categoría"""
+        search_field = self.request.query_params.get('search_field', '')
+        if search_field == 'category':
+            # Ya filtrado en get_queryset, saltar SearchFilter
+            return queryset
+        return super().filter_queryset(queryset)
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filtro personalizado por nombre de categoría
+        search = self.request.query_params.get('search', '')
+        search_field = self.request.query_params.get('search_field', '')
+        
+        if search and search_field == 'category':
+            # Mapeo de nombres a códigos
+            category_map = {
+                'calidad': 'CAL',
+                'compromiso': 'COM', 
+                'comunicación': 'CMU',
+                'comunicacion': 'CMU',
+                'organización': 'ORG',
+                'organizacion': 'ORG',
+                'disciplina': 'DIS',
+                'proactividad': 'PRO',
+            }
+            
+            search_lower = search.lower()
+            # Buscar categorías que coincidan parcialmente
+            matching_codes = [
+                code for name, code in category_map.items()
+                if search_lower in name
+            ]
+            
+            if matching_codes:
+                queryset = queryset.filter(category__in=matching_codes)
+            else:
+                queryset = queryset.none()  # No hay coincidencias
+        
+        return queryset
 
 
 class PerformanceReviewViewSet(viewsets.ModelViewSet):

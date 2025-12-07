@@ -7,6 +7,7 @@ class EvaluationPeriodSerializer(serializers.ModelSerializer):
 
 class CompetencySerializer(serializers.ModelSerializer):
     job_titles_names = serializers.StringRelatedField(many=True, source='job_titles', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
 
     class Meta: 
         model = Competency
@@ -18,10 +19,13 @@ class CompetencySerializer(serializers.ModelSerializer):
 class ReviewDetailSerializer(serializers.ModelSerializer):
     competency_name = serializers.CharField(source='competency.name', read_only=True)
     competency_description = serializers.CharField(source='competency.description', read_only=True)
+    competency_category = serializers.CharField(source='competency.category', read_only=True)
+    competency_category_display = serializers.CharField(source='competency.get_category_display', read_only=True)
     
     class Meta: 
         model = ReviewDetail
-        fields = ['id', 'competency', 'competency_name', 'competency_description', 'score', 'comment']
+        fields = ['id', 'competency', 'competency_name', 'competency_description', 
+                  'competency_category', 'competency_category_display', 'score', 'comment']
 
 class PerformanceReviewSerializer(serializers.ModelSerializer):
     # Datos de lectura enriquecidos navegando las relaciones de Employment

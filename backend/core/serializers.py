@@ -655,8 +655,15 @@ class PersonSerializer(serializers.ModelSerializer):
     class Meta: model = Person; fields = '__all__'
     
     def to_internal_value(self, data):
-        if hasattr(data, 'copy'): data = data.copy()
-        if 'photo' in data and data['photo'] == 'DELETE': data['photo'] = None
+        # Only copy if no files are present (files can't be deepcopied)
+        if hasattr(data, 'copy') and not hasattr(data, 'getlist'):
+            # For regular dicts, we can copy
+            if not any(hasattr(v, 'read') for v in data.values()):
+                data = data.copy()
+        if 'photo' in data and data['photo'] == 'DELETE': 
+            data['photo'] = None
+        if 'cv_file' in data and data['cv_file'] == 'DELETE':
+            data['cv_file'] = None
         return super().to_internal_value(data)
 
     def validate_cedula_number(self, value):

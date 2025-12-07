@@ -17,10 +17,7 @@ export enum CourseModality {
     HYBRID = 'MIX',
 }
 
-export enum ParticipantRole {
-    INSTRUCTOR = 'INS',
-    STUDENT = 'EST',
-}
+// 🔧 REFACTOR: ParticipantRole removed - all participants are students now
 
 export enum EnrollmentStatus {
     REQUESTED = 'REQ',
@@ -30,6 +27,7 @@ export enum EnrollmentStatus {
 
 export enum AcademicStatus {
     PENDING = 'PEN',
+    COMPLETED = 'COM',  // 🆕 NEW
     PASSED = 'APR',
     FAILED = 'REP',
 }
@@ -66,6 +64,7 @@ export const enrollmentStatusDisplay: Record<EnrollmentStatus, string> = {
 
 export const academicStatusDisplay: Record<AcademicStatus, string> = {
     [AcademicStatus.PENDING]: 'En Curso',
+    [AcademicStatus.COMPLETED]: 'Completado',  // 🆕 NEW
     [AcademicStatus.PASSED]: 'Aprobado',
     [AcademicStatus.FAILED]: 'Reprobado',
 };
@@ -77,6 +76,7 @@ export interface CourseResource {
     name: string;
     resource_type: string;
     file?: string;
+    file_url?: string; // 🆕 NEW: Added file_url
     url?: string;
     created_at: string;
 }
@@ -90,12 +90,54 @@ export interface CourseSession {
     end_time: string;
 }
 
+// 🆕 NEW: Hierarchical Content Interfaces
+
+export interface CourseLesson {
+    id: number;
+    module: number;
+    module_name: string;
+    title: string;
+    content: string;
+    order: number;
+    duration_minutes: number;
+    resources?: CourseResource[];
+    course_id?: number;
+    course_instructor_id?: number;
+}
+
+export interface CourseModule {
+    id: number;
+    course: number;
+    name: string;
+    description?: string;
+    order: number;
+    lessons: CourseLesson[];
+    lesson_count: number;
+}
+
+export interface LessonProgress {
+    id: number;
+    enrollment: number;
+    lesson: number;
+    lesson_title?: string;
+    person_name?: string;
+    completed: boolean;
+    completed_at?: string;
+}
+
+export interface CourseProgress {
+    total_lessons: number;
+    completed_lessons: number;
+    progress_percentage: number;
+    is_complete: boolean;
+}
+
 export interface ParticipantListItem {
     id: number;
     person_id: number;
     person_name: string;
-    role: ParticipantRole;
-    role_name: string;
+    person_id_document?: string;
+    // 🔧 REFACTOR: role removed - all participants are students
     enrollment_status: EnrollmentStatus;
     enrollment_status_name: string;
     academic_status: AcademicStatus;
@@ -128,11 +170,19 @@ export interface Course {
     created_at: string;
     updated_at: string;
 
+    // 🔧 REFACTOR: Instructor ahora es un campo directo del curso
+    instructor_id?: number;
+    instructor_name?: string;
+    instructor_id_document?: string;
+
+    // 🆕 NEW: Grading logic
+    requires_approval_to_complete: boolean;
+
     // Nested data (in detail view)
-    instructors?: ParticipantListItem[];
-    students?: ParticipantListItem[];
+    students?: ParticipantListItem[]; // Solo estudiantes ahora
     resources?: CourseResource[];
     sessions?: CourseSession[];
+    modules?: CourseModule[];  // 🆕 NEW: Hierarchical content
 }
 
 export interface AttendanceRecord {
@@ -151,7 +201,6 @@ export interface UserEnrollment {
     id?: number;
     enrollment_status?: EnrollmentStatus;
     academic_status?: AcademicStatus;
-    role?: ParticipantRole;
-    is_instructor?: boolean;
+    // 🔧 REFACTOR: role removed
     grade?: number;
 }

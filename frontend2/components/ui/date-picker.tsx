@@ -138,6 +138,19 @@ export function DatePicker({ value, onChange, placeholder = "dd/mm/aaaa", classN
                         alignOffset={-8}
                         sideOffset={10}
                     >
+                        <div className="p-2 border-b">
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                size="sm"
+                                onClick={() => {
+                                    onChange?.(new Date())
+                                    setOpen(false)
+                                }}
+                            >
+                                Hoy
+                            </Button>
+                        </div>
                         <Calendar
                             mode="single"
                             selected={value}

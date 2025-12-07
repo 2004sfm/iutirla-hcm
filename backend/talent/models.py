@@ -24,13 +24,27 @@ class EducationLevel(models.Model):
     def __str__(self): return self.name
 
 class FieldOfStudy(models.Model):
+    education_level = models.ForeignKey(
+        EducationLevel, 
+        on_delete=models.CASCADE, 
+        related_name='fields_of_study',
+        null=True,  # Permitir NULL para registros existentes
+        blank=True,
+        help_text="Nivel educativo al que pertenece este campo de estudio"
+    )
     name = models.CharField(
         max_length=100, 
-        unique=True, 
-        help_text="Ej: Software, Recursos Humanos, N/A",
+        help_text="Ej: Software, Recursos Humanos, Diseño Gráfico",
         error_messages=UNIQUE_ERR_MSG
     )
-    def __str__(self): return self.name
+    
+    class Meta:
+        unique_together = ('education_level', 'name')
+    
+    def __str__(self): 
+        if self.education_level:
+            return f"{self.name} ({self.education_level.name})"
+        return self.name
 
 # --- Modelos Transaccionales ---
 

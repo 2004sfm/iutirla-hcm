@@ -19,6 +19,11 @@ router.register(r'participants', views.CourseParticipantViewSet, basename='cours
 # 5. Asistencia (Registros puntuales)
 router.register(r'attendance', views.AttendanceRecordViewSet, basename='attendance-record')
 
+# 🆕 NEW: 6-8. Hierarchical Content (Modules, Lessons, Progress)
+router.register(r'modules', views.CourseModuleViewSet, basename='course-module')
+router.register(r'lessons', views.CourseLessonViewSet, basename='course-lesson')
+router.register(r'lesson-progress', views.LessonProgressViewSet, basename='lesson-progress')
+
 urlpatterns = [
     path('', include(router.urls)),
 ]

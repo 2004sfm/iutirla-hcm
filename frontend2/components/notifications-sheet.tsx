@@ -49,9 +49,9 @@ export function NotificationsSheet() {
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Notificaciones" className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground relative">
+                <Button variant="ghost" size="icon" aria-label="Notificaciones" className="text-slate-600 hover:bg-slate-100 hover:text-slate-800 relative">
                     <Bell className="size-5" />
-                    <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full border-2 border-primary" />
+                    <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full border-2 border-white" />
                 </Button>
             </SheetTrigger>
 

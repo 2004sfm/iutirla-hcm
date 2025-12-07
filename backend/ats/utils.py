@@ -47,7 +47,7 @@ def send_status_change_email(candidate, new_stage):
                 <p>Si tienes alguna duda, por favor no dudes en contactarnos.</p>
             </div>
             <div class="footer">
-                <p>&copy; {settings.DEFAULT_FROM_EMAIL.split('@')[1] if '@' in settings.DEFAULT_FROM_EMAIL else 'IUTIRLA'}. Todos los derechos reservados.</p>
+                <p>&copy; <a href="https://iutirlaoficial.com/" style="color: inherit; text-decoration: none;">iutirlaoficial.com</a>. Todos los derechos reservados.</p>
                 <p>Este es un correo automático, por favor no respondas a esta dirección.</p>
             </div>
         </div>
@@ -79,14 +79,14 @@ def send_status_change_email(candidate, new_stage):
         # Ruta asumiendo estructura: backend/ats/utils.py -> backend/ -> ../frontend/public/logoiutirla.png
         # Ajustamos la ruta base para llegar al frontend
         base_dir = settings.BASE_DIR # backend/
-        logo_path = os.path.join(base_dir.parent, 'frontend', 'public', 'logoiutirla.png')
+        logo_path = os.path.join(base_dir.parent, 'frontend2', 'public', 'email-logoiutirla.webp')
         
         if os.path.exists(logo_path):
             with open(logo_path, 'rb') as f:
                 logo_data = f.read()
                 logo = MIMEImage(logo_data)
                 logo.add_header('Content-ID', '<logoiutirla>')
-                logo.add_header('Content-Disposition', 'inline', filename='logoiutirla.png')
+                logo.add_header('Content-Disposition', 'inline', filename='email-logoiutirla.webp')
                 msg.attach(logo)
         else:
             print(f"Logo not found at {logo_path}")

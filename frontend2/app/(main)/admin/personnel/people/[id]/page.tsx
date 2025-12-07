@@ -3,7 +3,7 @@
 import { useState, use, useEffect } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, User, Contact, FileText, Users, Mail, Phone, MapPin, CreditCard, Globe, Pencil, GraduationCap, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, User, Contact, FileText, Users, Mail, Phone, MapPin, CreditCard, Globe, Pencil, GraduationCap, Link as LinkIcon, Upload, Download, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CatalogCRUD, CatalogField } from "@/components/catalogs/catalog-crud";
 import { ColumnDef } from "@tanstack/react-table";
 import apiClient from "@/lib/api-client";
+import { toast } from "sonner";
 import { useBreadcrumb } from "@/context/breadcrumb-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const fetcher = (url: string) => apiClient.get(url).then((res) => res.data);
 
@@ -26,10 +38,53 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     const { setLabel } = useBreadcrumb();
     const { mutate } = useSWRConfig();
     const [isEditing, setIsEditing] = useState(false);
+    const [isUploadingCV, setIsUploadingCV] = useState(false);
     const { data: person, error, isLoading } = useSWR(`/api/core/persons/${id}/`, fetcher);
     const { data: countries } = useSWR("/api/core/countries/", fetcher);
     const countriesList = countries?.results || (Array.isArray(countries) ? countries : []);
     const venezuelaId = countriesList.find((c: any) => c.iso_2 === "VE")?.id;
+
+    const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error("Solo se permiten archivos PDF o DOCX");
+            return;
+        }
+
+        setIsUploadingCV(true);
+        try {
+            const formData = new FormData();
+            formData.append('cv_file', file);
+
+            await apiClient.patch(`/api/core/persons/${id}/`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+            toast.success("CV subido exitosamente");
+            mutate(`/api/core/persons/${id}/`);
+        } catch (error) {
+            console.error("Error uploading CV:", error);
+            toast.error("Error al subir el CV");
+        } finally {
+            setIsUploadingCV(false);
+        }
+    };
+
+    const handleCVDelete = async () => {
+        try {
+            await apiClient.patch(`/api/core/persons/${id}/`, { cv_file: null });
+            toast.success("CV eliminado exitosamente");
+            mutate(`/api/core/persons/${id}/`);
+        } catch (error) {
+            console.error("Error deleting CV:", error);
+            toast.error("Error al eliminar el CV");
+        }
+    };
 
     useEffect(() => {
         if (person) {
@@ -173,7 +228,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
             }
         },
         { name: "bank_account_type", label: "Tipo de Cuenta", type: "select", required: true, optionsUrl: "/api/core/bank-account-types/", optionLabelKey: "name", optionValueKey: "id" },
-        { name: "account_number", label: "Número de Cuenta", type: "text", required: true },
+        { name: "account_number", label: "Número de Cuenta", type: "text", required: true, showCharCount: true, lockPrefixLength: 4 },
         { name: "is_primary", label: "Principal", type: "checkbox" },
     ];
     const bankColumns: ColumnDef<any>[] = [
@@ -227,8 +282,31 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     // 7. Formación Académica (Education)
     const educationFields: CatalogField[] = [
         { name: "person", label: "Persona", type: "hidden", defaultValue: id },
-        { name: "level", label: "Nivel", type: "select", required: true, optionsUrl: "/api/talent/education-levels/", optionLabelKey: "name", optionValueKey: "id" },
-        { name: "field_of_study", label: "Campo de Estudio", type: "select", required: true, optionsUrl: "/api/talent/fields-of-study/", optionLabelKey: "name", optionValueKey: "id" },
+        {
+            name: "level",
+            label: "Nivel",
+            type: "select",
+            required: true,
+            optionsUrl: "/api/talent/education-levels/",
+            optionLabelKey: "name",
+            optionValueKey: "id",
+            onChange: (value, form) => {
+                // Reset field_of_study when level changes
+                form.setValue("field_of_study", "");
+            }
+        },
+        {
+            name: "field_of_study",
+            label: "Campo de Estudio",
+            type: "select",
+            required: true,
+            optionsUrl: "/api/talent/fields-of-study/",
+            optionLabelKey: "name",
+            optionValueKey: "id",
+            dependsOn: "level",
+            dependsOnFilterParam: "education_level",
+            // This will be dynamically filtered based on the selected level
+        },
         { name: "school_name", label: "Institución", type: "text", required: true },
         { name: "start_date", label: "Fecha Inicio", type: "date", required: true },
         { name: "end_date", label: "Fecha Fin", type: "date" },
@@ -474,6 +552,110 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
 
                         {/* --- 6. TALENTO --- */}
                         <TabsContent value="talent" className="m-0 space-y-8">
+                            {/* CV Section - First */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="size-5 text-primary" />
+                                        <h3 className="text-lg font-semibold">Curriculum</h3>
+                                    </div>
+                                </div>
+
+                                {person.cv_file ? (
+                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                                        <div className="flex items-center gap-3">
+                                            <FileText className="size-6 text-muted-foreground" />
+                                            <div>
+                                                <p className="font-medium">CV Actual</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {person.cv_file.split('/').pop()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => window.open(person.cv_file, '_blank')}
+                                            >
+                                                <Download className="size-4 mr-2" />
+                                                Descargar
+                                            </Button>
+
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={isUploadingCV}
+                                                    >
+                                                        <Upload className="size-4 mr-2" />
+                                                        {isUploadingCV ? "Subiendo..." : "Reemplazar"}
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Esto reemplazará el archivo CV actual. Esta acción no se puede deshacer.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => document.getElementById('cv-upload')?.click()}>
+                                                            Continuar
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive" size="sm">
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Esto eliminará permanentemente el archivo CV. Esta acción no se puede deshacer.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={handleCVDelete} className="bg-destructive text-white hover:bg-destructive/90">
+                                                            Eliminar
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-card">
+                                        <Upload className="size-12 text-muted-foreground mb-4" />
+                                        <p className="text-sm text-muted-foreground mb-4">
+                                            No hay CV cargado. Sube un archivo PDF o DOCX.
+                                        </p>
+                                        <Button
+                                            onClick={() => document.getElementById('cv-upload')?.click()}
+                                            disabled={isUploadingCV}
+                                        >
+                                            <Upload className="size-4 mr-2" />
+                                            {isUploadingCV ? "Subiendo..." : "Subir CV"}
+                                        </Button>
+                                    </div>
+                                )}
+                                <input
+                                    id="cv-upload"
+                                    type="file"
+                                    accept=".pdf,.doc,.docx"
+                                    onChange={handleCVUpload}
+                                    className="hidden"
+                                />
+                            </div>
+
                             <div className="space-y-4">
                                 <CatalogCRUD
                                     title="Formación Académica"

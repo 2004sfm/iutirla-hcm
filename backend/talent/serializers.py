@@ -38,7 +38,11 @@ class EducationLevelSerializer(serializers.ModelSerializer):
         return cleaned
 
 class FieldOfStudySerializer(serializers.ModelSerializer):
-    class Meta: model = FieldOfStudy; fields = '__all__'
+    education_level_name = serializers.CharField(source='education_level.name', read_only=True)
+    
+    class Meta: 
+        model = FieldOfStudy
+        fields = '__all__'
     def validate_name(self, value):
         cleaned = title_case_cleaner(validate_text_with_spaces(value, 'Nombre'))
         validate_min_length(cleaned, 2)

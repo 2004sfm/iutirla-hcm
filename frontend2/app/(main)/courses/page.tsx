@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Grid3x3, Loader2 } from "lucide-react";
 import { CourseCard } from "@/components/courses/course-card";
@@ -9,7 +9,7 @@ import { Course, EnrollmentStatus } from "@/types/course";
 import apiClient from "@/lib/api-client";
 import { useAuth } from "@/context/auth-context";
 
-const fetcher = (url: string) => apiClient.get(url).then((res) => res.data);
+const fetcher = (url: string) => apiClient.get(url).then((res) => res.data.results || res.data);
 
 interface CourseWithEnrollment extends Course {
     user_enrollment_status?: EnrollmentStatus;
@@ -34,7 +34,9 @@ export default function CoursesPage() {
     // Crear un mapa de course_id -> enrollment_status
     const enrollmentMap = new Map<number, EnrollmentStatus>();
     userEnrollments?.forEach((enrollment) => {
-        enrollmentMap.set(enrollment.course, enrollment.enrollment_status);
+        if (enrollment.course) {
+            enrollmentMap.set(Number(enrollment.course), enrollment.enrollment_status);
+        }
     });
 
     // Separar cursos en "Mis Cursos" y "Disponibles"
@@ -43,7 +45,12 @@ export default function CoursesPage() {
 
     allCourses?.forEach((course) => {
         const enrollmentStatus = enrollmentMap.get(course.id);
-        if (enrollmentStatus) {
+        const isInstructor = user?.person?.id === course.instructor_id;
+
+        // Curso va a "Mis Cursos" si:
+        // 1. El usuario está inscrito (tiene enrollment_status)
+        // 2. El usuario es el instructor
+        if (enrollmentStatus || isInstructor) {
             myCourses.push({ ...course, user_enrollment_status: enrollmentStatus });
         } else {
             availableCourses.push(course);
@@ -68,7 +75,7 @@ export default function CoursesPage() {
     }
 
     return (
-        <div className="flex flex-col h-full space-y-6 p-8">
+        <div className="flex flex-col h-full space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between border-b pb-6">
                 <div>
@@ -80,20 +87,24 @@ export default function CoursesPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
-                <TabsList className="w-full md:w-auto bg-muted/50 p-1">
+                <TabsList className="w-full flex flex-col md:grid md:grid-cols-2 h-auto p-1 bg-muted/50 gap-1">
                     <TabsTrigger
                         value="my-courses"
-                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 px-6 transition-all duration-300"
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                     >
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Mis Cursos
+                        <BookOpen className="mr-1 size-4" />
+                        <p className="truncate">
+                            Mis Cursos
+                        </p>
                     </TabsTrigger>
                     <TabsTrigger
                         value="available"
-                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 px-6 transition-all duration-300"
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                     >
-                        <Grid3x3 className="mr-2 h-4 w-4" />
-                        Cursos Disponibles
+                        <Grid3x3 className="mr-1 size-4" />
+                        <p className="truncate">
+                            Cursos Disponibles
+                        </p>
                     </TabsTrigger>
                 </TabsList>
 
@@ -115,6 +126,7 @@ export default function CoursesPage() {
                                         key={course.id}
                                         course={course}
                                         enrollmentStatus={course.user_enrollment_status}
+                                        isInstructor={user?.person?.id === course.instructor_id}
                                         href={`/courses/${course.id}`}
                                     />
                                 ))}
@@ -139,6 +151,13 @@ export default function CoursesPage() {
                                         key={course.id}
                                         course={course}
                                         href={`/courses/${course.id}`}
+                                        showEnrollButton={true}
+                                        onEnrollmentSuccess={() => {
+                                            mutate("/api/training/courses/");
+                                            if (user?.person) {
+                                                mutate(`/api/training/participants/?person=${user.person.id}`);
+                                            }
+                                        }}
                                     />
                                 ))}
                             </div>

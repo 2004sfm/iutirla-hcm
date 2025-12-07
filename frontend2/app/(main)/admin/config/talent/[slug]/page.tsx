@@ -53,8 +53,35 @@ const catalogs: Record<string, CatalogConfig> = {
         title: "Campos de Estudio",
         icon: BookOpen,
         apiUrl: "/api/talent/fields-of-study/",
-        fields: simpleNameFields,
-        columns: simpleNameColumns,
+        fields: [
+            {
+                name: "education_level",
+                label: "Nivel Educativo",
+                type: "select",
+                required: true,
+                optionsUrl: "/api/talent/education-levels/",
+                optionLabelKey: "name",
+                optionValueKey: "id",
+            },
+            {
+                name: "name",
+                label: "Nombre",
+                type: "text",
+                required: true,
+            },
+        ],
+        columns: [
+            {
+                accessorKey: "name",
+                header: "Campo de Estudio",
+                cell: ({ row }) => <div className="truncate">{row.getValue("name")}</div>
+            },
+            {
+                accessorKey: "education_level_name",
+                header: "Nivel Educativo",
+                cell: ({ row }) => <div className="truncate">{row.getValue("education_level_name") || "Sin nivel"}</div>
+            },
+        ],
         searchKey: "name",
     },
     languages: {

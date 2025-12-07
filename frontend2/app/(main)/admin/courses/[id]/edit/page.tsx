@@ -43,7 +43,7 @@ const courseFormSchema = z.object({
     duration_hours: z.number().min(1, "La duración debe ser mayor a 0"),
     max_participants: z.number().min(1, "El cupo máximo debe ser mayor a 0"),
     is_public: z.boolean(),
-    department: z.number().optional(),
+    department: z.number().nullable().optional(),
 }).refine((data) => {
     if (data.start_date && data.end_date) {
         return new Date(data.end_date) > new Date(data.start_date);
@@ -114,12 +114,13 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                 duration_hours: course.duration_hours,
                 max_participants: course.max_participants,
                 is_public: course.is_public,
-                department: course.department,
+                department: course.department ?? undefined, // Convert null to undefined
             });
         }
     }, [course, form]);
 
     const onSubmit = async (values: CourseFormValues) => {
+        console.log("Form submitted with values:", values);
         setIsSubmitting(true);
         try {
             const formData = new FormData();
@@ -139,6 +140,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                 formData.append("department", values.department.toString());
             }
 
+            console.log("Sending PATCH request to:", `/api/training/courses/${id}/`);
             await apiClient.patch(`/api/training/courses/${id}/`, formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -209,7 +211,15 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form
+                            onSubmit={form.handleSubmit(
+                                onSubmit,
+                                (errors) => {
+                                    console.log("Form validation errors:", errors);
+                                }
+                            )}
+                            className="space-y-6"
+                        >
                             {/* Nombre */}
                             <FormField
                                 control={form.control}
@@ -423,8 +433,8 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                                                     <FormControl>
                                                         <Combobox
                                                             options={departmentOptions}
-                                                            value={field.value}
-                                                            onSelect={(val) => field.onChange(val === "" ? undefined : val)}
+                                                            value={field.value ?? undefined}
+                                                            onSelect={(val) => field.onChange(val === "" ? null : val)}
                                                             placeholder="Seleccione departamento"
                                                             emptyText="No se encontraron departamentos"
                                                         />

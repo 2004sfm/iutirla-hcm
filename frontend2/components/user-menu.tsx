@@ -34,13 +34,13 @@ export function UserMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative size-10 rounded-full ring-2 ring-primary-foreground/20 hover:ring-primary-foreground/40">
+                <Button variant="ghost" className="relative size-10 rounded-full ring-2 ring-slate-200 hover:ring-slate-300 transition-all">
                     <Avatar>
                         <AvatarImage
                             src={user?.person?.photo || undefined}
                             alt={displayName}
                         />
-                        <AvatarFallback className="bg-primary-foreground text-primary">{getInitials()}</AvatarFallback>
+                        <AvatarFallback className="bg-brand-primary/10 text-brand-primary font-medium">{getInitials()}</AvatarFallback>
                     </Avatar>
                 </Button>
             </DropdownMenuTrigger>

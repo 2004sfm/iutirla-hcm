@@ -2,108 +2,29 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    BookOpen,
     Clock,
     Users,
     Calendar,
-    UserCheck,
-    Settings
+    UserCheck
 } from "lucide-react";
 import {
     Course,
-    EnrollmentStatus,
-    UserEnrollment,
-    enrollmentStatusDisplay,
     courseModalityDisplay
 } from "@/types/course";
-import { useAuth } from "@/context/auth-context";
 
 interface CourseHeaderProps {
     course: Course;
-    userEnrollment?: UserEnrollment | null;
-    onEnrollmentRequest?: () => void;
-    onManageRequests?: () => void;
-    isLoadingEnrollment?: boolean;
 }
 
-export function CourseHeader({
-    course,
-    userEnrollment,
-    onEnrollmentRequest,
-    onManageRequests,
-    isLoadingEnrollment = false,
-}: CourseHeaderProps) {
-    const { user } = useAuth();
+export function CourseHeader({ course }: CourseHeaderProps) {
     const [imageError, setImageError] = useState(false);
-
-    // Determinar si el usuario puede gestionar solicitudes (Admin o Instructor)
-    const canManageRequests = user?.is_staff || userEnrollment?.is_instructor;
 
     // Determinar la imagen de portada con fallback
     const coverImageSrc = !imageError && course.cover_image
         ? course.cover_image
         : "/images/course-placeholder.webp";
-
-    // --- LÓGICA DEL BOTÓN DINÁMICO ---
-    const getActionButton = () => {
-        // Si no hay información de inscripción, mostrar botón de solicitud
-        if (!userEnrollment || !userEnrollment.enrollment_status) {
-            return (
-                <Button
-                    size="lg"
-                    onClick={onEnrollmentRequest}
-                    disabled={isLoadingEnrollment || course.is_full}
-                    className="bg-primary hover:bg-primary/90"
-                >
-                    <BookOpen className="mr-2 h-5 w-5" />
-                    {course.is_full ? "Cupo Lleno" : "Solicitar Inscripción"}
-                </Button>
-            );
-        }
-
-        switch (userEnrollment.enrollment_status) {
-            case EnrollmentStatus.REQUESTED:
-                return (
-                    <Button
-                        size="lg"
-                        disabled
-                        variant="outline"
-                        className="border-yellow-500 text-yellow-600 dark:text-yellow-500"
-                    >
-                        <Clock className="mr-2 h-5 w-5" />
-                        Solicitud Pendiente
-                    </Button>
-                );
-
-            case EnrollmentStatus.REJECTED:
-                return (
-                    <Badge variant="destructive" className="text-base px-4 py-2">
-                        Solicitud Rechazada
-                    </Badge>
-                );
-
-            case EnrollmentStatus.ENROLLED:
-                return (
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                        <BookOpen className="mr-2 h-5 w-5" />
-                        Continuar Curso
-                    </Button>
-                );
-
-            case EnrollmentStatus.DROPPED:
-                return (
-                    <Badge variant="secondary" className="text-base px-4 py-2">
-                        Retirado del Curso
-                    </Badge>
-                );
-
-            default:
-                return null;
-        }
-    };
 
     return (
         <div className="relative w-full">
@@ -138,7 +59,7 @@ export function CourseHeader({
                 </div>
             </div>
 
-            {/* Info & Action Section */}
+            {/* Info Section */}
             <div className="bg-card border-x border-b rounded-b-lg p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     {/* Course Metadata */}
@@ -189,40 +110,18 @@ export function CourseHeader({
                             </div>
                         </div>
                     </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                        {canManageRequests && (
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                onClick={onManageRequests}
-                                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                            >
-                                <Settings className="mr-2 h-5 w-5" />
-                                Gestionar Solicitudes
-                            </Button>
-                        )}
-                        {getActionButton()}
-                    </div>
                 </div>
 
-                {/* Instructors Section */}
-                {course.instructors && course.instructors.length > 0 && (
+                {/* Instructor Section */}
+                {course.instructor_name && (
                     <div className="mt-6 pt-6 border-t">
                         <div className="flex items-center gap-2 mb-3">
                             <UserCheck className="h-5 w-5 text-primary" />
-                            <h3 className="font-semibold">
-                                {course.instructors.length === 1 ? 'Instructor' : 'Instructores'}
-                            </h3>
+                            <h3 className="font-semibold">Instructor</h3>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {course.instructors.map((instructor) => (
-                                <Badge key={instructor.id} variant="secondary" className="text-sm">
-                                    {instructor.person_name}
-                                </Badge>
-                            ))}
-                        </div>
+                        <Badge variant="secondary" className="text-sm">
+                            {course.instructor_name}
+                        </Badge>
                     </div>
                 )}
             </div>

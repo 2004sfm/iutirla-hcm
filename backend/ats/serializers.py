@@ -45,28 +45,40 @@ class JobPostingDetailSerializer(serializers.ModelSerializer):
     """Serializer detallado para ver una vacante específica (incluye configuración)"""
     department_name = serializers.CharField(source='position.department.name', read_only=True)
     position_title = serializers.CharField(source='position.job_title.name', read_only=True, allow_null=True)
+    position_objective = serializers.CharField(source='position.objective', read_only=True, allow_null=True)
     position_objectives = serializers.SerializerMethodField()
     position_requirements = serializers.SerializerMethodField()
+    position_functions = serializers.SerializerMethodField()
     
     class Meta:
         model = JobPosting
         fields = [
             'id', 'title', 'description', 'location',
             'department_name',
-            'position', 'position_title', 'position_objectives', 'position_requirements',
+            'position', 'position_title', 'position_objective', 
+            'position_objectives', 'position_requirements', 'position_functions',
             'ask_education',
             'status', 'published_date', 'closing_date',
             'created_at', 'updated_at'
         ]
     
+    
     def get_position_objectives(self, obj):
-        if obj.position:
-            return [o.description for o in obj.position.objectives.all()]
+        # Position has 'objective' (singular TextField), not 'objectives'
+        if obj.position and obj.position.objective:
+            return [obj.position.objective]  # Return as list for consistency
         return []
     
     def get_position_requirements(self, obj):
+        # Position has 'requirements' related_name from PositionRequirement model
         if obj.position:
-            return [r.description for r in obj.position.requirements.all()]
+            return [{'id': r.id, 'description': r.description, 'order': r.id} for r in obj.position.requirements.all()]
+        return []
+    
+    def get_position_functions(self, obj):
+        # Position has 'functions' related_name from PositionFunction model
+        if obj.position:
+            return [{'id': f.id, 'description': f.description, 'order': f.order} for f in obj.position.functions.all()]
         return []
 
 
@@ -106,12 +118,11 @@ class JobPostingAdminSerializer(serializers.ModelSerializer):
                     })
 
             # 2. Contar empleados activos en esta posición
-            from employment.models import Employment
+            from employment.models import Employment, is_active_status
             
-            active_employees_count = Employment.objects.filter(
-                position=position,
-                current_status__is_active_relationship=True
-            ).count()
+            # Obtener todos los empleados de esta posición y filtrar por activos
+            all_employments = Employment.objects.filter(position=position)
+            active_employees_count = sum(1 for emp in all_employments if is_active_status(emp.current_status))
             
             # Verificar si hay vacantes disponibles
             # Cupos libres = Total Vacantes - Empleados Activos
@@ -327,9 +338,10 @@ class CandidateStageUpdateSerializer(serializers.Serializer):
 class HireCandidateSerializer(serializers.Serializer):
     """Serializer para el proceso de contratación"""
     hire_date = serializers.DateField()
-    role = serializers.IntegerField(help_text="ID del Role")
-    employment_type = serializers.IntegerField(help_text="ID del EmploymentType")
-    employment_status = serializers.IntegerField(help_text="ID del EmploymentStatus")
+    role = serializers.CharField(help_text="Código del Role (EMP, MGR)")
+    employment_type = serializers.CharField(help_text="Código del EmploymentType (FIJ, TMP, PAS)")
+    employment_status = serializers.CharField(help_text="Código del EmploymentStatus (ACT, SUS, etc)")
+    end_date = serializers.DateField(required=False, allow_null=True)
     salary = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     notes = serializers.CharField(required=False, allow_blank=True)
 

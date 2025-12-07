@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     PersonSpecialAssignment, BusinessFunction, PersonFunctionalExperience,
     PersonCertification, CertificationDocument, EducationLevel, FieldOfStudy,
@@ -73,8 +74,9 @@ class EducationLevelViewSet(viewsets.ModelViewSet):
 class FieldOfStudyViewSet(viewsets.ModelViewSet):
     queryset = FieldOfStudy.objects.all()
     serializer_class = FieldOfStudySerializer
+    filterset_fields = ['education_level']
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    filter_backends = [UnaccentSearchFilter]
+    filter_backends = [DjangoFilterBackend, UnaccentSearchFilter]
     search_fields = ['name__unaccent']
 
 class PersonEducationViewSet(viewsets.ModelViewSet):
