@@ -126,6 +126,7 @@ export default function JobsPage() {
             fields={fields}
             columns={columns}
             searchKey="title"
+            singularName="Vacante"
             extraActions={(item) => (
                 <>
                     <DropdownMenuItem onClick={() => router.push(`/admin/ats/jobs/${item.id}`)}>

@@ -72,15 +72,14 @@ export default function PerformancePage() {
     }
 
     return (
-        <div className="container mx-auto py-8 px-4">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold flex items-center gap-3 text-slate-800">
-                    <ClipboardCheck className="w-8 h-8 text-brand-primary" />
-                    Mi Desempeño
-                </h1>
-                <p className="text-muted-foreground mt-2 text-lg">
-                    Consulta el historial de tus evaluaciones y retroalimentación recibida.
-                </p>
+        <div className="flex flex-col h-full space-y-6">
+            <div className="flex items-center justify-between border-b pb-6">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Mi Desempeño</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Consulta el historial de tus evaluaciones y retroalimentación recibida
+                    </p>
+                </div>
             </div>
 
             {reviews.length === 0 ? (

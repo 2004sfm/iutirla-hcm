@@ -203,10 +203,10 @@ export default function EmployeesPage() {
                                 Crear Cuentas ({pendingCount})
                             </Button>
                         )}
-                        <Button asChild>
+                        <Button asChild variant="outline">
                             <Link href="/admin/personnel/employees/new">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nuevo
+                                <Plus className="h-4 w-4" />
+                                Nuevo Empleado
                             </Link>
                         </Button>
                     </div>

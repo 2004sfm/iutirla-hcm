@@ -413,7 +413,33 @@ class EmployeeListSerializer(serializers.ModelSerializer):
         return "N/A"
 
 
+# --- SERIALIZADOR ESPECIALIZADO PARA DATOS DEL PUESTO (MY POSITION DATA) ---
+
+class EmployeePositionDataSerializer(EmploymentSerializer):
+    """
+    Serializador extendido para la vista "Datos del Puesto" del empleado.
+    Incluye detalles adicionales de la posición como Objetivo y Funciones.
+    """
+    position_objective = serializers.SerializerMethodField()
+    position_functions = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Employment
+        fields = '__all__'  # Inherit all fields from parent, SerializerMethodFields are auto-added
+
+    def get_position_objective(self, obj):
+        if obj.position:
+            return obj.position.objective
+        return None
+
+    def get_position_functions(self, obj):
+        if obj.position:
+            functions = obj.position.functions.all().order_by('order')
+            return [f.description for f in functions]
+        return []
+
 # --- SERIALIZADOR DE ROLES JERÁRQUICOS POR PERSONA (MATRIZ) ---
+
 
 class PersonDepartmentRoleSerializer(serializers.ModelSerializer):
     """

@@ -14,6 +14,7 @@ interface CatalogConfig {
     searchKey?: string;
     searchOptions?: { label: string; value: string }[];
     icon?: React.ElementType;
+    singularName?: string;
 }
 
 const simpleNameColumns: ColumnDef<any>[] = [
@@ -36,6 +37,7 @@ const simpleNameFields: CatalogField[] = [
 const catalogs: Record<string, CatalogConfig> = {
     countries: {
         title: "Países",
+        singularName: "País",
         icon: Globe,
         apiUrl: "/api/core/countries/",
         fields: [
@@ -54,6 +56,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     genders: {
         title: "Géneros",
+        singularName: "Género",
         icon: Users,
         apiUrl: "/api/core/genders/",
         fields: simpleNameFields,
@@ -62,6 +65,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "marital-statuses": {
         title: "Estados Civiles",
+        singularName: "Estado Civil",
         icon: Heart,
         apiUrl: "/api/core/marital-statuses/",
         fields: simpleNameFields,
@@ -70,6 +74,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "address-types": {
         title: "Tipos de Dirección",
+        singularName: "Tipo de Dirección",
         icon: MapPin,
         apiUrl: "/api/core/address-types/",
         fields: simpleNameFields,
@@ -78,6 +83,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "phone-types": {
         title: "Tipos de Teléfono",
+        singularName: "Tipo de Teléfono",
         icon: Phone,
         apiUrl: "/api/core/phone-types/",
         fields: simpleNameFields,
@@ -86,6 +92,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "phone-carriers": {
         title: "Operadoras Telefónicas",
+        singularName: "Operadora Telefónica",
         icon: Smartphone,
         apiUrl: "/api/core/phone-carriers/",
         fields: simpleNameFields,
@@ -94,6 +101,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "email-types": {
         title: "Tipos de Email",
+        singularName: "Tipo de Email",
         icon: Mail,
         apiUrl: "/api/core/email-types/",
         fields: simpleNameFields,
@@ -102,6 +110,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     banks: {
         title: "Bancos",
+        singularName: "Banco",
         icon: Building2,
         apiUrl: "/api/core/banks/",
         fields: [
@@ -120,6 +129,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "bank-account-types": {
         title: "Tipos de Cuenta Bancaria",
+        singularName: "Tipo de Cuenta Bancaria",
         icon: CreditCard,
         apiUrl: "/api/core/bank-account-types/",
         fields: simpleNameFields,
@@ -128,6 +138,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "relationship-types": {
         title: "Tipos de Relación",
+        singularName: "Tipo de Relación",
         icon: Link,
         apiUrl: "/api/core/relationship-types/",
         fields: simpleNameFields,
@@ -136,6 +147,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     states: {
         title: "Estados",
+        singularName: "Estado",
         icon: Map,
         apiUrl: "/api/core/states/",
         fields: [
@@ -162,6 +174,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "phone-carrier-codes": {
         title: "Códigos de Operadora",
+        singularName: "Código de Operadora",
         icon: Smartphone,
         apiUrl: "/api/core/phone-carrier-codes/",
         fields: [
@@ -205,6 +218,7 @@ export default function DynamicCatalogPage({ params }: { params: Promise<{ slug:
             columns={config.columns}
             searchKey={config.searchKey}
             searchOptions={config.searchOptions}
+            singularName={config.singularName}
         />
     );
 }

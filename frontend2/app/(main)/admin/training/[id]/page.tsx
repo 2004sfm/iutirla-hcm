@@ -133,7 +133,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => router.push(`/admin/courses/${id}/edit`)}>
+                    <Button variant="outline" onClick={() => router.push(`/admin/training/${id}/edit`)}>
                         <Edit className="mr-2 size-4" />
                         Editar Curso
                     </Button>
@@ -222,19 +222,15 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                                 </CardContent>
                             </Card>
 
-                            {course.instructors && course.instructors.length > 0 && (
+                            {course.instructor_name && (
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Instructores Asignados</CardTitle>
+                                        <CardTitle>Instructor Asignado</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="flex flex-wrap gap-2">
-                                            {course.instructors.map((instructor) => (
-                                                <Badge key={instructor.id} variant="secondary">
-                                                    {instructor.person_name}
-                                                </Badge>
-                                            ))}
-                                        </div>
+                                        <Badge variant="secondary">
+                                            {course.instructor_name}
+                                        </Badge>
                                     </CardContent>
                                 </Card>
                             )}

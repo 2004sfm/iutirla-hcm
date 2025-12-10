@@ -103,6 +103,7 @@ export default function CompetenciesPage() {
                 { label: "Descripción", value: "description" },
                 { label: "Categoría", value: "category" },
             ]}
+            singularName="Competencia"
             icon={ClipboardList}
         />
     );

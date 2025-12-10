@@ -13,6 +13,7 @@ interface CatalogConfig {
     columns: ColumnDef<any>[];
     searchKey?: string;
     icon?: React.ElementType;
+    singularName?: string;
 }
 
 const simpleNameColumns: ColumnDef<any>[] = [
@@ -35,6 +36,7 @@ const simpleNameFields: CatalogField[] = [
 const catalogs: Record<string, CatalogConfig> = {
     "business-functions": {
         title: "Funciones de Negocio",
+        singularName: "Función de Negocio",
         icon: Briefcase,
         apiUrl: "/api/talent/business-functions/",
         fields: simpleNameFields,
@@ -43,6 +45,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "education-levels": {
         title: "Niveles Educativos",
+        singularName: "Nivel Educativo",
         icon: GraduationCap,
         apiUrl: "/api/talent/education-levels/",
         fields: simpleNameFields,
@@ -51,6 +54,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     "fields-of-study": {
         title: "Campos de Estudio",
+        singularName: "Campo de Estudio",
         icon: BookOpen,
         apiUrl: "/api/talent/fields-of-study/",
         fields: [
@@ -86,6 +90,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     languages: {
         title: "Idiomas",
+        singularName: "Idioma",
         icon: Languages,
         apiUrl: "/api/talent/languages/",
         fields: simpleNameFields,
@@ -94,6 +99,7 @@ const catalogs: Record<string, CatalogConfig> = {
     },
     proficiencies: {
         title: "Niveles de Dominio de Idioma",
+        singularName: "Nivel de Dominio",
         icon: BarChart,
         apiUrl: "/api/talent/language-proficiencies/",
         fields: simpleNameFields,
@@ -118,6 +124,7 @@ export default function TalentDynamicCatalogPage({ params }: { params: Promise<{
             fields={config.fields}
             columns={config.columns}
             searchKey={config.searchKey}
+            singularName={config.singularName}
         />
     );
 }

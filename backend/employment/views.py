@@ -11,7 +11,8 @@ from .models import (
 )
 from .serializers import (
     EmploymentSerializer, EmployeeListSerializer, EmploymentStatusLogSerializer,
-    EmploymentDepartmentRoleSerializer, PersonDepartmentRoleSerializer
+    EmploymentDepartmentRoleSerializer, PersonDepartmentRoleSerializer,
+    EmployeePositionDataSerializer # Nuevo serializer
 )
 from core.filters import UnaccentSearchFilter
 
@@ -278,6 +279,36 @@ class EmploymentViewSet(viewsets.ModelViewSet):
             final_data.append(item)
 
         return Response(final_data)
+
+    # --- ACCIÓN 4: DATOS DEL PUESTO (MY POSITION DATA) ---
+    @action(detail=False, methods=['get'])
+    def my_position_data(self, request):
+        """
+        Retorna los empleos activos del usuario con detalle de posición (Objetivo, Funciones).
+        Usado en la página "Datos del Puesto".
+        """
+        user = request.user
+        if not hasattr(user, 'person'):
+            return Response([])
+
+        # Buscar empleos activos asociados a la persona
+        my_employments = Employment.objects.filter(
+            person=user.person
+        ).select_related(
+            'position', 
+            'position__department', 
+            'position__job_title'
+        ).prefetch_related(
+            'position__functions',  # Para el serializer
+            'position__manager_positions'  # Para supervisor info (ManyToMany)
+        )
+        
+        # Filtrar solo activos usando helper
+        active_employments = [e for e in my_employments if is_active_status(e.current_status)]
+        
+        serializer = EmployeePositionDataSerializer(active_employments, many=True, context={'request': request})
+        return Response(serializer.data)
+
 
 # Viewset para logs
 class EmploymentStatusLogViewSet(viewsets.ModelViewSet):

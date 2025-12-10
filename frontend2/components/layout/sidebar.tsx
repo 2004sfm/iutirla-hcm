@@ -24,7 +24,9 @@ import {
     BookOpenText,
     ClipboardList,
     BookOpen,
-    Crown
+    Crown,
+    User,
+    IdCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IutirlaLogo } from "../iutirla-logo";
@@ -67,10 +69,8 @@ const menuItems: MenuItem[] = [
             { label: "Organización", href: "/admin/organization", icon: Network },
             {
                 label: "Capacitación",
+                href: "/admin/training",
                 icon: GraduationCap,
-                children: [
-                    { label: "Cursos", href: "/admin/courses", icon: Circle },
-                ],
             },
             {
                 label: "Reclutamiento",
@@ -88,7 +88,6 @@ const menuItems: MenuItem[] = [
                     { label: "Competencias", href: "/admin/performance/competencies", icon: Circle },
                 ],
             },
-            { label: "Equipos", href: "/admin/performance/teams", icon: Users },
             {
                 label: "Configuración",
                 icon: Settings,
@@ -101,6 +100,16 @@ const menuItems: MenuItem[] = [
     },
     // Opciones de empleado (visibles para todos)
     {
+        label: "Mi Expediente",
+        icon: IdCard,
+        children: [
+            { label: "Perfil de Talento", href: "/employee/talent-profile", icon: Circle },
+            { label: "Datos Personales", href: "/employee/personal-data", icon: Circle },
+            { label: "Datos del Puesto", href: "/employee/job-data", icon: Circle },
+        ],
+    },
+    { label: "Organigrama", href: "/org-chart", icon: Network },
+    {
         label: "Mi Desempeño",
         href: "/performance",
         icon: Gauge,
@@ -111,8 +120,8 @@ const menuItems: MenuItem[] = [
         icon: Users,
     },
     {
-        label: "Formación",
-        href: "/courses",
+        label: "Capacitación",
+        href: "/training",
         icon: BookOpen,
     },
 ];

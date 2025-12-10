@@ -113,6 +113,7 @@ export default function PeriodsPage() {
             columns={periodsColumns}
             searchKey="name"
             extraActions={extraActions}
+            singularName="Período"
             icon={Calendar}
             refreshKey={refreshKey}
             disablePagination

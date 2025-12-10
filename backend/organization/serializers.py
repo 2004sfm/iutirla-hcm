@@ -14,17 +14,17 @@ class PositionFunctionSerializer(serializers.ModelSerializer):
 class DepartmentSerializer(serializers.ModelSerializer):
     # Campo extra para mostrar el nombre del padre
     parent_name = serializers.CharField(source='parent.name', read_only=True)
-    # Include nested parent object for display
-    parent = serializers.SerializerMethodField()
 
     class Meta:
         model = Department
         fields = '__all__'
     
-    def get_parent(self, obj):
-        if obj.parent:
-            return {'id': obj.parent.id, 'name': obj.parent.name}
-        return None
+    def to_representation(self, instance):
+        """Customize the output to include nested parent object"""
+        data = super().to_representation(instance)
+        if instance.parent:
+            data['parent'] = {'id': instance.parent.id, 'name': instance.parent.name}
+        return data
 
     def validate_name(self, value): 
         cleaned = title_case_cleaner(validate_alphanumeric_with_spaces(value, 'Nombre'))

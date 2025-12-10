@@ -1,0 +1,891 @@
+// =================================================================
+// DBML Database Schema for IUTIRLA HCM
+// Generated from Django models.py files
+// =================================================================
+
+// ===================== CATÁLOGOS DE CHOICES =====================
+// Estos catálogos representan los campos con choices= en Django
+
+Table nationalid_category_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table nationalid_prefix_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table jobposting_status_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table candidate_stage_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table employment_role_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table employment_type_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table employment_status_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table employment_exit_reason_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table hierarchical_role_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table competency_category_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table review_status_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table course_status_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table course_modality_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table resource_type_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table enrollment_status_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table academic_status_cat {
+  code varchar [pk]
+  name varchar
+}
+
+Table attendance_status_cat {
+  code varchar [pk]
+  name varchar
+}
+
+
+// ===================== ACCOUNTS =====================
+
+Table User {
+  id integer [pk, increment]
+  person_id integer [null]
+  username varchar [unique]
+  password varchar
+  is_active boolean
+  is_staff boolean
+  is_superuser boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: User.person_id - Person.id
+
+
+// ===================== CORE CATALOGS =====================
+
+Table Gender {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table MaritalStatus {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table Country {
+  id integer [pk, increment]
+  name varchar [unique]
+  iso_2 varchar [unique]
+}
+
+Table DisabilityGroup {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table DisabilityType {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table DisabilityStatus {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table AddressType {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table EmailType {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table PhoneType {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table PhoneCarrier {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table Bank {
+  id integer [pk, increment]
+  name varchar [unique]
+  code varchar [unique]
+}
+
+Table BankAccountType {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table RelationshipType {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table State {
+  id integer [pk, increment]
+  name varchar
+  country_id integer
+}
+
+Ref: State.country_id > Country.id
+
+Table PhoneCarrierCode {
+  id integer [pk, increment]
+  carrier_id integer
+  code varchar
+}
+
+Ref: PhoneCarrierCode.carrier_id > PhoneCarrier.id
+
+
+// ===================== CORE - PERSON =====================
+
+Table Person {
+  id integer [pk, increment]
+  first_name varchar
+  second_name varchar [null]
+  paternal_surname varchar
+  maternal_surname varchar [null]
+  gender_id integer [null]
+  marital_status_id integer [null]
+  birthdate date [null]
+  country_of_birth_id integer [null]
+  photo varchar [null]
+  cv_file varchar [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: Person.gender_id > Gender.id
+Ref: Person.marital_status_id > MaritalStatus.id
+Ref: Person.country_of_birth_id > Country.id
+
+
+// ===================== CORE - PERSON DETAILS =====================
+
+Table NationalId {
+  id integer [pk, increment]
+  person_id integer
+  category varchar
+  document_type varchar
+  number varchar
+  is_primary boolean
+  file varchar [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: NationalId.person_id > Person.id
+Ref: NationalId.category > nationalid_category_cat.code
+Ref: NationalId.document_type > nationalid_prefix_cat.code
+
+Table PersonDisabilityVE {
+  person_id integer [pk]
+  date_learned date [null]
+  disability_group_id integer [null]
+  disability_degree varchar [null]
+  disability_type_id integer [null]
+  issuing_authority varchar [null]
+  reference_number varchar [null]
+  disability_status_id integer [null]
+  date_of_determination date [null]
+}
+
+Ref: PersonDisabilityVE.person_id - Person.id
+Ref: PersonDisabilityVE.disability_group_id > DisabilityGroup.id
+Ref: PersonDisabilityVE.disability_type_id > DisabilityType.id
+Ref: PersonDisabilityVE.disability_status_id > DisabilityStatus.id
+
+Table Address {
+  id integer [pk, increment]
+  person_id integer
+  address_type_id integer [null]
+  country_id integer [null]
+  state_id integer [null]
+  city varchar
+  postal_code varchar [null]
+  street_name_and_number varchar
+  extra_address_line varchar [null]
+  house_number varchar [null]
+  apartment varchar [null]
+  street_2 varchar [null]
+}
+
+Ref: Address.person_id > Person.id
+Ref: Address.address_type_id > AddressType.id
+Ref: Address.country_id > Country.id
+Ref: Address.state_id > State.id
+
+Table PersonEmail {
+  id integer [pk, increment]
+  person_id integer
+  email_type_id integer [null]
+  email_address varchar [unique]
+  is_primary boolean
+}
+
+Ref: PersonEmail.person_id > Person.id
+Ref: PersonEmail.email_type_id > EmailType.id
+
+Table PersonPhone {
+  id integer [pk, increment]
+  person_id integer
+  phone_type_id integer [null]
+  carrier_code_id integer [null]
+  subscriber_number varchar
+  is_primary boolean
+}
+
+Ref: PersonPhone.person_id > Person.id
+Ref: PersonPhone.phone_type_id > PhoneType.id
+Ref: PersonPhone.carrier_code_id > PhoneCarrierCode.id
+
+Table PersonBankAccount {
+  id integer [pk, increment]
+  person_id integer
+  bank_id integer [null]
+  bank_account_type_id integer [null]
+  account_number varchar [unique]
+  is_primary boolean
+}
+
+Ref: PersonBankAccount.person_id > Person.id
+Ref: PersonBankAccount.bank_id > Bank.id
+Ref: PersonBankAccount.bank_account_type_id > BankAccountType.id
+
+Table PersonDocument {
+  id integer [pk, increment]
+  person_id integer
+  file varchar [null]
+  description varchar [null]
+}
+
+Ref: PersonDocument.person_id > Person.id
+
+Table PersonNationality {
+  id integer [pk, increment]
+  person_id integer
+  country_id integer
+}
+
+Ref: PersonNationality.person_id > Person.id
+Ref: PersonNationality.country_id > Country.id
+
+Table Dependent {
+  id integer [pk, increment]
+  person_id integer
+  first_name varchar
+  second_name varchar [null]
+  paternal_surname varchar
+  maternal_surname varchar [null]
+  relationship_id integer [null]
+  birthdate date
+  gender_id integer [null]
+}
+
+Ref: Dependent.person_id > Person.id
+Ref: Dependent.relationship_id > RelationshipType.id
+Ref: Dependent.gender_id > Gender.id
+
+Table EmergencyContact {
+  id integer [pk, increment]
+  person_id integer
+  first_name varchar
+  second_name varchar [null]
+  paternal_surname varchar
+  maternal_surname varchar [null]
+  relationship_id integer [null]
+  phone_carrier_code_id integer [null]
+  phone_number varchar
+  is_primary boolean
+}
+
+Ref: EmergencyContact.person_id > Person.id
+Ref: EmergencyContact.relationship_id > RelationshipType.id
+Ref: EmergencyContact.phone_carrier_code_id > PhoneCarrierCode.id
+
+
+// ===================== ORGANIZATION =====================
+
+Table Department {
+  id integer [pk, increment]
+  name varchar [unique]
+  parent_id integer [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: Department.parent_id > Department.id
+
+Table JobTitle {
+  id integer [pk, increment]
+  name varchar [unique]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table Position {
+  id integer [pk, increment]
+  department_id integer [null]
+  job_title_id integer [null]
+  vacancies integer
+  objective text [null]
+  is_manager boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: Position.department_id > Department.id
+Ref: Position.job_title_id > JobTitle.id
+
+// ManyToMany: Position.manager_positions (tabla intermedia)
+Table Position_manager_positions {
+  id integer [pk, increment]
+  from_position_id integer
+  to_position_id integer
+}
+
+Ref: Position_manager_positions.from_position_id > Position.id
+Ref: Position_manager_positions.to_position_id > Position.id
+
+Table PositionRequirement {
+  id integer [pk, increment]
+  position_id integer
+  description text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PositionRequirement.position_id > Position.id
+
+Table PositionFunction {
+  id integer [pk, increment]
+  position_id integer
+  description text
+  order integer
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PositionFunction.position_id > Position.id
+
+
+// ===================== ATS (APPLICANT TRACKING) =====================
+
+Table JobPosting {
+  id integer [pk, increment]
+  title varchar
+  description text
+  position_id integer [null]
+  location varchar [null]
+  ask_education boolean
+  status varchar
+  published_date date [null]
+  closing_date date [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: JobPosting.position_id > Position.id
+Ref: JobPosting.status > jobposting_status_cat.code
+
+Table Candidate {
+  id integer [pk, increment]
+  job_posting_id integer
+  first_name varchar
+  last_name varchar
+  email varchar
+  phone_area_code_id integer [null]
+  phone_subscriber varchar [null]
+  phone varchar [null]
+  national_id varchar
+  avatar varchar [null]
+  cv_file varchar
+  education_details text [null]
+  stage varchar
+  notes text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: Candidate.job_posting_id > JobPosting.id
+Ref: Candidate.phone_area_code_id > PhoneCarrierCode.id
+Ref: Candidate.stage > candidate_stage_cat.code
+
+Table CandidateEducation {
+  id integer [pk, increment]
+  candidate_id integer
+  school_name varchar
+  level_name varchar
+  field_name varchar
+  start_date date
+  end_date date [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: CandidateEducation.candidate_id > Candidate.id
+
+Table CandidateLog {
+  id integer [pk, increment]
+  candidate_id integer
+  user_id integer [null]
+  action varchar
+  details text [null]
+  timestamp timestamp
+}
+
+Ref: CandidateLog.candidate_id > Candidate.id
+Ref: CandidateLog.user_id > User.id
+
+
+// ===================== EMPLOYMENT =====================
+
+Table Employment {
+  id integer [pk, increment]
+  person_id integer
+  position_id integer
+  role varchar
+  employment_type varchar
+  current_status varchar
+  hire_date date
+  end_date date [null]
+  exit_reason varchar [null]
+  exit_notes text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: Employment.person_id > Person.id
+Ref: Employment.position_id > Position.id
+Ref: Employment.role > employment_role_cat.code
+Ref: Employment.employment_type > employment_type_cat.code
+Ref: Employment.current_status > employment_status_cat.code
+Ref: Employment.exit_reason > employment_exit_reason_cat.code
+
+Table EmploymentStatusLog {
+  id integer [pk, increment]
+  employment_id integer
+  status varchar
+  start_date date
+  reason text [null]
+  created_at timestamp
+}
+
+Ref: EmploymentStatusLog.employment_id > Employment.id
+Ref: EmploymentStatusLog.status > employment_status_cat.code
+
+Table EmploymentDepartmentRole {
+  id integer [pk, increment]
+  employment_id integer
+  department_id integer
+  hierarchical_role varchar
+  start_date date
+  end_date date [null]
+  notes text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: EmploymentDepartmentRole.employment_id > Employment.id
+Ref: EmploymentDepartmentRole.department_id > Department.id
+Ref: EmploymentDepartmentRole.hierarchical_role > hierarchical_role_cat.code
+
+Table PersonDepartmentRole {
+  id integer [pk, increment]
+  person_id integer
+  department_id integer
+  hierarchical_role varchar
+  start_date date
+  end_date date [null]
+  notes text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonDepartmentRole.person_id > Person.id
+Ref: PersonDepartmentRole.department_id > Department.id
+Ref: PersonDepartmentRole.hierarchical_role > hierarchical_role_cat.code
+
+
+// ===================== PERFORMANCE =====================
+
+Table EvaluationPeriod {
+  id integer [pk, increment]
+  name varchar [unique]
+  start_date date
+  end_date date
+  is_active boolean
+}
+
+Table Competency {
+  id integer [pk, increment]
+  name varchar
+  description text [null]
+  category varchar [null]
+  is_global boolean
+}
+
+Ref: Competency.category > competency_category_cat.code
+
+// ManyToMany: Competency.job_titles (tabla intermedia)
+Table Competency_job_titles {
+  id integer [pk, increment]
+  competency_id integer
+  jobtitle_id integer
+}
+
+Ref: Competency_job_titles.competency_id > Competency.id
+Ref: Competency_job_titles.jobtitle_id > JobTitle.id
+
+Table PerformanceReview {
+  id integer [pk, increment]
+  period_id integer
+  employment_id integer
+  evaluator_id integer
+  final_score decimal [null]
+  status varchar
+  feedback_manager text
+  feedback_employee text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PerformanceReview.period_id > EvaluationPeriod.id
+Ref: PerformanceReview.employment_id > Employment.id
+Ref: PerformanceReview.evaluator_id > Person.id
+Ref: PerformanceReview.status > review_status_cat.code
+
+Table ReviewDetail {
+  id integer [pk, increment]
+  review_id integer
+  competency_id integer
+  score integer
+  comment text [null]
+}
+
+Ref: ReviewDetail.review_id > PerformanceReview.id
+Ref: ReviewDetail.competency_id > Competency.id
+
+
+// ===================== TALENT =====================
+
+Table BusinessFunction {
+  id integer [pk, increment]
+  name varchar [unique]
+  description text [null]
+}
+
+Table EducationLevel {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table FieldOfStudy {
+  id integer [pk, increment]
+  education_level_id integer [null]
+  name varchar
+}
+
+Ref: FieldOfStudy.education_level_id > EducationLevel.id
+
+Table PersonSpecialAssignment {
+  id integer [pk, increment]
+  person_id integer
+  project_name varchar
+  description text [null]
+  start_date date
+  end_date date [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonSpecialAssignment.person_id > Person.id
+
+Table PersonFunctionalExperience {
+  id integer [pk, increment]
+  person_id integer
+  function_id integer [null]
+  start_date date
+  end_date date [null]
+  comments text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonFunctionalExperience.person_id > Person.id
+Ref: PersonFunctionalExperience.function_id > BusinessFunction.id
+
+Table PersonCertification {
+  id integer [pk, increment]
+  person_id integer
+  name varchar
+  description text [null]
+  institution varchar
+  effective_date date
+  expiration_date date [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonCertification.person_id > Person.id
+
+Table CertificationDocument {
+  id integer [pk, increment]
+  certification_id integer
+  file varchar [null]
+  description varchar [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: CertificationDocument.certification_id > PersonCertification.id
+
+Table PersonEducation {
+  id integer [pk, increment]
+  person_id integer
+  school_name varchar
+  level_id integer [null]
+  field_of_study_id integer [null]
+  start_date date
+  end_date date [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonEducation.person_id > Person.id
+Ref: PersonEducation.level_id > EducationLevel.id
+Ref: PersonEducation.field_of_study_id > FieldOfStudy.id
+
+Table PersonVolunteerExperience {
+  id integer [pk, increment]
+  person_id integer
+  organization_name varchar
+  role varchar
+  start_date date
+  end_date date [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonVolunteerExperience.person_id > Person.id
+
+Table PersonAward {
+  id integer [pk, increment]
+  person_id integer
+  name varchar
+  description text [null]
+  institution varchar [null]
+  issue_date date
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonAward.person_id > Person.id
+
+Table PersonMembership {
+  id integer [pk, increment]
+  person_id integer
+  organization_name varchar
+  role varchar [null]
+  start_date date
+  end_date date [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: PersonMembership.person_id > Person.id
+
+Table Language {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table LanguageProficiency {
+  id integer [pk, increment]
+  name varchar [unique]
+}
+
+Table PersonLanguage {
+  id integer [pk, increment]
+  person_id integer
+  language_id integer
+  speaking_proficiency_id integer [null]
+  reading_proficiency_id integer [null]
+  writing_proficiency_id integer [null]
+}
+
+Ref: PersonLanguage.person_id > Person.id
+Ref: PersonLanguage.language_id > Language.id
+Ref: PersonLanguage.speaking_proficiency_id > LanguageProficiency.id
+Ref: PersonLanguage.reading_proficiency_id > LanguageProficiency.id
+Ref: PersonLanguage.writing_proficiency_id > LanguageProficiency.id
+
+
+// ===================== TRAINING =====================
+
+Table Course {
+  id integer [pk, increment]
+  name varchar
+  description text [null]
+  cover_image varchar [null]
+  start_date date
+  end_date date
+  modality varchar
+  max_participants integer
+  duration_hours integer
+  status varchar
+  instructor_id integer [null]
+  is_public boolean
+  department_id integer [null]
+  requires_approval_to_complete boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: Course.instructor_id > Person.id
+Ref: Course.department_id > Department.id
+Ref: Course.modality > course_modality_cat.code
+Ref: Course.status > course_status_cat.code
+
+Table CourseModule {
+  id integer [pk, increment]
+  course_id integer
+  name varchar
+  description text [null]
+  order integer
+}
+
+Ref: CourseModule.course_id > Course.id
+
+Table CourseLesson {
+  id integer [pk, increment]
+  module_id integer
+  title varchar
+  content text [null]
+  order integer
+  duration_minutes integer
+}
+
+Ref: CourseLesson.module_id > CourseModule.id
+
+Table CourseResource {
+  id integer [pk, increment]
+  course_id integer
+  lesson_id integer [null]
+  name varchar
+  resource_type varchar
+  file varchar [null]
+  url varchar [null]
+  created_at timestamp
+}
+
+Ref: CourseResource.course_id > Course.id
+Ref: CourseResource.lesson_id > CourseLesson.id
+Ref: CourseResource.resource_type > resource_type_cat.code
+
+Table CourseSession {
+  id integer [pk, increment]
+  course_id integer
+  topic varchar
+  date date
+  start_time time
+  end_time time
+}
+
+Ref: CourseSession.course_id > Course.id
+
+Table CourseParticipant {
+  id integer [pk, increment]
+  course_id integer
+  person_id integer
+  enrollment_status varchar
+  academic_status varchar
+  grade decimal [null]
+  created_at timestamp
+}
+
+Ref: CourseParticipant.course_id > Course.id
+Ref: CourseParticipant.person_id > Person.id
+Ref: CourseParticipant.enrollment_status > enrollment_status_cat.code
+Ref: CourseParticipant.academic_status > academic_status_cat.code
+
+Table LessonProgress {
+  id integer [pk, increment]
+  enrollment_id integer
+  lesson_id integer
+  completed boolean
+  completed_at timestamp [null]
+}
+
+Ref: LessonProgress.enrollment_id > CourseParticipant.id
+Ref: LessonProgress.lesson_id > CourseLesson.id
+
+Table AttendanceRecord {
+  id integer [pk, increment]
+  session_id integer
+  participant_id integer
+  status varchar
+  notes varchar [null]
+}
+
+Ref: AttendanceRecord.session_id > CourseSession.id
+Ref: AttendanceRecord.participant_id > CourseParticipant.id
+Ref: AttendanceRecord.status > attendance_status_cat.code

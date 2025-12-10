@@ -143,6 +143,7 @@ export default function CandidatesPage() {
             fields={fields}
             columns={columns}
             searchKey="search"
+            singularName="Candidato"
             extraActions={(item) => (
                 <>
                     <DropdownMenuItem onClick={() => router.push(`/admin/ats/candidates/${item.id}`)}>

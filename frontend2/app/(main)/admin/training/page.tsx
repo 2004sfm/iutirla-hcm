@@ -111,7 +111,7 @@ export default function AdminCoursesPage() {
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <CatalogCRUD
-                title="Gestión de Cursos"
+                title="Gestión de Capacitación"
                 icon={BookOpen}
                 apiUrl="/api/training/courses/"
                 fields={fields}
@@ -120,17 +120,17 @@ export default function AdminCoursesPage() {
                 disableCreate={true}
                 disableEdit={true}
                 customToolbarActions={
-                    <Button asChild>
-                        <Link href="/admin/courses/new">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Crear Curso
+                    <Button asChild variant="outline">
+                        <Link href="/admin/training/new">
+                            <Plus className="h-4 w-4" />
+                            Nuevo Curso
                         </Link>
                     </Button>
                 }
                 extraActions={(item) => (
                     <>
                         <DropdownMenuItem asChild>
-                            <Link href={`/admin/courses/${item.id}`} className="cursor-pointer w-full flex items-center">
+                            <Link href={`/admin/training/${item.id}`} className="cursor-pointer w-full flex items-center">
                                 <Eye className="mr-2 h-4 w-4" />
                                 Ver Detalle
                             </Link>

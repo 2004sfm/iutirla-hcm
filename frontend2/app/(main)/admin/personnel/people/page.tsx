@@ -105,9 +105,9 @@ export default function PeoplePage() {
                 disableCreate={true}
                 disableEdit={true}
                 customToolbarActions={
-                    <Button asChild>
+                    <Button asChild variant="outline">
                         <Link href="/admin/personnel/people/new">
-                            <Plus className="mr-2 h-4 w-4" />
+                            <Plus className="h-4 w-4" />
                             Nueva Persona
                         </Link>
                     </Button>

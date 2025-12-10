@@ -119,7 +119,7 @@ export default function LessonDetailPage({ params }: { params: Promise<{ id: str
         try {
             await apiClient.delete(`/api/training/lessons/${lessonId}/`);
             toast.success("Lección eliminada");
-            router.push(`/courses/${id}`);
+            router.push(`/training`);
         } catch (error) {
             console.error("Error deleting lesson:", error);
             toast.error("Error al eliminar la lección");

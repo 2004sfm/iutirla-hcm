@@ -9,6 +9,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
     CheckCircle,
@@ -225,9 +226,11 @@ export function CourseModuleAccordion({
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => router.push(`/courses/${module.course}/lessons/${lesson.id}`)}
+                                                        asChild
                                                     >
-                                                        Ver Contenido
+                                                        <Link href={`/training/${module.course}/lessons/${lesson.id}`}>
+                                                            Ver Contenido
+                                                        </Link>
                                                     </Button>
 
                                                     {!isInstructor && !completed && (

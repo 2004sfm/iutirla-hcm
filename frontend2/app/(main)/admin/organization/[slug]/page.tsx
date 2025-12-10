@@ -17,6 +17,7 @@ interface CatalogConfig {
     searchKey?: string;
     searchOptions?: { label: string; value: string }[];
     extraActions?: (item: any) => React.ReactNode;
+    singularName?: string;
 }
 
 const simpleNameColumns: ColumnDef<any>[] = [
@@ -39,6 +40,7 @@ const simpleNameFields: CatalogField[] = [
 const configs: Record<string, CatalogConfig> = {
     departments: {
         title: "Departamentos",
+        singularName: "Departamento",
         apiUrl: "/api/organization/departments/",
         fields: [
             { name: "name", label: "Nombre", type: "text", required: true },
@@ -63,6 +65,7 @@ const configs: Record<string, CatalogConfig> = {
     },
     "job-titles": {
         title: "Títulos de Cargo",
+        singularName: "Título de Cargo",
         apiUrl: "/api/organization/job-titles/",
         fields: simpleNameFields,
         columns: simpleNameColumns,
@@ -73,6 +76,7 @@ const configs: Record<string, CatalogConfig> = {
     },
     positions: {
         title: "Posiciones",
+        singularName: "Posición",
         apiUrl: "/api/organization/positions/",
         fields: [
             { name: "job_title", label: "Cargo", type: "select", required: true, optionsUrl: "/api/organization/job-titles/", optionLabelKey: "name", optionValueKey: "id" },
@@ -103,6 +107,7 @@ const configs: Record<string, CatalogConfig> = {
     },
     "person-department-roles": {
         title: "Roles Jerárquicos",
+        singularName: "Rol Jerárquico",
         apiUrl: "/api/employment/person-department-roles/",
         fields: [
             {
@@ -185,6 +190,7 @@ export default function OrganizationDynamicCatalogPage({ params }: { params: Pro
                 searchKey={config.searchKey}
                 searchOptions={config.searchOptions}
                 extraActions={config.extraActions}
+                singularName={config.singularName}
             />
         </div>
     );

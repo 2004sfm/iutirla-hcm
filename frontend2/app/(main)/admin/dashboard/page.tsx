@@ -278,7 +278,7 @@ export default function DashboardPage() {
             isPositive: (stats?.employees.change || 0) >= 0,
             icon: <Users className="w-6 h-6" />,
             color: "brand-primary",
-            link: "/admin/employment/employees",
+            link: "/admin/personnel/employees",
         },
         {
             title: "Cursos de Capacitación",
@@ -287,7 +287,7 @@ export default function DashboardPage() {
             isPositive: true,
             icon: <BookOpen className="w-6 h-6" />,
             color: "brand-secondary",
-            link: "/admin/training/courses",
+            link: "/admin/training",
         },
         {
             title: "Evaluaciones Completadas",
@@ -563,7 +563,7 @@ export default function DashboardPage() {
                                 Nuevo Empleado
                             </button>
                         </Link>
-                        <Link href="/admin/courses/new">
+                        <Link href="/admin/training/new">
                             <button className="w-full bg-brand-secondary text-brand-secondary-foreground p-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                                 <BookOpen className="w-4 h-4" />
                                 Nuevo Curso

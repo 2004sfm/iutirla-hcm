@@ -654,6 +654,24 @@ class PersonSerializer(serializers.ModelSerializer):
 
     class Meta: model = Person; fields = '__all__'
     
+    def to_representation(self, instance):
+        """Override to add talent-related nested fields dynamically to avoid circular import"""
+        ret = super().to_representation(instance)
+        
+        # Import talent serializers here to avoid circular dependency
+        from talent.serializers import (
+            PersonEducationSerializer,
+            PersonCertificationSerializer,
+            PersonLanguageSerializer
+        )
+        
+        # Add talent-related nested data using correct related_names
+        ret['educations'] = PersonEducationSerializer(instance.education_history.all(), many=True).data
+        ret['certifications'] = PersonCertificationSerializer(instance.certifications.all(), many=True).data
+        ret['languages'] = PersonLanguageSerializer(instance.languages.all(), many=True).data
+        
+        return ret
+    
     def to_internal_value(self, data):
         # Only copy if no files are present (files can't be deepcopied)
         if hasattr(data, 'copy') and not hasattr(data, 'getlist'):

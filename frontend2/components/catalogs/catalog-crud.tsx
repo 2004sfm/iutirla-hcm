@@ -167,9 +167,10 @@ interface CatalogCRUDProps {
     disableDelete?: boolean;
     icon?: React.ElementType;
     refreshKey?: number; // Prop to trigger refresh from parent
+    singularName?: string; // Singular name for the entity (e.g. "Employee", "Candidate")
 }
 
-export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, disableDelete, customToolbarActions, disablePagination, icon: Icon, refreshKey }: CatalogCRUDProps) {
+export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchOptions, extraActions, disableCreate, disableEdit, disableDelete, customToolbarActions, disablePagination, icon: Icon, refreshKey, singularName }: CatalogCRUDProps) {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -376,15 +377,23 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
         setIsSaving(true);
         setServerError(null);
         setIsEditConfirmDialogOpen(false);
+        // Transform empty strings to null for select fields (nullable foreign keys)
+        const transformedValues = { ...values };
+        fields.forEach(field => {
+            if (field.type === "select" && !field.required && transformedValues[field.name] === "") {
+                transformedValues[field.name] = null;
+            }
+        });
+
         try {
             if (currentItem) {
                 // Update - strip query params from apiUrl before adding ID
                 const baseUrl = apiUrl.split('?')[0];
-                await apiClient.patch(`${baseUrl}${currentItem.id}/`, values);
+                await apiClient.patch(`${baseUrl}${currentItem.id}/`, transformedValues);
                 toast.success("Registro actualizado correctamente.");
             } else {
                 // Create
-                await apiClient.post(apiUrl, values);
+                await apiClient.post(apiUrl, transformedValues);
                 toast.success("Registro creado correctamente.");
             }
             setIsDialogOpen(false);
@@ -503,9 +512,9 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                 ) : <div></div>}
                 <div className="flex gap-2">
                     {disableCreate ? customToolbarActions : (
-                        <Button onClick={handleCreate}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nuevo
+                        <Button onClick={handleCreate} variant="outline">
+                            <Plus className="h-4 w-4" />
+                            {singularName ? `Nuevo ${singularName}` : "Nuevo"}
                         </Button>
                     )}
                 </div>

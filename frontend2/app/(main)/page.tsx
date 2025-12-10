@@ -36,7 +36,7 @@ export default function HomePage() {
             title: "Capacitación y Cursos",
             description: "Catálogo de cursos y planes de formación.",
             icon: BookOpen,
-            href: "/admin/courses",
+            href: "/admin/training",
             color: "text-orange-500",
             bg: "bg-orange-50"
         },
@@ -76,10 +76,10 @@ export default function HomePage() {
             bg: "bg-blue-50"
         },
         {
-            title: "Formación",
+            title: "Capacitación",
             description: "Mis cursos y planes de aprendizaje.",
             icon: BookOpen,
-            href: "/courses",
+            href: "/training",
             color: "text-orange-500",
             bg: "bg-orange-50"
         }

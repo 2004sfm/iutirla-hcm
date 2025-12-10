@@ -3,11 +3,12 @@
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Grid3x3, Loader2 } from "lucide-react";
+import { BookOpen, Grid3x3, Loader2, Search } from "lucide-react";
 import { CourseCard } from "@/components/courses/course-card";
 import { Course, EnrollmentStatus } from "@/types/course";
 import apiClient from "@/lib/api-client";
 import { useAuth } from "@/context/auth-context";
+import { Input } from "@/components/ui/input";
 
 const fetcher = (url: string) => apiClient.get(url).then((res) => res.data.results || res.data);
 
@@ -18,6 +19,8 @@ interface CourseWithEnrollment extends Course {
 export default function CoursesPage() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<"my-courses" | "available">("my-courses");
+    const [myCoursesSearch, setMyCoursesSearch] = useState("");
+    const [availableCoursesSearch, setAvailableCoursesSearch] = useState("");
 
     // Fetch all available courses
     const { data: allCourses, error, isLoading } = useSWR<Course[]>(
@@ -40,8 +43,8 @@ export default function CoursesPage() {
     });
 
     // Separar cursos en "Mis Cursos" y "Disponibles"
-    const myCourses: CourseWithEnrollment[] = [];
-    const availableCourses: Course[] = [];
+    let myCourses: CourseWithEnrollment[] = [];
+    let availableCourses: Course[] = [];
 
     allCourses?.forEach((course) => {
         const enrollmentStatus = enrollmentMap.get(course.id);
@@ -56,6 +59,21 @@ export default function CoursesPage() {
             availableCourses.push(course);
         }
     });
+
+    // Filter courses based on search
+    if (myCoursesSearch) {
+        myCourses = myCourses.filter(course =>
+            course.name.toLowerCase().includes(myCoursesSearch.toLowerCase()) ||
+            course.description?.toLowerCase().includes(myCoursesSearch.toLowerCase())
+        );
+    }
+
+    if (availableCoursesSearch) {
+        availableCourses = availableCourses.filter(course =>
+            course.name.toLowerCase().includes(availableCoursesSearch.toLowerCase()) ||
+            course.description?.toLowerCase().includes(availableCoursesSearch.toLowerCase())
+        );
+    }
 
     if (isLoading) {
         return (
@@ -79,7 +97,7 @@ export default function CoursesPage() {
             {/* Header */}
             <div className="flex items-center justify-between border-b pb-6">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Cursos</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Capacitación</h1>
                     <p className="text-muted-foreground mt-1">
                         Explora y gestiona tu formación profesional
                     </p>
@@ -110,13 +128,25 @@ export default function CoursesPage() {
 
                 <div className="flex-1 mt-6">
                     {/* My Courses Tab */}
-                    <TabsContent value="my-courses" className="m-0">
+                    <TabsContent value="my-courses" className="m-0 space-y-4">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Buscar en mis cursos..."
+                                className="pl-9"
+                                value={myCoursesSearch}
+                                onChange={(e) => setMyCoursesSearch(e.target.value)}
+                            />
+                        </div>
+
                         {myCourses.length === 0 ? (
                             <div className="flex flex-col items-center justify-center p-12 text-center">
                                 <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
-                                <h3 className="text-lg font-semibold mb-2">No tienes cursos inscritos</h3>
+                                <h3 className="text-lg font-semibold mb-2">
+                                    {myCoursesSearch ? "No se encontraron cursos" : "No tienes cursos inscritos"}
+                                </h3>
                                 <p className="text-muted-foreground">
-                                    Explora los cursos disponibles y solicita tu inscripción
+                                    {myCoursesSearch ? "Intenta con otros términos de búsqueda" : "Explora los cursos disponibles y solicita tu inscripción"}
                                 </p>
                             </div>
                         ) : (
@@ -127,7 +157,7 @@ export default function CoursesPage() {
                                         course={course}
                                         enrollmentStatus={course.user_enrollment_status}
                                         isInstructor={user?.person?.id === course.instructor_id}
-                                        href={`/courses/${course.id}`}
+                                        href={`/training/${course.id}`}
                                     />
                                 ))}
                             </div>
@@ -135,13 +165,25 @@ export default function CoursesPage() {
                     </TabsContent>
 
                     {/* Available Courses Tab */}
-                    <TabsContent value="available" className="m-0">
+                    <TabsContent value="available" className="m-0 space-y-4">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Buscar cursos disponibles..."
+                                className="pl-9"
+                                value={availableCoursesSearch}
+                                onChange={(e) => setAvailableCoursesSearch(e.target.value)}
+                            />
+                        </div>
+
                         {availableCourses.length === 0 ? (
                             <div className="flex flex-col items-center justify-center p-12 text-center">
                                 <Grid3x3 className="h-16 w-16 text-muted-foreground mb-4" />
-                                <h3 className="text-lg font-semibold mb-2">No hay cursos disponibles</h3>
+                                <h3 className="text-lg font-semibold mb-2">
+                                    {availableCoursesSearch ? "No se encontraron cursos" : "No hay cursos disponibles"}
+                                </h3>
                                 <p className="text-muted-foreground">
-                                    Todos los cursos activos ya están en tu lista
+                                    {availableCoursesSearch ? "Intenta con otros términos de búsqueda" : "Todos los cursos activos ya están en tu lista"}
                                 </p>
                             </div>
                         ) : (
@@ -150,7 +192,7 @@ export default function CoursesPage() {
                                     <CourseCard
                                         key={course.id}
                                         course={course}
-                                        href={`/courses/${course.id}`}
+                                        href={`/training/${course.id}`}
                                         showEnrollButton={true}
                                         onEnrollmentSuccess={() => {
                                             mutate("/api/training/courses/");

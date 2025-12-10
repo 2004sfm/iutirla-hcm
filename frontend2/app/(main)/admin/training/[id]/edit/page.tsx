@@ -147,7 +147,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                 },
             });
             toast.success("Curso actualizado exitosamente");
-            router.push(`/admin/courses/${id}`);
+            router.push(`/admin/training/${id}`);
         } catch (error: any) {
             console.error("Error updating course:", error);
             if (error.response?.data) {

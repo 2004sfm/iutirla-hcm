@@ -73,6 +73,84 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         
         return Response(departments_data)
     
+        return Response(departments_data)
+    
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def institutional_chart(self, request):
+        """
+        Returns all departments for the organization chart with manager position and person info.
+        """
+        from employment.models import Employment, is_active_status
+        
+        departments = Department.objects.all()
+        departments_data = []
+        
+        for dept in departments:
+            # Serialize basic department data
+            dept_serializer = DepartmentSerializer(dept)
+            dept_data = dept_serializer.data
+            
+            # Find manager position for this department (show even if vacant)
+            manager_position = None
+            manager_info = None
+            manager_pos = Position.objects.filter(
+                department=dept,
+                is_manager=True
+            ).select_related('job_title').first()
+            
+            if manager_pos and manager_pos.job_title:
+                manager_position = manager_pos.job_title.name
+                
+                # Find who currently occupies this position
+                manager_emp = Employment.objects.filter(
+                    position=manager_pos
+                ).select_related('person').first()
+                
+                if manager_emp and is_active_status(manager_emp.current_status):
+                    # Get absolute photo URL
+                    photo_url = None
+                    if manager_emp.person.photo:
+                        photo_url = request.build_absolute_uri(manager_emp.person.photo.url)
+                    
+                    manager_info = {
+                        'id': manager_emp.person.id,
+                        'name': str(manager_emp.person),
+                        'photo': photo_url,
+                    }
+            
+            dept_data['manager_position'] = manager_position
+            dept_data['manager_info'] = manager_info
+            departments_data.append(dept_data)
+        
+        return Response(departments_data)
+    
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated], url_path='export-institutional-chart')
+    def export_institutional_chart(self, request):
+        """
+        Exports provided SVG content to PDF or returns SVG for the institutional org chart.
+        POST body: { "format": "svg" | "pdf", "svg_content": "<svg>..." }
+        """
+        from django.http import HttpResponse
+        
+        export_format = request.data.get('format', 'pdf')
+        svg_content = request.data.get('svg_content', '')
+        
+        if not svg_content:
+            return Response({'error': 'SVG content is required'}, status=400)
+            
+        if export_format == 'svg':
+            response = HttpResponse(svg_content, content_type='image/svg+xml')
+            response['Content-Disposition'] = 'attachment; filename="organigrama-institucional.svg"'
+            return response
+        else:  # pdf
+            import cairosvg
+            # Convert SVG to PDF
+            pdf_bytes = cairosvg.svg2pdf(bytestring=svg_content.encode('utf-8'))
+            
+            response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="organigrama-institucional.pdf"'
+            return response
+
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='detail')
     def department_detail(self, request, pk=None):
         """
