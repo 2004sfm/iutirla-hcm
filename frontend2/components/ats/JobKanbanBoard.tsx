@@ -76,7 +76,7 @@ function AccordionDroppableColumn({
             onClick={() => onHover(stage)}
             onMouseEnter={() => onHover(stage)}
             className={cn(
-                "transition-all duration-500 ease-in-out relative flex flex-col overflow-hidden",
+                "transition-all duration-700 ease-in-out relative flex flex-col overflow-hidden",
                 "w-full md:w-auto", // Removed fixed md:h-full to allow natural growth, flex stretch handles equal height
                 isActive ? "bg-slate-50 dark:bg-slate-900" : STAGE_COLORS[stage], // Active: Neutral BG. Inactive: Colored Spine.
                 isActive
@@ -86,7 +86,7 @@ function AccordionDroppableColumn({
         >
             {isActive ? (
                 // Expanded Content
-                <div className="flex flex-col animate-in fade-in duration-500 w-full min-h-[200px] md:min-w-[300px] h-full">
+                <div className="flex flex-col animate-in fade-in duration-700 w-full min-h-[200px] md:min-w-[300px] h-full">
                     {/* Header Strip */}
                     <div className={cn("p-4 md:p-6 sticky top-0 z-10 shadow-sm", STAGE_COLORS[stage])}>
                         <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-wider">

@@ -303,30 +303,36 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
             {/* Tabs: Overview, Resources & Modules */}
             <Tabs defaultValue="overview" className="flex-1 flex flex-col">
-                <TabsList className="w-full md:w-auto bg-muted/50 p-1">
+                <TabsList className="w-full flex flex-col md:grid md:grid-cols-3 h-auto p-1 bg-muted/50 gap-1">
                     <TabsTrigger
                         value="overview"
-                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 px-6 transition-all duration-300"
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                     >
-                        <FileText className="mr-2 h-4 w-4" />
-                        Información General
+                        <FileText className="mr-1 size-4" />
+                        <p className="truncate">
+                            Información General
+                        </p>
                     </TabsTrigger>
 
                     <TabsTrigger
                         value="modules"
-                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 px-6 transition-all duration-300"
+                        className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                     >
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Módulos y Sesiones
+                        <BookOpen className="mr-1 size-4" />
+                        <p className="truncate">
+                            Módulos y Sesiones
+                        </p>
                         {!hasAccess && <Lock className="ml-2 h-4 w-4" />}
                     </TabsTrigger>
                     {isInstructor && (
                         <TabsTrigger
                             value="people"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 px-6 transition-all duration-300"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3 transition-all duration-300 w-full"
                         >
-                            <Users className="mr-2 h-4 w-4" />
-                            Personas
+                            <Users className="mr-1 size-4" />
+                            <p className="truncate">
+                                Personas
+                            </p>
                         </TabsTrigger>
                     )}
                 </TabsList>

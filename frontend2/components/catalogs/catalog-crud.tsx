@@ -138,7 +138,7 @@ function DependentSelect({
 export interface CatalogField {
     name: string;
     label: string;
-    type: "text" | "number" | "email" | "select" | "checkbox" | "textarea" | "date" | "hidden";
+    type: "text" | "number" | "email" | "select" | "checkbox" | "textarea" | "date" | "hidden" | "custom";
     required?: boolean;
     optionsUrl?: string; // API endpoint to fetch options
     options?: { label: string; value: string }[]; // Static options
@@ -150,6 +150,8 @@ export interface CatalogField {
     lockPrefixLength?: number; // Lock the first N characters from being deleted/modified
     dependsOn?: string; // Name of the field this field depends on for filtering options
     dependsOnFilterParam?: string; // Query parameter name to use when filtering (defaults to dependsOn value)
+    customComponent?: React.ComponentType<any>; // Custom component for "custom" type field
+    customComponentProps?: Record<string, any>; // Props to pass to custom component
 }
 
 interface CatalogCRUDProps {
@@ -305,6 +307,8 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                 defaults[f.name] = "";
             }
         });
+
+        console.log("🎯 [CatalogCRUD] Initializing form with defaults:", defaults);
         form.reset(defaults);
         setIsDialogOpen(true);
     };
@@ -377,13 +381,20 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
         setIsSaving(true);
         setServerError(null);
         setIsEditConfirmDialogOpen(false);
+
         // Transform empty strings to null for select fields (nullable foreign keys)
         const transformedValues = { ...values };
         fields.forEach(field => {
             if (field.type === "select" && !field.required && transformedValues[field.name] === "") {
                 transformedValues[field.name] = null;
             }
+            // Ensure hidden fields are included even if empty
+            if (field.type === "hidden" && transformedValues[field.name] === undefined) {
+                transformedValues[field.name] = "";
+            }
         });
+
+        console.log("📤 Submitting to backend:", transformedValues); // Debug log
 
         try {
             if (currentItem) {
@@ -514,7 +525,7 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                     {disableCreate ? customToolbarActions : (
                         <Button onClick={handleCreate} variant="outline">
                             <Plus className="h-4 w-4" />
-                            {singularName ? `Nuevo ${singularName}` : "Nuevo"}
+                            {singularName ? `Añadir ${singularName}` : "Añadir"}
                         </Button>
                     )}
                 </div>
@@ -598,7 +609,14 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                                             <FormItem className={field.type === "hidden" ? "hidden" : ""}>
                                                 {field.type !== "hidden" && <FormLabel>{field.label}</FormLabel>}
                                                 <FormControl>
-                                                    {field.type === "select" ? (
+                                                    {field.type === "custom" && field.customComponent ? (
+                                                        <field.customComponent
+                                                            {...formField}
+                                                            {...field.customComponentProps}
+                                                            form={form}
+                                                            onSelect={(value: any) => formField.onChange(value)}
+                                                        />
+                                                    ) : field.type === "select" ? (
                                                         <DependentSelect
                                                             field={field}
                                                             formField={formField}
@@ -634,7 +652,11 @@ export function CatalogCRUD({ title, apiUrl, fields, columns, searchKey, searchO
                                                             placeholder={field.label}
                                                         />
                                                     ) : field.type === "hidden" ? (
-                                                        <input type="hidden" {...formField} value={(formField.value as string | number) ?? ""} />
+                                                        <input
+                                                            type="hidden"
+                                                            {...formField}
+                                                            value={(formField.value as string | number) ?? ""}
+                                                        />
                                                     ) : (
                                                         <div>
                                                             <Input

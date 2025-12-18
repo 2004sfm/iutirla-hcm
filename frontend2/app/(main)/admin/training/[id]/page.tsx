@@ -222,7 +222,7 @@ export default function AdminCourseDetailPage({ params }: { params: Promise<{ id
                                 </CardContent>
                             </Card>
 
-                            {course.instructor_name && (
+                            {course.instructor_name && !course.instructor_name.includes('NoneType') && !course.instructor_name.includes('method-wrapper') && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>Instructor Asignado</CardTitle>

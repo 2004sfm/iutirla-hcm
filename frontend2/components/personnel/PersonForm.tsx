@@ -79,7 +79,7 @@ export function PersonForm({ initialData, isEditing = false, personId, onSuccess
 
     const { data: genders } = useSWR("/api/core/genders/", fetcher);
     const { data: maritalStatuses } = useSWR("/api/core/marital-statuses/", fetcher);
-    const { data: countries } = useSWR("/api/core/countries/", fetcher);
+    const { data: countries } = useSWR("/api/core/countries/?page_size=1000", fetcher);
 
     // Prepare default values
     const defaultValues = {

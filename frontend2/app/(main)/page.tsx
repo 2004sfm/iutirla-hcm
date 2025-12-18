@@ -6,7 +6,10 @@ import {
     Briefcase,
     Settings,
     Gauge,
-    BookOpen
+    BookOpen,
+    Network,
+    Building2,
+    IdCard
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -17,67 +20,91 @@ export default function HomePage() {
 
     const adminCards = [
         {
-            title: "Gestión de Personal",
-            description: "Administra empleados, contratos y expedientes.",
+            title: "Personal",
+            description: "Gestiona empleados y expedientes de tu organización.",
             icon: Users,
             href: "/admin/personnel/employees",
             color: "text-blue-500",
             bg: "bg-blue-50"
         },
         {
+            title: "Departamentos",
+            description: "Administra la estructura departamental.",
+            icon: Building2,
+            href: "/departments",
+            color: "text-indigo-500",
+            bg: "bg-indigo-50"
+        },
+        {
+            title: "Organigrama",
+            description: "Visualiza la estructura organizacional completa.",
+            icon: Network,
+            href: "/org-chart",
+            color: "text-teal-500",
+            bg: "bg-teal-50"
+        },
+        {
             title: "Evaluación de Desempeño",
-            description: "Gestiona períodos, competencias y revisiones.",
+            description: "Gestiona períodos de evaluación y competencias.",
             icon: Gauge,
-            href: "/admin/performance/periods",
+            href: "/performance",
             color: "text-purple-500",
             bg: "bg-purple-50"
         },
         {
             title: "Capacitación y Cursos",
-            description: "Catálogo de cursos y planes de formación.",
+            description: "Administra el catálogo de cursos y formación.",
             icon: BookOpen,
-            href: "/admin/training",
+            href: "/training",
             color: "text-orange-500",
             bg: "bg-orange-50"
         },
         {
-            title: "Reclutamiento (ATS)",
-            description: "Gestiona vacantes y candidatos.",
+            title: "Reclutamiento",
+            description: "Gestiona vacantes y procesos de selección.",
             icon: Briefcase,
             href: "/admin/ats/jobs",
             color: "text-green-500",
             bg: "bg-green-50"
-        },
-        {
-            title: "Configuración",
-            description: "Ajustes generales y catálogos del sistema.",
-            icon: Settings,
-            href: "/admin/config/general",
-            color: "text-slate-500",
-            bg: "bg-slate-50"
         }
     ];
 
     const employeeCards = [
         {
-            title: "Mi Desempeño",
-            description: "Ver mis evaluaciones y objetivos.",
-            icon: Gauge,
-            href: "/employee/performance",
-            color: "text-purple-500",
-            bg: "bg-purple-50"
-        },
-        {
-            title: "Mi Equipo",
-            description: "Ver miembros de mi departamento.",
-            icon: Users,
-            href: "/employee/teams",
+            title: "Mi Expediente",
+            description: "Ver y actualizar mis datos personales y profesionales.",
+            icon: IdCard,
+            href: "/employee/personal-data",
             color: "text-blue-500",
             bg: "bg-blue-50"
         },
         {
+            title: "Mi Desempeño",
+            description: "Consulta tus evaluaciones y objetivos.",
+            icon: Gauge,
+            href: "/performance",
+            color: "text-purple-500",
+            bg: "bg-purple-50"
+        },
+        {
+            title: "Organigrama",
+            description: "Visualiza la estructura de la organización.",
+            icon: Network,
+            href: "/org-chart",
+            color: "text-teal-500",
+            bg: "bg-teal-50"
+        },
+        {
+            title: "Mi Equipo",
+            description: "Conoce a los miembros de tu departamento.",
+            icon: Users,
+            href: "/departments",
+            color: "text-indigo-500",
+            bg: "bg-indigo-50"
+        },
+        {
             title: "Capacitación",
-            description: "Mis cursos y planes de aprendizaje.",
+            description: "Accede a tus cursos y planes de aprendizaje.",
             icon: BookOpen,
             href: "/training",
             color: "text-orange-500",

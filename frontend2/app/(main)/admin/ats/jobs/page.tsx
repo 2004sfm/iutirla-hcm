@@ -3,10 +3,11 @@
 import { CatalogCRUD, CatalogField } from "@/components/catalogs/catalog-crud";
 import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Briefcase, Eye, Users } from "lucide-react";
+import { Briefcase, Eye, Users, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface JobPosting {
     id: number;
@@ -127,6 +128,15 @@ export default function JobsPage() {
             columns={columns}
             searchKey="title"
             singularName="Vacante"
+            disableCreate={true}
+            customToolbarActions={
+                <Button asChild variant="outline">
+                    <Link href="/admin/ats/jobs/new">
+                        <Plus className="h-4 w-4" />
+                        Añadir Vacante
+                    </Link>
+                </Button>
+            }
             extraActions={(item) => (
                 <>
                     <DropdownMenuItem onClick={() => router.push(`/admin/ats/jobs/${item.id}`)}>

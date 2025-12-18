@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import { CommandMenu } from "@/components/command-menu";
 import { TaskSheet } from "@/components/task-sheet";
 import { NotificationsSheet } from "@/components/notifications-sheet";
+import { ManualButton } from "@/components/manual-button";
 import { UserMenu } from "@/components/user-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { SidebarContent } from "./sidebar";
@@ -55,6 +56,7 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
                 <div className="flex md:flex-1 gap-2 items-center justify-end">
                     <CommandMenu />
                     {/* <TaskSheet /> */}
+                    <ManualButton />
                     <NotificationsSheet />
                     <UserMenu />
                 </div>

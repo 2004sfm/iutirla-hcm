@@ -3,7 +3,7 @@
 import { useState, use, useEffect } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, User, Contact, FileText, Users, Mail, Phone, MapPin, CreditCard, Globe, Pencil, GraduationCap, Link as LinkIcon, Upload, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, User, Contact, FileText, Users, Mail, Phone, MapPin, CreditCard, Globe, Pencil, GraduationCap, Link as LinkIcon, Upload, Download, Trash2, MoreVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import apiClient from "@/lib/api-client";
 import { toast } from "sonner";
 import { useBreadcrumb } from "@/context/breadcrumb-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AddressSearchField } from "@/components/catalogs/address-search-field";
+import { AddressData } from "@/components/ui/address-autocomplete";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -28,6 +30,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const fetcher = (url: string) => apiClient.get(url).then((res) => res.data);
 
@@ -40,9 +43,11 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     const [isEditing, setIsEditing] = useState(false);
     const [isUploadingCV, setIsUploadingCV] = useState(false);
     const { data: person, error, isLoading } = useSWR(`/api/core/persons/${id}/`, fetcher);
-    const { data: countries } = useSWR("/api/core/countries/", fetcher);
+    const { data: countries } = useSWR("/api/core/countries/?page_size=1000", fetcher);
+    const { data: statesData } = useSWR("/api/core/states/?page_size=100", fetcher); // Load all states
     const countriesList = countries?.results || (Array.isArray(countries) ? countries : []);
     const venezuelaId = countriesList.find((c: any) => c.iso_2 === "VE")?.id;
+    const venezuelaStates = statesData?.results || (Array.isArray(statesData) ? statesData : []);
 
     const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -147,20 +152,36 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
 
 
 
+
     // 3. Direcciones
+    // Hardcoded Venezuela ID to avoid race condition with SWR data loading
+    const VENEZUELA_ID = 1; // ID from database
+    console.log("🌍 Venezuela ID:", VENEZUELA_ID, "| Countries loaded:", countriesList.length, "| States loaded:", venezuelaStates.length);
+
     const addressFields: CatalogField[] = [
         { name: "person", label: "Persona", type: "hidden", defaultValue: id },
         { name: "address_type", label: "Tipo", type: "select", required: true, optionsUrl: "/api/core/address-types/", optionLabelKey: "name", optionValueKey: "id" },
-        { name: "country", label: "País", type: "hidden", defaultValue: venezuelaId },
-        { name: "state", label: "Estado", type: "select", required: true, optionsUrl: "/api/core/states/", optionLabelKey: "name", optionValueKey: "id" },
-        { name: "city", label: "Ciudad", type: "text", required: true },
-        { name: "street_name_and_number", label: "Calle/Avenida", type: "text", required: true },
+        { name: "country", label: "País", type: "hidden", defaultValue: VENEZUELA_ID },
+        {
+            name: "street_name_and_number",
+            label: "Buscar Dirección",
+            type: "custom",
+            required: true,
+            customComponent: AddressSearchField,
+            customComponentProps: {
+                placeholder: "Buscar dirección (ej: Caracas, Venezuela)",
+            }
+        },
+        { name: "state", label: "Estado", type: "hidden" },
+        { name: "city", label: "Ciudad", type: "hidden" },
+        { name: "postal_code", label: "Código Postal", type: "hidden" },
     ];
     const addressColumns: ColumnDef<any>[] = [
         { accessorKey: "address_type_name", header: "Tipo", cell: ({ row }) => row.getValue("address_type_name") },
-        { accessorKey: "state_name", header: "Estado", cell: ({ row }) => row.getValue("state_name") },
-        { accessorKey: "city", header: "Ciudad", cell: ({ row }) => row.getValue("city") },
         { accessorKey: "street_name_and_number", header: "Calle/Avenida", cell: ({ row }) => row.getValue("street_name_and_number") },
+        { accessorKey: "city", header: "Ciudad", cell: ({ row }) => row.getValue("city") },
+        { accessorKey: "state_name", header: "Estado", cell: ({ row }) => row.getValue("state_name") },
+        { accessorKey: "postal_code", header: "C.P.", cell: ({ row }) => row.getValue("postal_code") || "-" },
     ];
 
     // 4. Documentos de Identidad
@@ -466,6 +487,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     fields={docFields}
                                     columns={nationalIdColumns}
                                     disablePagination={true}
+                                    singularName="Documento"
                                 />
                             </div>
                             <div className="space-y-4">
@@ -477,6 +499,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     columns={bankColumns}
                                     searchKey="account_number"
                                     disablePagination={true}
+                                    singularName="Cuenta Bancaria"
                                 />
                             </div>
                         </TabsContent>
@@ -493,6 +516,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                         columns={emailColumns}
                                         searchKey="email_address"
                                         disablePagination={true}
+                                        singularName="Correo Electrónico"
                                     />
                                 </div>
                                 <div className="space-y-4">
@@ -504,6 +528,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                         columns={phoneColumns}
                                         searchKey="subscriber_number"
                                         disablePagination={true}
+                                        singularName="Teléfono"
                                     />
                                 </div>
                             </div>
@@ -518,8 +543,9 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     apiUrl={`/api/core/addresses/?person=${id}`}
                                     fields={addressFields}
                                     columns={addressColumns}
-                                    searchKey="city"
+                                    searchKey="street_name_and_number"
                                     disablePagination={true}
+                                    singularName="Dirección"
                                 />
                             </div>
                         </TabsContent>
@@ -535,17 +561,19 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     columns={dependentColumns}
                                     searchKey="first_name"
                                     disablePagination={true}
+                                    singularName="Dependiente"
                                 />
                             </div>
                             <div className="space-y-4">
                                 <CatalogCRUD
                                     title="Contactos de Emergencia"
-                                    icon={Users}
+                                    icon={Phone}
                                     apiUrl={`/api/core/emergency-contacts/?person=${id}`}
                                     fields={emergencyFields}
                                     columns={emergencyColumns}
-                                    searchKey="first_name"
+                                    searchKey="phone"
                                     disablePagination={true}
+                                    singularName="Contacto de Emergencia"
                                 />
                             </div>
                         </TabsContent>
@@ -555,98 +583,62 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                             {/* CV Section - First */}
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2">
                                         <FileText className="size-5 text-primary" />
-                                        <h3 className="text-lg font-semibold">Curriculum</h3>
-                                    </div>
+                                        Currículum Vitae
+                                    </h3>
+                                    {person?.cv_file && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" size="icon">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL}${person.cv_file}`, '_blank')}>
+                                                    <Download className="mr-2 h-4 w-4" />
+                                                    Descargar CV
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => document.getElementById('cv-upload')?.click()}>
+                                                    <Upload className="mr-2 h-4 w-4" />
+                                                    Reemplazar CV
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    onClick={handleCVDelete}
+                                                    className="text-destructive focus:text-destructive"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Eliminar CV
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </div>
 
-                                {person.cv_file ? (
-                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
-                                        <div className="flex items-center gap-3">
-                                            <FileText className="size-6 text-muted-foreground" />
-                                            <div>
-                                                <p className="font-medium">CV Actual</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {person.cv_file.split('/').pop()}
-                                                </p>
+                                {person?.cv_file ? (
+                                    <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
+                                        <div className="shrink-0">
+                                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                <FileText className="w-6 h-6 text-primary" />
                                             </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => window.open(person.cv_file, '_blank')}
-                                            >
-                                                <Download className="size-4 mr-2" />
-                                                Descargar
-                                            </Button>
-
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        disabled={isUploadingCV}
-                                                    >
-                                                        <Upload className="size-4 mr-2" />
-                                                        {isUploadingCV ? "Subiendo..." : "Reemplazar"}
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Esto reemplazará el archivo CV actual. Esta acción no se puede deshacer.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => document.getElementById('cv-upload')?.click()}>
-                                                            Continuar
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="destructive" size="sm">
-                                                        <Trash2 className="size-4" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Esto eliminará permanentemente el archivo CV. Esta acción no se puede deshacer.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={handleCVDelete} className="bg-destructive text-white hover:bg-destructive/90">
-                                                            Eliminar
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">Currículum Vitae</p>
+                                            <p className="text-xs text-muted-foreground">Documento cargado</p>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-card">
-                                        <Upload className="size-12 text-muted-foreground mb-4" />
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            No hay CV cargado. Sube un archivo PDF o DOCX.
-                                        </p>
-                                        <Button
-                                            onClick={() => document.getElementById('cv-upload')?.click()}
-                                            disabled={isUploadingCV}
-                                        >
-                                            <Upload className="size-4 mr-2" />
-                                            {isUploadingCV ? "Subiendo..." : "Subir CV"}
+                                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg">
+                                        <Upload className="h-12 w-12 text-muted-foreground mb-3" />
+                                        <p className="text-sm text-muted-foreground mb-4">No hay currículum cargado</p>
+                                        <Button onClick={() => document.getElementById('cv-upload')?.click()} disabled={isUploadingCV}>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            {isUploadingCV ? "Subiendo..." : "Cargar CV"}
                                         </Button>
                                     </div>
                                 )}
+
                                 <input
                                     id="cv-upload"
                                     type="file"
@@ -654,7 +646,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     onChange={handleCVUpload}
                                     className="hidden"
                                 />
-                            </div>
+                            </div >
 
                             <div className="space-y-4">
                                 <CatalogCRUD
@@ -665,6 +657,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     columns={educationColumns}
                                     searchKey="school_name"
                                     disablePagination={true}
+                                    singularName="Formación"
                                 />
                             </div>
                             <div className="space-y-4">
@@ -676,6 +669,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     columns={certificationColumns}
                                     searchKey="name"
                                     disablePagination={true}
+                                    singularName="Certificación"
                                 />
                             </div>
                             <div className="space-y-4">
@@ -687,13 +681,14 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                                     columns={languageColumns}
                                     searchKey="language_name"
                                     disablePagination={true}
+                                    singularName="Idioma"
                                 />
                             </div>
-                        </TabsContent>
-                    </div>
-                </Tabs>
+                        </TabsContent >
+                    </div >
+                </Tabs >
             )}
-        </div>
+        </div >
     );
 }
 

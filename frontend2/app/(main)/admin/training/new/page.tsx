@@ -123,7 +123,7 @@ export default function NewCoursePage() {
                 },
             });
             toast.success("Curso creado exitosamente");
-            router.push(`/admin/courses/${response.data.id}`);
+            router.push(`/admin/training/${response.data.id}`);
         } catch (error: any) {
             console.error("Error creating course:", error);
             if (error.response?.data) {
@@ -311,11 +311,20 @@ export default function NewCoursePage() {
                                             <FormControl>
                                                 <Input
                                                     type="number"
+                                                    min="1"
+                                                    step="1"
                                                     placeholder="40"
                                                     {...field}
+                                                    onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                                        const input = e.currentTarget;
+                                                        // Remover ceros iniciales mientras el usuario escribe
+                                                        if (input.value.length > 1 && input.value.startsWith('0')) {
+                                                            input.value = input.value.replace(/^0+/, '');
+                                                        }
+                                                    }}
                                                     onChange={e => {
-                                                        const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                                                        field.onChange(value);
+                                                        const value = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                                                        field.onChange(isNaN(value) ? 0 : value);
                                                     }}
                                                 />
                                             </FormControl>
@@ -333,11 +342,20 @@ export default function NewCoursePage() {
                                             <FormControl>
                                                 <Input
                                                     type="number"
+                                                    min="1"
+                                                    step="1"
                                                     placeholder="30"
                                                     {...field}
+                                                    onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                                        const input = e.currentTarget;
+                                                        // Remover ceros iniciales mientras el usuario escribe
+                                                        if (input.value.length > 1 && input.value.startsWith('0')) {
+                                                            input.value = input.value.replace(/^0+/, '');
+                                                        }
+                                                    }}
                                                     onChange={e => {
-                                                        const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                                                        field.onChange(value);
+                                                        const value = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                                                        field.onChange(isNaN(value) ? 0 : value);
                                                     }}
                                                 />
                                             </FormControl>

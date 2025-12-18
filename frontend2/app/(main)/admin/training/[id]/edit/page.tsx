@@ -362,11 +362,20 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                                             <FormControl>
                                                 <Input
                                                     type="number"
+                                                    min="1"
+                                                    step="1"
                                                     placeholder="40"
                                                     {...field}
+                                                    onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                                        const input = e.currentTarget;
+                                                        // Remover ceros iniciales mientras el usuario escribe
+                                                        if (input.value.length > 1 && input.value.startsWith('0')) {
+                                                            input.value = input.value.replace(/^0+/, '');
+                                                        }
+                                                    }}
                                                     onChange={e => {
-                                                        const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                                                        field.onChange(value);
+                                                        const value = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                                                        field.onChange(isNaN(value) ? 0 : value);
                                                     }}
                                                 />
                                             </FormControl>
@@ -384,11 +393,20 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                                             <FormControl>
                                                 <Input
                                                     type="number"
+                                                    min="1"
+                                                    step="1"
                                                     placeholder="30"
                                                     {...field}
+                                                    onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                                        const input = e.currentTarget;
+                                                        // Remover ceros iniciales mientras el usuario escribe
+                                                        if (input.value.length > 1 && input.value.startsWith('0')) {
+                                                            input.value = input.value.replace(/^0+/, '');
+                                                        }
+                                                    }}
                                                     onChange={e => {
-                                                        const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                                                        field.onChange(value);
+                                                        const value = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                                                        field.onChange(isNaN(value) ? 0 : value);
                                                     }}
                                                 />
                                             </FormControl>

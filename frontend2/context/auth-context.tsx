@@ -109,12 +109,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 apiClient.defaults.headers.common["Authorization"] = `Bearer ${access}`;
             }
 
-            // Redirección basada en rol
-            if (typedUser.is_staff) {
-                router.push("/admin/dashboard");
-            } else {
-                router.push("/");
-            }
+            // Redirección basada en rol - ambos van a home
+            router.push("/");
 
         } catch (error) {
             throw error;

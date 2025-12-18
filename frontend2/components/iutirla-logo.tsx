@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface IutirlaLogoProps {
     collapsed?: boolean;
@@ -8,7 +9,7 @@ interface IutirlaLogoProps {
 
 export function IutirlaLogo({ collapsed, className }: IutirlaLogoProps) {
     return (
-        <div className={cn("flex items-center gap-1 cursor-pointer", className)}>
+        <Link href="/" className={cn("flex items-center gap-1 cursor-pointer", className)}>
             <div className={cn("flex items-center justify-center shrink-0", collapsed ? "w-16 h-14" : "ml-3 h-14")}>
                 <Image
                     src="/images/logoiutirla.webp"
@@ -24,6 +25,6 @@ export function IutirlaLogo({ collapsed, className }: IutirlaLogoProps) {
                     <span className="absolute top-0 font-semibold -right-4 text-[8px]">HCM</span>
                 </div>
             )}
-        </div>
+        </Link>
     )
 }

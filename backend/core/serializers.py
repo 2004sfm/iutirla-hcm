@@ -207,18 +207,40 @@ class AddressSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
     state_name = serializers.CharField(source='state.name', read_only=True)
 
-    class Meta: model = Address; fields = '__all__'
+    class Meta:
+        model = Address
+        fields = '__all__'
     
     def validate(self, data):
+        # Convert empty strings to None for ForeignKey fields
+        if 'state' in data and data['state'] == '':
+            data['state'] = None
+        if 'country' in data and data['country'] == '':
+            data['country'] = None
+            
+        # Validate state belongs to country if both are provided
         if data.get('state') and data.get('country') and data['state'].country != data['country']:
             raise serializers.ValidationError({"state": "El estado no pertenece al país."})
+        
+        print(f"📥 [AddressSerializer] Validated data: {data}")  # Debug log
         return data
 
     def validate_city(self, value):
+        if not value:  # Allow empty city
+            return ""
         return title_case_cleaner(validate_text_with_spaces(value, 'Ciudad'))
 
     def validate_street_name_and_number(self, value):
         return title_case_cleaner(value)
+    
+    def create(self, validated_data):
+        print(f"✅ [AddressSerializer] Creating address with: {validated_data}")  # Debug log
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        print(f"✅ [AddressSerializer] Updating address with: {validated_data}")  # Debug log
+        return super().update(instance, validated_data)
+
     
 class EmergencyContactSerializer(serializers.ModelSerializer):
     relationship_name = serializers.SerializerMethodField()

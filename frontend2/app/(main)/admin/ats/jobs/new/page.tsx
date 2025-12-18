@@ -250,7 +250,7 @@ export default function NewJobPage() {
         formData.title && formData.description && formData.position;
 
     return (
-        <div className="container mx-auto py-8 px-4">
+        <div className="flex flex-col h-full space-y-6 p-8">
             <div className="mb-6">
                 <Link href="/admin/ats/jobs">
                     <Button variant="ghost">
@@ -262,7 +262,7 @@ export default function NewJobPage() {
                 <p className="text-muted-foreground">Crear una nueva oferta de trabajo</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Información Básica</CardTitle>
